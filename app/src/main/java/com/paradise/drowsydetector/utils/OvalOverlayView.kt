@@ -5,13 +5,15 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 
-class OvalOverlayView(context: Context, attrs: AttributeSet?) : View(context, attrs) {
+class OvalOverlayView(context: Context, attrs: AttributeSet?) :
+    View(context, attrs) {
     private val paint = Paint()
 
     private val ovalRect = RectF()
     fun getOvalRect() = ovalRect
 
-    private val blurPaint = Paint()
+    var blurPaint = Paint()
+
     private val ovalPath = Path()
 
     init {
@@ -23,20 +25,31 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) : View(context, at
 
         blurPaint.apply {
             isAntiAlias = true
-            color = Color.BLACK
+            color = Color.RED
             style = Paint.Style.FILL
-            alpha = 128
-        }
-
-        blurPaint.apply {
-            isAntiAlias = true
-            color = Color.BLACK
-            style = Paint.Style.FILL
-            alpha = 128
+            alpha = 30
         }
 
     }
 
+    fun onZeroAngle(zero: Boolean) {
+        if (zero) {
+            blurPaint.apply {
+                isAntiAlias = true
+                color = Color.GREEN
+                style = Paint.Style.FILL
+                alpha = 30
+            }
+        } else {
+            blurPaint.apply {
+                isAntiAlias = true
+                color = Color.RED
+                style = Paint.Style.FILL
+                alpha = 30
+            }
+        }
+        invalidate()
+    }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
@@ -46,11 +59,18 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) : View(context, at
         val radiusX = width / 2.8
         val radiusY = height / 3.4
 
+//        ovalRect.set(
+//            (centerX - radiusX).toFloat(),
+//            (centerY - radiusY).toFloat(),
+//            (centerX + radiusX).toFloat(),
+//            (centerY + radiusY).toFloat()
+//        )
+
         ovalRect.set(
-            (centerX - radiusX).toFloat(),
-            (centerY - radiusY).toFloat(),
-            (centerX + radiusX).toFloat(),
-            (centerY + radiusY).toFloat()
+            (width / 10).toFloat(),
+            (height / 10).toFloat(),
+            (width * 9 / 10).toFloat(),
+            (height * 9 / 10).toFloat()
         )
 
         // The following code adjusts the outer part of the oval shape to be slightly blurred and the inner part to be transparent.
@@ -64,4 +84,5 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) : View(context, at
         canvas?.clipOutPath(ovalPath)
         canvas?.drawPaint(blurPaint)
     }
+
 }
