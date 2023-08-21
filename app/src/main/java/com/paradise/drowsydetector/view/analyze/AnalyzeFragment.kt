@@ -141,7 +141,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                     val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
                     if (standard == null) {
                         if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
-                            overlay.onZeroAngle(true, false)
+                            overlay.onZeroAngle(1)
                             if (!isInAngleRange) {
                                 startTimer()
                                 isInAngleRange = true
@@ -156,7 +156,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                             if ((leftRightAngle > 4 || leftRightAngle < -4) && upDownAngle < 4 && upDownAngle > -4) binding.analyzeTextGazerequest.text =
                                 "고개를 살짝만 돌려 주세요"
 
-                            overlay.onZeroAngle(false, false)
+                            overlay.onZeroAngle(3)
                             if (isInAngleRange) {
                                 isInAngleRange = false
                                 stopTimer()
@@ -171,10 +171,10 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                             // 카메라 정면 요청
                             binding.analyzeTextScreenrequest.visibility = View.VISIBLE
                             binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
-                            overlay.onZeroAngle(false, true)
+                            overlay.onZeroAngle(2)
                         } else {
-                            overlay.onZeroAngle(true, true)
                             binding.analyzeTextScreenrequest.visibility = View.INVISIBLE
+                            overlay.onZeroAngle(1)
                         }
 
                         // 비율이 제한을 벗어나거나 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐)
@@ -238,9 +238,9 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
     fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
 
         val upDownSec =
-            (1 / Math.cos(upDownAngle * Math.PI / 180.0)) //  val upDownRadian = upDownAngle * Math.PI / 180.0
+            (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
         var leftRightSec =
-            (1 / Math.cos(leftRightAngle * Math.PI / 180.0)) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
+            (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
 
 /*
 var rightWidth =

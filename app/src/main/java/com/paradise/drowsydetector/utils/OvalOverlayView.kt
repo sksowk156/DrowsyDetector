@@ -32,23 +32,25 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
 
     }
 
-    fun onZeroAngle(zero: Boolean, standard: Boolean) {
-        if (zero) {
-            blurPaint.apply {
-                isAntiAlias = true
-                color = Color.GREEN
-                style = Paint.Style.FILL
-                alpha = 40
+    fun onZeroAngle(state:Int) {
+        when(state){
+            1->{
+                blurPaint.apply {
+                    isAntiAlias = true
+                    color = Color.GREEN
+                    style = Paint.Style.FILL
+                    alpha = 40
+                }
             }
-        } else {
-            if (standard) {
+            2->{
                 blurPaint.apply {
                     isAntiAlias = true
                     color = Color.BLUE
                     style = Paint.Style.FILL
                     alpha = 40
                 }
-            } else {
+            }
+            3->{
                 blurPaint.apply {
                     isAntiAlias = true
                     color = Color.RED
@@ -63,18 +65,6 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        val centerX = width / 2
-        val centerY = height / 2.8
-        val radiusX = width / 2.8
-        val radiusY = height / 3.4
-
-//        ovalRect.set(
-//            (centerX - radiusX).toFloat(),
-//            (centerY - radiusY).toFloat(),
-//            (centerX + radiusX).toFloat(),
-//            (centerY + radiusY).toFloat()
-//        )
-
         ovalRect.set(
             (width / 10).toFloat(),
             (height / 10).toFloat(),
@@ -82,8 +72,6 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
             (height * 9 / 10).toFloat()
         )
 
-        // The following code adjusts the outer part of the oval shape to be slightly blurred and the inner part to be transparent.
-//        ovalPath.addOval(ovalRect, Path.Direction.CCW)
         ovalPath.addRect(ovalRect, Path.Direction.CCW)
 //        if (Build.VERSION.SDK_INT >= 26) {
 //            canvas?.clipOutPath(ovalPath)
