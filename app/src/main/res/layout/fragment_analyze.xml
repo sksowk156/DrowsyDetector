@@ -25,9 +25,7 @@
             android:id="@+id/analyze_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="visible">
-
-        </com.paradise.drowsydetector.utils.OvalOverlayView>
+            android:visibility="visible"/>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -57,10 +55,10 @@
                 android:layout_marginHorizontal="25dp"
                 android:layout_marginBottom="50dp"
                 android:gravity="center"
-                android:text="2초간 정면을 응시해주세요"
+                android:text="얼굴을 정방향으로 해주세요"
                 android:textColor="#FFE500"
                 android:textSize="30sp"
-                android:visibility="invisible" />
+                android:visibility="visible" />
 
         </LinearLayout>
 
@@ -77,7 +75,8 @@
                 android:gravity="center"
                 android:text="화면 각도를 조정해주세요"
                 android:textColor="#008EFF"
-                android:textSize="30sp"
+                android:textSize="50sp"
+                android:textStyle="bold"
                 android:visibility="invisible" />
         </LinearLayout>
 
@@ -94,9 +93,9 @@
                 android:gravity="center"
                 android:text="혹시 지금 졸리시나요?"
                 android:textColor="#FF0000"
-                android:visibility="invisible"
                 android:textSize="50sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:visibility="invisible" />
 
         </LinearLayout>
 

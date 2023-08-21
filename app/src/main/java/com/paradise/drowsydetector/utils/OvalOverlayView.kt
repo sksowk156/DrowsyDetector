@@ -32,20 +32,29 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
 
     }
 
-    fun onZeroAngle(zero: Boolean) {
+    fun onZeroAngle(zero: Boolean, standard: Boolean) {
         if (zero) {
             blurPaint.apply {
                 isAntiAlias = true
                 color = Color.GREEN
                 style = Paint.Style.FILL
-                alpha = 30
+                alpha = 40
             }
         } else {
-            blurPaint.apply {
-                isAntiAlias = true
-                color = Color.RED
-                style = Paint.Style.FILL
-                alpha = 30
+            if (standard) {
+                blurPaint.apply {
+                    isAntiAlias = true
+                    color = Color.BLUE
+                    style = Paint.Style.FILL
+                    alpha = 40
+                }
+            } else {
+                blurPaint.apply {
+                    isAntiAlias = true
+                    color = Color.RED
+                    style = Paint.Style.FILL
+                    alpha = 40
+                }
             }
         }
         invalidate()

@@ -1,9 +1,13 @@
 package com.paradise.drowsydetector.view.analyze
 
-import android.graphics.Point
-import android.opengl.Visibility
+import android.annotation.SuppressLint
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.MenuItem
 import android.view.View
 import androidx.camera.core.CameraSelector
 import androidx.camera.mlkit.vision.MlKitAnalyzer
@@ -11,7 +15,6 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import androidx.core.view.marginTop
 import com.google.mlkit.vision.common.PointF3D
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -22,7 +25,6 @@ import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseFragment
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.utils.OvalOverlayView
-import kotlinx.coroutines.NonCancellable.start
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -34,10 +36,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-//            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-//            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-//            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
-            .build()
+            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL).build()
     }
 
     private val faceMeshOption by lazy {
@@ -60,9 +59,12 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
     var isInDrowsyState = false
     var timeCheckDrowsy: Long? = null
     val standardRatioList = mutableListOf<Double>()
+    private var toneGenerator: ToneGenerator? = null
+    private lateinit var toolbarMenuReset: MenuItem
 
     override fun init() {
-        initAppbar(binding.analyzeToolbar, null, true, "")
+        initAppbar(binding.analyzeToolbar, R.menu.menu_reset, true, "")
+        initAppbarItem()
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -72,16 +74,15 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
         binding.analyzeProgress.setMax(msFuture.toInt())
 
         timer = object : CountDownTimer(msFuture, 1000) {
+            @SuppressLint("SetTextI18n")
             override fun onTick(msUntilFinished: Long) {
-//                displayText.setText("remaining sec: " + msUntilFinished / 1000)
-                binding.analyzeOverlay.visibility = View.VISIBLE
                 binding.analyzeProgress.visibility = View.VISIBLE
-                binding.analyzeTextGazerequest.visibility = View.VISIBLE
+                binding.analyzeTextGazerequest.text = "2초간 응시해주세요\n(눈 크기 측정 중)"
             }
 
             override fun onFinish() {
-                binding.analyzeOverlay.visibility = View.INVISIBLE
                 binding.analyzeProgress.visibility = View.INVISIBLE
+                binding.analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
                 binding.analyzeTextGazerequest.visibility = View.INVISIBLE
 
                 if (standardRatioList.size > 0) {
@@ -90,11 +91,20 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                     standard = mid.average()
                     showToast("설정 완료")
                 }
-//                displayText.setText("done!")
             }
         }
 
         startCamera()
+    }
+
+    override fun initAppbarItem() {
+        super.initAppbarItem()
+        toolbarMenuReset = baseToolbar.menu.findItem(R.id.reset_menu_standardreset)
+        toolbarMenuReset.setOnMenuItemClickListener {
+            binding.analyzeTextGazerequest.visibility = View.VISIBLE
+            standard = null
+            true
+        }
     }
 
     private fun startCamera() {
@@ -122,66 +132,91 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                         return@MlKitAnalyzer
                     }
 
-                    val angle = analyzeResult1[0]
-                    val landmark = analyzeResult2[0].allPoints
+                    val resultDetector = analyzeResult1[0]
+                    val resultMesh = analyzeResult2[0].allPoints
 
-                    val upDownAngle = angle.headEulerAngleX + 8 // 정면을 봤을 때 -8부터 시작해서
-                    val leftRightAngle = angle.headEulerAngleY
+                    val upDownAngle = resultDetector.headEulerAngleX + 8 // 정면을 봤을 때 -8부터 시작해서
+                    val leftRightAngle = resultDetector.headEulerAngleY
 
-                    val eyeRatio = calRatio(upDownAngle, leftRightAngle, landmark)
-
-                    if (leftRightAngle < -30 || leftRightAngle > 30 || upDownAngle < -20 || upDownAngle > 20) {
-                        // 카메라 정면 요청
-                        binding.analyzeTextScreenrequest.visibility = View.VISIBLE
-                    } else {
-                        binding.analyzeTextScreenrequest.visibility = View.INVISIBLE
-
-                        if (standard == null) {
-                            if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
-                                overlay.onZeroAngle(true)
-                                if (!isInAngleRange) {
-                                    startTimer()
-                                    isInAngleRange = true
-                                } else {
-                                    standardRatioList.add(eyeRatio)
-                                }
+                    val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
+                    if (standard == null) {
+                        if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
+                            overlay.onZeroAngle(true, false)
+                            if (!isInAngleRange) {
+                                startTimer()
+                                isInAngleRange = true
                             } else {
-                                overlay.onZeroAngle(false)
-                                if (isInAngleRange) {
-                                    isInAngleRange = false
-                                    stopTimer()
-                                    standardRatioList.clear()
+                                standardRatioList.add(eyeRatio)
+                            }
+                        } else {
+                            if (upDownAngle > 4 && leftRightAngle < 4 && leftRightAngle > -4) binding.analyzeTextGazerequest.text =
+                                "고개를 살짝만 내려 주세요"
+                            if (upDownAngle < -4 && leftRightAngle < 4 && leftRightAngle > -4) binding.analyzeTextGazerequest.text =
+                                "고개를 살짝만 들어 주세요"
+                            if ((leftRightAngle > 4 || leftRightAngle < -4) && upDownAngle < 4 && upDownAngle > -4) binding.analyzeTextGazerequest.text =
+                                "고개를 살짝만 돌려 주세요"
+
+                            overlay.onZeroAngle(false, false)
+                            if (isInAngleRange) {
+                                isInAngleRange = false
+                                stopTimer()
+                                standardRatioList.clear()
+                            }
+                        }
+                    } else {
+                        val ratioRange = standard!!
+                        val eyeState = eyeRatio / ratioRange
+                        var limit = 0.78
+                        if (leftRightAngle < -30 || leftRightAngle > 30 || upDownAngle < -20 || upDownAngle > 20) {
+                            // 카메라 정면 요청
+                            binding.analyzeTextScreenrequest.visibility = View.VISIBLE
+                            binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
+                            overlay.onZeroAngle(false, true)
+                        } else {
+                            overlay.onZeroAngle(true, true)
+                            binding.analyzeTextScreenrequest.visibility = View.INVISIBLE
+                        }
+
+                        // 비율이 제한을 벗어나거나 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐)
+                        if (eyeState <= limit && resultDetector.smilingProbability!! <= 0.9) {
+                            if (!isInDrowsyState) {
+                                isInDrowsyState = true
+                                timeCheckDrowsy = Date().time
+                            }
+
+                            if (timeCheckDrowsy != null) {
+                                val maintainTime = Date().time - timeCheckDrowsy!!
+                                if (maintainTime > 1800) {
+                                    binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
+                                    if (toneGenerator == null) beep(ToneGenerator.TONE_CDMA_ABBR_ALERT,
+                                        500,
+                                        ToneGenerator.MAX_VOLUME)
                                 }
                             }
                         } else {
-                            val ratioRange = standard!!
-                            val eyeState = eyeRatio / ratioRange
-                            var limit = 0.78
-                            if (eyeState <= limit) {
-                                if (!isInDrowsyState) {
-                                    isInDrowsyState = true
-                                    timeCheckDrowsy = Date().time
-                                }
-
-                                if (timeCheckDrowsy != null) {
-                                    val maintainTime = Date().time - timeCheckDrowsy!!
-                                    if (maintainTime > 1800) {
-                                        Log.d("whatisthis", "졸음")
-                                        binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
-                                    }
-                                }
-                            } else {
-                                if (isInDrowsyState) {
-                                    binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
-                                    isInDrowsyState = false
-                                    timeCheckDrowsy = null
-                                }
+                            if (isInDrowsyState) {
+                                binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
+                                isInDrowsyState = false
+                                timeCheckDrowsy = null
                             }
-//                            Log.d("whatisthis", "상태 : " + eyeState)
                         }
+                        Log.d("whatisthis", "상태 : " + eyeState + " ")
                     }
                 })
         }
+    }
+
+    fun beep(mediaFileRawId: Int, duration: Int, volume: Int) {
+        if (toneGenerator == null) toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, volume)
+
+        toneGenerator!!.startTone(mediaFileRawId, duration)
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed(Runnable {
+            if (toneGenerator != null) {
+                toneGenerator!!.release()
+                toneGenerator = null
+            }
+        }, 200)
     }
 
     fun startTimer() {
@@ -191,6 +226,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
     fun stopTimer() {
         timer.cancel()
         binding.analyzeProgress.visibility = View.INVISIBLE
+        binding.analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
     }
 
     fun calDist(point1: PointF3D, point2: PointF3D): Double {
@@ -257,14 +293,18 @@ val heightAvg = (rightHeight + leftHeight) / 2.0
         var widthAvg = calDist(rightEyeMid, leftEyeMid)
         var heightAvg = calDist(midEyeUpper, midEyeLower)
 
-        if (upDownAngle < 0) {
-            heightAvg *= upDownSec * 1.4
-        } else {
-            heightAvg *= upDownSec * 1.2
+        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
+            heightAvg *= upDownSec * 1.4 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        } else { // 카메라가 아래에 있을 경우
+            heightAvg *= upDownSec * 1.3 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        }
+
+        if (leftRightAngle < -26 || leftRightAngle > 26) { // 카메라가 너무 왼쪽 혹은 오른쪽으로 치우쳐져 있을 경우
+            heightAvg *= 0.8 // 가로길이값이 너무 작게 측정되어서 높이를 줄여 값을 보정 -> 반대편 눈이 정확히 측정되지 않아 그런듯
         }
 
         // 종횡비 계산
-        return (heightAvg * upDownSec / widthAvg * leftRightSec)
+        return (heightAvg / widthAvg * leftRightSec)
     }
 
 
