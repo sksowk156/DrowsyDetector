@@ -119,9 +119,11 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
         // 이미지 분석
         previewView.controller = cameraController.apply {
             setImageAnalysisAnalyzer(cameraExecutor,
-                MlKitAnalyzer(listOf(faceDetector, faceMesh),
+                MlKitAnalyzer(
+                    listOf(faceDetector, faceMesh),
                     CameraController.COORDINATE_SYSTEM_VIEW_REFERENCED,
-                    ContextCompat.getMainExecutor(requireContext())) { result: MlKitAnalyzer.Result? ->
+                    ContextCompat.getMainExecutor(requireContext())
+                ) { result: MlKitAnalyzer.Result? ->
                     // 분석 결과(랜드마크)
                     val analyzeResult1 = result?.getValue(faceDetector)
                     val analyzeResult2 = result?.getValue(faceMesh)
@@ -188,9 +190,11 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                                 val maintainTime = Date().time - timeCheckDrowsy!!
                                 if (maintainTime > 1800) {
                                     binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
-                                    if (toneGenerator == null) beep(ToneGenerator.TONE_CDMA_ABBR_ALERT,
+                                    if (toneGenerator == null) beep(
+                                        ToneGenerator.TONE_CDMA_ABBR_ALERT,
                                         500,
-                                        ToneGenerator.MAX_VOLUME)
+                                        ToneGenerator.MAX_VOLUME
+                                    )
                                 }
                             }
                         } else {
@@ -242,27 +246,27 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
         var leftRightSec =
             (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
 
-/*
-var rightWidth =
-calDist(landmark.get(159).position,
-landmark.get(386).position) * leftRightSec// 오른쪽 가로 길
+        /*
+        var rightWidth =
+        calDist(landmark.get(159).position,
+        landmark.get(386).position) * leftRightSec// 오른쪽 가로 길
 
-var rightHeight =
-calDist(landmark.get(159).position,
-landmark.get(145).position) * upDownSec // 오른쪽 세로 길이 -> 세로 길이는 항상 보정
+        var rightHeight =
+        calDist(landmark.get(159).position,
+        landmark.get(145).position) * upDownSec // 오른쪽 세로 길이 -> 세로 길이는 항상 보정
 
-var leftWidth =
-calDist(landmark.get(145).position,
-landmark.get(374).position) * leftRightSec // 왼쪽 가로 길이
+        var leftWidth =
+        calDist(landmark.get(145).position,
+        landmark.get(374).position) * leftRightSec // 왼쪽 가로 길이
 
-var leftHeight =
-calDist(landmark.get(386).position,
-landmark.get(374).position) * upDownSec // 왼쪽 세로 길이 -> 세로 길이는 항상 보정
+        var leftHeight =
+        calDist(landmark.get(386).position,
+        landmark.get(374).position) * upDownSec // 왼쪽 세로 길이 -> 세로 길이는 항상 보정
 
-val widthAvg = (rightWidth + leftWidth) / 2.0
-// 오른쪽 눈 왼쪽 눈 길이 정보를 평균한다.
-val heightAvg = (rightHeight + leftHeight) / 2.0
-*/
+        val widthAvg = (rightWidth + leftWidth) / 2.0
+        // 오른쪽 눈 왼쪽 눈 길이 정보를 평균한다.
+        val heightAvg = (rightHeight + leftHeight) / 2.0
+        */
 
         val rightUpper = landmark.get(159).position
         val rightLower = landmark.get(145).position
@@ -270,41 +274,57 @@ val heightAvg = (rightHeight + leftHeight) / 2.0
         val leftUpper = landmark.get(386).position
         val leftLower = landmark.get(374).position
 
-        val rightEyeMid =
-            PointF3D.from((Math.round((rightUpper.x + rightLower.x) * 100) / 200.0).toFloat(),
-                ((rightUpper.y + rightLower.y) / 2.0).toFloat(),
-                0f)
+//        // 버전1
+//        val rightEyeMid =
+//            PointF3D.from(
+//                (Math.round((rightUpper.x + rightLower.x) * 100) / 200.0).toFloat(),
+//                ((rightUpper.y + rightLower.y) / 2.0).toFloat(),
+//                0f
+//            )
+//
+//        val leftEyeMid =
+//            PointF3D.from(
+//                (Math.round((leftUpper.x + leftLower.x) * 100) / 200.0).toFloat(),
+//                ((leftUpper.y + leftLower.y) / 2.0).toFloat(),
+//                0f
+//            )
+//
+//        val midEyeUpper =
+//            PointF3D.from(
+//                (Math.round((leftUpper.x + rightUpper.x) * 100) / 200.0).toFloat(),
+//                ((leftUpper.y + rightUpper.y) / 2.0).toFloat(),
+//                0f
+//            )
+//
+//        val midEyeLower =
+//            PointF3D.from(
+//                (Math.round((rightLower.x + leftLower.x) * 100) / 200.0).toFloat(),
+//                ((rightLower.y + leftLower.y) / 2.0).toFloat(),
+//                0f
+//            )
+//
+//        var widthAvg = calDist(rightEyeMid, leftEyeMid)
+//        var heightAvg = calDist(midEyeUpper, midEyeLower)
+//
+//        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
+//            heightAvg *= upDownSec * 1.4 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+//        } else { // 카메라가 아래에 있을 경우
+//            heightAvg *= upDownSec * 1.3 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+//        }
+//
+//        if (leftRightAngle < -26 || leftRightAngle > 26) { // 카메라가 너무 왼쪽 혹은 오른쪽으로 치우쳐져 있을 경우
+//            heightAvg *= 0.8 // 가로길이값이 너무 작게 측정되어서 높이를 줄여 값을 보정 -> 반대편 눈이 정확히 측정되지 않아 그런듯
+//        }
+//
+//        // 종횡비 계산
+//        return (heightAvg / widthAvg * leftRightSec)
 
-        val leftEyeMid =
-            PointF3D.from((Math.round((leftUpper.x + leftLower.x) * 100) / 200.0).toFloat(),
-                ((leftUpper.y + leftLower.y) / 2.0).toFloat(),
-                0f)
-
-        val midEyeUpper =
-            PointF3D.from((Math.round((leftUpper.x + rightUpper.x) * 100) / 200.0).toFloat(),
-                ((leftUpper.y + rightUpper.y) / 2.0).toFloat(),
-                0f)
-
-        val midEyeLower =
-            PointF3D.from((Math.round((rightLower.x + leftLower.x) * 100) / 200.0).toFloat(),
-                ((rightLower.y + leftLower.y) / 2.0).toFloat(),
-                0f)
-
-        var widthAvg = calDist(rightEyeMid, leftEyeMid)
-        var heightAvg = calDist(midEyeUpper, midEyeLower)
-
-        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
-            heightAvg *= upDownSec * 1.4 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-        } else { // 카메라가 아래에 있을 경우
-            heightAvg *= upDownSec * 1.3 // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-        }
-
-        if (leftRightAngle < -26 || leftRightAngle > 26) { // 카메라가 너무 왼쪽 혹은 오른쪽으로 치우쳐져 있을 경우
-            heightAvg *= 0.8 // 가로길이값이 너무 작게 측정되어서 높이를 줄여 값을 보정 -> 반대편 눈이 정확히 측정되지 않아 그런듯
-        }
+        // 버전2
+        var widthLower = calDist(rightLower, leftLower)
+        var heightSum = calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)
 
         // 종횡비 계산
-        return (heightAvg / widthAvg * leftRightSec)
+        return (heightSum * upDownSec / widthLower * leftRightSec)
     }
 
 
