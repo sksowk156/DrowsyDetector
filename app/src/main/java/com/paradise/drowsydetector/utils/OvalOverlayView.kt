@@ -62,7 +62,7 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
         invalidate()
     }
 
-    override fun onDraw(canvas: Canvas?) {
+    override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         ovalRect.set(
@@ -78,8 +78,8 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
 //        } else {
 //            @Suppress("DEPRECATION") canvas?.clipPath(ovalPath, Region.Op.DIFFERENCE)
 //        }
-        canvas?.clipOutPath(ovalPath)
-        canvas?.drawPaint(blurPaint)
+        canvas.clipOutPath(ovalPath)
+        canvas.drawPaint(blurPaint)
     }
 
 }
