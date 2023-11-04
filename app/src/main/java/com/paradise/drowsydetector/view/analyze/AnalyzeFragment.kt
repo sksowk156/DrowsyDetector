@@ -6,8 +6,6 @@ import android.media.ToneGenerator
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import android.view.MenuItem
 import android.view.View
 import androidx.camera.core.CameraSelector
 import androidx.camera.mlkit.vision.MlKitAnalyzer
@@ -21,19 +19,19 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
-import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.base.BaseFragment
+import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.utils.OvalOverlayView
+import com.paradise.drowsydetector.utils.inflateResetMenu
+import com.paradise.drowsydetector.utils.showToast
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import kotlin.time.times
 
 
-class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_analyze) {
+class AnalyzeFragment :
+    BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
     private lateinit var cameraExecutor: ExecutorService
-
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -61,11 +59,15 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
     var timeCheckDrowsy: Long? = null
     val standardRatioList = mutableListOf<Double>()
     private var toneGenerator: ToneGenerator? = null
-    private lateinit var toolbarMenuReset: MenuItem
 
-    override fun init() {
-        initAppbar(binding.analyzeToolbar, R.menu.menu_reset, true, "")
-        initAppbarItem()
+    override fun onViewCreated() {
+        // 툴바 세팅
+        binding.analyzeToolbar
+            .setToolbarMenu("졸음 감지", true)
+            .inflateResetMenu {
+                binding.analyzeTextGazerequest.visibility = View.VISIBLE
+                standard = null
+            }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -98,15 +100,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
         startCamera()
     }
 
-    override fun initAppbarItem() {
-        super.initAppbarItem()
-        toolbarMenuReset = baseToolbar.menu.findItem(R.id.reset_menu_standardreset)
-        toolbarMenuReset.setOnMenuItemClickListener {
-            binding.analyzeTextGazerequest.visibility = View.VISIBLE
-            standard = null
-            true
-        }
-    }
+    private val record = mutableListOf<Double>()
 
     private fun startCamera() {
         var cameraController = LifecycleCameraController(requireContext())
@@ -142,7 +136,7 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                     val leftRightAngle = resultDetector.headEulerAngleY
 
                     val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
-
+                    record.add(eyeRatio)
                     if (standard == null) {
                         if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
                             overlay.onZeroAngle(1)
@@ -206,8 +200,9 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
                                 timeCheckDrowsy = null
                             }
                         }
-                        Log.d("whatisthis", "상태 : " + eyeState + " ")
+//                        Log.d("whatisthis", "상태 : " + eyeState + " ")
                     }
+
                 })
         }
     }
@@ -265,7 +260,6 @@ class AnalyzeFragment : BaseFragment<FragmentAnalyzeBinding>(R.layout.fragment_a
         // 종횡비 계산
         return (heightAvg / widthLower)
     }
-
 
     override fun onDestroyView() {
         faceDetector.close()

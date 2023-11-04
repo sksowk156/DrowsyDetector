@@ -6,12 +6,15 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.base.BaseFragment
+import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentHomeBinding
+import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.view.analyze.AnalyzeFragment
 
-class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
-    override fun init() {
+class HomeFragment :
+    BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
+
+    override fun onViewCreated() {
         binding.homeTextStartanalyze.setOnClickListener {
             if (checkPermission()) {
                 parentFragmentManager
