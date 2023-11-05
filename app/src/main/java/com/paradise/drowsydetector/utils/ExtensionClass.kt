@@ -1,6 +1,5 @@
 package com.paradise.drowsydetector.utils
 
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
@@ -15,6 +14,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import reactivecircus.flowbinding.android.view.clicks
 import reactivecircus.flowbinding.android.widget.afterTextChanges
+import reactivecircus.flowbinding.appcompat.navigationClicks
 
 /**
  * Set on finish input flow, textview 입력 완성 후 이벤트 처리 메서드
@@ -93,4 +93,12 @@ fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
         editListener()
         showToast("?")
     }
+}
+
+fun Toolbar.setNavigationOnClickListenerFlowBinding(actionInMainThread: () -> Unit) {
+    this.navigationClicks()
+        .onEach {
+            actionInMainThread()
+        }
+        .launchIn(mainScope)
 }

@@ -1,10 +1,8 @@
 package com.paradise.drowsydetector.base
 
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -14,13 +12,12 @@ import androidx.viewbinding.ViewBinding
 import com.jakewharton.rxbinding4.view.clicks
 import com.jakewharton.rxbinding4.widget.textChanges
 import com.paradise.drowsydetector.R
+import com.paradise.drowsydetector.databinding.LayoutToolbarBinding
 import com.paradise.drowsydetector.utils.CLICK_INTERVAL_TIME
 import com.paradise.drowsydetector.utils.FragmentInflate
 import com.paradise.drowsydetector.utils.INPUT_COMPLETE_TIME
 import com.paradise.drowsydetector.utils.RXERROR
-import com.paradise.drowsydetector.utils.inflateResetMenu
-import com.paradise.drowsydetector.utils.setOnMenuItemClickListenerFlowBinding
-import com.paradise.drowsydetector.utils.showToast
+import com.paradise.drowsydetector.utils.setNavigationOnClickListenerFlowBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -37,8 +34,8 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
 
     private var _binding: VB? = null
     val binding get() = _binding!!
-    protected open fun savedInstanceStateOnCreateView() {} // 필요하면 재정의
-    protected open fun savedInstanceStateOnViewCreated() {} // 필요하면 재정의
+    protected open fun savedInstanceStateNull() {} // 필요하면 재정의
+    protected open fun savedInstanceStateNotNull(savedInstanceState: Bundle) {} // 필요하면 재정의
     protected open fun df() {}
     protected open fun onCreateView() {} // 필요하면 재정의
     protected abstract fun onViewCreated() // 반드시 재정의
@@ -52,7 +49,9 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
     ): View? {
         _binding = inflate.invoke(inflater, container, false)
         if (savedInstanceState == null) { // onSaveInstanceState로 데이터를 넘긴 것이 있다면 null이 아니므로 작동X -> onSaveInstanceState 전에 한번만 호출되었으면 하는 것
-            savedInstanceStateOnCreateView()
+            savedInstanceStateNull()
+        } else {
+            savedInstanceStateNotNull(savedInstanceState)
         }
         initBackPressCallback()
         return binding.root
@@ -60,11 +59,7 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        onViewCreated()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
+        if (_binding != null) onViewCreated()
     }
 
     override fun onDestroyView() {
@@ -162,16 +157,19 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
      * @param backBT  back 키 유무
      * @author 진혁
      */
-    fun Toolbar.setToolbarMenu(
+    fun LayoutToolbarBinding.setToolbarMenu(
         title: String, // 툴바 제목
         backBT: Boolean = false, // true 안해주면, 기본 false
-    ) = this.apply {
-        this.title = title // 툴바 제목은 무조건
-        if (backBT) {
-            this.setNavigationIcon(R.drawable.icon_backarrow)
-        } // backBT이 있을 경우
-        this.setOnAvoidDuplicateClick {
-            backPress()
+    ): Toolbar {
+        this.apply {
+            this.tvToolbarTitle.text = title // 툴바 제목은 무조건
+            if (backBT) {
+                this.toolbar.setNavigationIcon(R.drawable.icon_backarrow)
+            } // backBT이 있을 경우
+            this.toolbar.setNavigationOnClickListenerFlowBinding {
+                backPress()
+            }
+            return this.toolbar
         }
     }
 

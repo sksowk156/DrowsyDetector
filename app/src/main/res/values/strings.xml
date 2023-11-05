@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">DrowsyDetector</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="home_settingbt">설정</string>
+    <string name="home_statisticbt">통계</string>
+    <string name="home_analyzebt">졸음\n감지</string>
 </resources>

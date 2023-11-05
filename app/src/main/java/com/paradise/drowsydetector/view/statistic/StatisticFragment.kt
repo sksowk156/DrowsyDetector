@@ -5,7 +5,7 @@ import com.paradise.drowsydetector.databinding.FragmentStatisticBinding
 
 class StatisticFragment : BaseViewbindingFragment<FragmentStatisticBinding>(FragmentStatisticBinding::inflate) {
     override fun onViewCreated() {
-        TODO("Not yet implemented")
+        binding.toolbarStatistic.setToolbarMenu("통계", true)
     }
 
 }

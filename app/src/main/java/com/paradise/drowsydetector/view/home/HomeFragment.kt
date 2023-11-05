@@ -8,24 +8,45 @@ import androidx.core.content.ContextCompat
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentHomeBinding
+import com.paradise.drowsydetector.utils.ANALYZE
+import com.paradise.drowsydetector.utils.SETTING
+import com.paradise.drowsydetector.utils.STATISTIC
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.view.analyze.AnalyzeFragment
+import com.paradise.drowsydetector.view.setting.SettingFragment
+import com.paradise.drowsydetector.view.statistic.StatisticFragment
 
 class HomeFragment :
     BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
 
     override fun onViewCreated() {
-        binding.homeTextStartanalyze.setOnClickListener {
+        binding.btHomeToanalyze.setOnAvoidDuplicateClick {
             if (checkPermission()) {
                 parentFragmentManager
                     .beginTransaction()
-                    .replace(R.id.mainbase_layout, AnalyzeFragment(), "analye")
+                    .replace(R.id.layout_home_main, AnalyzeFragment(), ANALYZE)
                     .addToBackStack(null)
                     .commitAllowingStateLoss()
             } else {
                 showToast("권한 허가 필요")
                 requestPermission()
             }
+        }
+
+        binding.btHomeTosetting.setOnAvoidDuplicateClick {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.layout_home_main, SettingFragment(), SETTING)
+                .addToBackStack(null)
+                .commitAllowingStateLoss()
+        }
+
+        binding.btHomeTostatistic.setOnAvoidDuplicateClick {
+            parentFragmentManager
+                .beginTransaction()
+                .replace(R.id.layout_home_main, StatisticFragment(), STATISTIC)
+                .addToBackStack(null)
+                .commitAllowingStateLoss()
         }
     }
 

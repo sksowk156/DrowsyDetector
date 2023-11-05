@@ -27,6 +27,13 @@ val mainDispatcher = Dispatchers.Main
 val defaultScope = CoroutineScope(defaultDispatcher)
 val ioScope = CoroutineScope(ioDispatcher)
 val mainScope = CoroutineScope(mainDispatcher)
+
+val MAINBASE = "homebase"
+val ANALYZE = "analye"
+val HOME = "home"
+val SETTING = "setting"
+val STATISTIC = "statistic"
+val CUURRENTFRAGMENTTAG = "currentfragment"
 fun showToast(message: String) {
     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show()
 }

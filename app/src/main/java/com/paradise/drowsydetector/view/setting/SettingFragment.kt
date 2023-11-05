@@ -8,11 +8,12 @@ import android.view.ViewGroup
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentSettingBinding
+import com.paradise.drowsydetector.utils.inflateResetMenu
 
 class SettingFragment :
     BaseViewbindingFragment<FragmentSettingBinding>(FragmentSettingBinding::inflate) {
     override fun onViewCreated() {
-        TODO("Not yet implemented")
+        binding.toolbarSetting.setToolbarMenu("설정", true)
     }
 
 }

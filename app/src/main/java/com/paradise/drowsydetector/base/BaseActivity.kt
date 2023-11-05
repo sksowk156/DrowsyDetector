@@ -6,16 +6,18 @@ import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
+import com.github.mikephil.charting.utils.Utils.init
 
 abstract class BaseActivity<T : ViewDataBinding>(
-    @LayoutRes private val layoutResId: Int
+    @LayoutRes private val layoutResId: Int,
 ) : AppCompatActivity() {
     private var _binding: T? = null
     val binding get() = _binding!!
 
-    protected open fun savedatainit() {}
+    protected open fun saveInstanceStateNull() {}
+    protected open fun saveInstanceStateNotNull(bundle: Bundle) {}
 
-    protected abstract fun init()
+    protected abstract fun onCreate()
 
     protected fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -26,10 +28,10 @@ abstract class BaseActivity<T : ViewDataBinding>(
         _binding = DataBindingUtil.setContentView(this, layoutResId)
         binding.lifecycleOwner = this
 
-        if (savedInstanceState == null) {
-            savedatainit()
-        }
-        init()
+        if (savedInstanceState == null) saveInstanceStateNull()
+        else saveInstanceStateNotNull(savedInstanceState)
+
+        onCreate()
     }
 
     override fun onDestroy() {
