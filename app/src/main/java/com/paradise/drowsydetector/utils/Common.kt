@@ -1,11 +1,14 @@
 package com.paradise.drowsydetector.utils
 
+import android.location.Geocoder
+import android.location.Location
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.util.Locale
 
 // BaseFragment에서 사용하는 typealias
 typealias FragmentInflate<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
@@ -36,4 +39,23 @@ val STATISTIC = "statistic"
 val CUURRENTFRAGMENTTAG = "currentfragment"
 fun showToast(message: String) {
     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show()
+}
+
+
+//위도 경도로 주소 구하는 Reverse-GeoCoding
+private fun getAddress(location: Location): String {
+    return try {
+        with(Geocoder(getApplicationContext(), Locale.KOREA).getFromLocation(location.latitude, location.longitude, 1)!!.first()){
+            getAddressLine(0)   //주소
+            countryName     //국가이름 (대한민국)
+            countryCode     //국가코드
+            adminArea       //행정구역 (서울특별시)
+            locality        //관할구역 (중구)
+            thoroughfare    //상세구역 (봉래동2가)
+            featureName     //상세주소 (122-21)
+        }
+    } catch (e: Exception){
+        e.printStackTrace()
+        getAddress(location)
+    }
 }

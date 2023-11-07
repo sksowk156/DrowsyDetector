@@ -1,6 +1,8 @@
 package com.paradise.drowsydetector.view.analyze
 
 import android.annotation.SuppressLint
+import android.location.Location
+import android.location.LocationManager
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.CountDownTimer
@@ -14,6 +16,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.activityViewModels
 import com.google.mlkit.vision.common.PointF3D
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -22,9 +25,13 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
+import com.paradise.drowsydetector.utils.ApplicationClass
+import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
+import com.paradise.drowsydetector.utils.LocationService
 import com.paradise.drowsydetector.utils.OvalOverlayView
 import com.paradise.drowsydetector.utils.inflateResetMenu
 import com.paradise.drowsydetector.utils.showToast
+import com.paradise.drowsydetector.viewmodel.ShelterViewModel
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -32,6 +39,10 @@ import java.util.concurrent.Executors
 
 class AnalyzeFragment :
     BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
+    private val shelterViewModel: ShelterViewModel by activityViewModels() {
+        ShelterViewModel.ShelterViewModelFactory(getApplicationContext().relaxRepository)
+    }
+
     private lateinit var cameraExecutor: ExecutorService
 
     private val faceDetectorOption by lazy {
@@ -49,6 +60,12 @@ class AnalyzeFragment :
 
     private val faceMesh by lazy {
         FaceMeshDetection.getClient(faceMeshOption)
+    }
+
+    private val mFusedLocationProviderClient by lazy {
+        LocationService.getInstance(
+            context = ApplicationClass.getApplicationContext()
+        )
     }
 
     private lateinit var overlay: OvalOverlayView
@@ -70,9 +87,7 @@ class AnalyzeFragment :
                 standard = null
             }
 
-        Log.d("whatisthis", "in analyze")
         cameraExecutor = Executors.newSingleThreadExecutor()
-
         overlay = binding.analyzeOverlay
 
         val msFuture: Long = 2000
@@ -189,7 +204,30 @@ class AnalyzeFragment :
 
                                 if (timeCheckDrowsy != null) {
                                     val maintainTime = Date().time - timeCheckDrowsy!!
+                                    // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
                                     if (maintainTime > 1800) {
+                                        if (shelterViewModel.checkDrowsy) {
+                                            Log.d("whatisthis", "?!")
+                                            shelterViewModel.checkDrowsy = false
+                                            mFusedLocationProviderClient.apply {
+                                                setLastLocationEventListener {
+                                                    getReverseGeocoding(it.latitude, it.longitude) {
+                                                        val tempLocation =
+                                                            Location(LocationManager.GPS_PROVIDER)
+                                                        tempLocation.latitude = it.latitude
+                                                        tempLocation.longitude = it.longitude
+
+                                                        shelterViewModel.setLocation(
+                                                            tempLocation,
+                                                            it.adminArea,
+                                                            (it.locality ?: it.subLocality)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+
                                         binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
                                         if (toneGenerator == null) beep(
                                             ToneGenerator.TONE_CDMA_ABBR_ALERT,
@@ -200,6 +238,7 @@ class AnalyzeFragment :
                                 }
                             } else {
                                 if (isInDrowsyState) {
+                                    shelterViewModel.checkDrowsy = true
                                     binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
                                     isInDrowsyState = false
                                     timeCheckDrowsy = null
@@ -211,6 +250,32 @@ class AnalyzeFragment :
                 })
         }
     }
+
+//    fun findDrowsyShelter() {
+//        mFusedLocationProviderClient.apply {
+//            setLastLocationEventListener {
+//                getReverseGeocoding(it.latitude, it.longitude) {
+//                    val addressString = StringBuilder()
+//                    with(it) {
+//                        if (adminArea != null) {
+//                            addressString.append(adminArea)
+//                            addressString.append(" ")
+//                        }
+//                        if (locality != null) {
+//                            addressString.append(locality)
+//                            addressString.append(" ")
+//                        }
+//                        if (subLocality != null) {
+//                            addressString.append(subLocality)
+//                            addressString.append(" ")
+//                        }
+//                    }
+////                    Log.d("whatisthis", addressString.toString())
+//                }
+//            }
+//        }
+//    }
+
 
     fun beep(mediaFileRawId: Int, duration: Int, volume: Int) {
         if (toneGenerator == null) toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, volume)

@@ -4,6 +4,8 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
+import com.gun0912.tedpermission.PermissionListener
+import com.gun0912.tedpermission.normal.TedPermission
 import com.paradise.drowsydetector.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -101,4 +103,23 @@ fun Toolbar.setNavigationOnClickListenerFlowBinding(actionInMainThread: () -> Un
             actionInMainThread()
         }
         .launchIn(mainScope)
+}
+
+fun checkPermission(permissionList: Array<String>, grantedEventListener: () -> Unit) {
+    TedPermission.create()
+        .setPermissionListener(object : PermissionListener {
+
+            //권한이 허용됐을 때
+            override fun onPermissionGranted() {
+                grantedEventListener()
+            }
+
+            //권한이 거부됐을 때
+            override fun onPermissionDenied(deniedPermissions: MutableList<String>?) {
+                showToast("권한 허용 X")
+            }
+        })
+        .setDeniedMessage("권한을 허용해주세요. [설정] > [앱 및 알림] > [고급] > [앱 권한]")
+        .setPermissions(*permissionList)// 얻으려는 권한(여러개 가능)
+        .check()
 }

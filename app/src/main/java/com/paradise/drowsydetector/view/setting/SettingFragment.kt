@@ -14,6 +14,15 @@ class SettingFragment :
     BaseViewbindingFragment<FragmentSettingBinding>(FragmentSettingBinding::inflate) {
     override fun onViewCreated() {
         binding.toolbarSetting.setToolbarMenu("설정", true)
+
+        binding.btSettingUsermusic.setOnAvoidDuplicateClick {
+            binding.layoutSettingMusiclistbackground.visibility = View.VISIBLE
+
+        }
+
+        binding.ivSettingAddmusic.setOnAvoidDuplicateClick {
+
+        }
     }
 
 }
