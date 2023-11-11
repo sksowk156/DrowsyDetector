@@ -5,6 +5,15 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.View
 
+
+/**
+ * Oval overlay view
+ * preview 위의 이미지
+ * @constructor
+ *
+ * @param context
+ * @param attrs
+ */
 class OvalOverlayView(context: Context, attrs: AttributeSet?) :
     View(context, attrs) {
     private val paint = Paint()

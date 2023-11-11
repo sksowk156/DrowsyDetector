@@ -27,11 +27,9 @@ abstract class BaseActivity<T : ViewDataBinding>(
         super.onCreate(savedInstanceState)
         _binding = DataBindingUtil.setContentView(this, layoutResId)
         binding.lifecycleOwner = this
-
+        onCreate()
         if (savedInstanceState == null) saveInstanceStateNull()
         else saveInstanceStateNotNull(savedInstanceState)
-
-        onCreate()
     }
 
     override fun onDestroy() {

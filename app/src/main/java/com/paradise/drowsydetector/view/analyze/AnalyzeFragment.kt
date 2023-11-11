@@ -31,7 +31,7 @@ import com.paradise.drowsydetector.utils.LocationService
 import com.paradise.drowsydetector.utils.OvalOverlayView
 import com.paradise.drowsydetector.utils.inflateResetMenu
 import com.paradise.drowsydetector.utils.showToast
-import com.paradise.drowsydetector.viewmodel.ShelterViewModel
+import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -39,8 +39,8 @@ import java.util.concurrent.Executors
 
 class AnalyzeFragment :
     BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
-    private val shelterViewModel: ShelterViewModel by activityViewModels() {
-        ShelterViewModel.ShelterViewModelFactory(getApplicationContext().relaxRepository)
+    private val analyzeViewModel: AnalyzeViewModel by activityViewModels() {
+        AnalyzeViewModel.AnalyzeViewModelFactory(getApplicationContext().relaxRepository)
     }
 
     private lateinit var cameraExecutor: ExecutorService
@@ -206,9 +206,9 @@ class AnalyzeFragment :
                                     val maintainTime = Date().time - timeCheckDrowsy!!
                                     // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
                                     if (maintainTime > 1800) {
-                                        if (shelterViewModel.checkDrowsy) {
+                                        if (analyzeViewModel.checkDrowsy) {
                                             Log.d("whatisthis", "?!")
-                                            shelterViewModel.checkDrowsy = false
+                                            analyzeViewModel.checkDrowsy = false
                                             mFusedLocationProviderClient.apply {
                                                 setLastLocationEventListener {
                                                     getReverseGeocoding(it.latitude, it.longitude) {
@@ -217,7 +217,7 @@ class AnalyzeFragment :
                                                         tempLocation.latitude = it.latitude
                                                         tempLocation.longitude = it.longitude
 
-                                                        shelterViewModel.setLocation(
+                                                        analyzeViewModel.setLocation(
                                                             tempLocation,
                                                             it.adminArea,
                                                             (it.locality ?: it.subLocality)
@@ -238,7 +238,7 @@ class AnalyzeFragment :
                                 }
                             } else {
                                 if (isInDrowsyState) {
-                                    shelterViewModel.checkDrowsy = true
+                                    analyzeViewModel.checkDrowsy = true
                                     binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
                                     isInDrowsyState = false
                                     timeCheckDrowsy = null

@@ -2,11 +2,13 @@ package com.paradise.drowsydetector.viewmodel
 
 import android.location.Location
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLot
 import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelter
+import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelterService
 import com.paradise.drowsydetector.repository.RelaxRepository
 import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.ioDispatcher
@@ -15,9 +17,18 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 data class temp(var tempLocation: Location, var s: String, var b: String)
-class ShelterViewModel(private val repository: RelaxRepository) : ViewModel() {
+class AnalyzeViewModel(private val repository: RelaxRepository) : ViewModel() {
+
+    var temp = MutableLiveData<Response<DrowsyShelter>>()
+
+    fun get(){
+        viewModelScope.launch {
+            temp.value = DrowsyShelterService.getRetrofitRESTInstance().getAllShelter(ctprvnNm= "경기도", signguNm="김포시")
+        }
+    }
 
     private val _allShelter: MutableStateFlow<ResponseState<DrowsyShelter>> =
         MutableStateFlow(ResponseState.Loading)
@@ -57,11 +68,11 @@ class ShelterViewModel(private val repository: RelaxRepository) : ViewModel() {
         }
 
 
-    class ShelterViewModelFactory(private val repository: RelaxRepository) :
+    class AnalyzeViewModelFactory(private val repository: RelaxRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return if (modelClass.isAssignableFrom(ShelterViewModel::class.java)) {
-                ShelterViewModel(repository) as T
+            return if (modelClass.isAssignableFrom(AnalyzeViewModel::class.java)) {
+                AnalyzeViewModel(repository) as T
             } else {
                 throw IllegalArgumentException()
             }

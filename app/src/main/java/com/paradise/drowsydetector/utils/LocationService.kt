@@ -1,6 +1,7 @@
 package com.paradise.drowsydetector.utils
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Address
 import android.location.Geocoder
@@ -22,6 +23,7 @@ class LocationService(context: Context) {
         private lateinit var geocoder: Geocoder
         fun getInstance(context: Context) =
             instance ?: synchronized(this) {
+                // LocationSercie 객체를 생성할 때 같이 한번만 객체를 생성한다.
                 geocoder = Geocoder(context, Locale.KOREA)
                 fusedLocationProviderClient =
                     LocationServices.getFusedLocationProviderClient(context)
@@ -30,8 +32,15 @@ class LocationService(context: Context) {
 
     }
 
+    /**
+     * Set last location event listener
+     * 지금 위치 확인 후 이벤트 처리
+     * @param lastLocationListener
+     * @receiver
+     */
+    @SuppressLint("MissingPermission")
     fun setLastLocationEventListener(lastLocationListener: (Location) -> Unit) {
-        checkPermission(
+        checkPermissions( // 위치 권한이 되어 있는지 확인
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
@@ -47,6 +56,14 @@ class LocationService(context: Context) {
         }
     }
 
+    /**
+     * Get reverse geocoding
+     * 위, 경도 정보를 주소 정보로 변환후 이벤트 처리
+     * @param latitude
+     * @param longitude
+     * @param reverseGeocoderListener
+     * @receiver
+     */
     fun getReverseGeocoding(
         latitude: Double,
         longitude: Double,

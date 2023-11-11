@@ -21,15 +21,13 @@ import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.view.analyze.AnalyzeFragment
 import com.paradise.drowsydetector.view.setting.SettingFragment
 import com.paradise.drowsydetector.view.statistic.StatisticFragment
-import com.paradise.drowsydetector.viewmodel.ShelterViewModel
+import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import kotlinx.coroutines.launch
 
 class HomeFragment :
     BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
 
-    private val shelterViewModel: ShelterViewModel by activityViewModels() {
-        ShelterViewModel.ShelterViewModelFactory(ApplicationClass.getApplicationContext().relaxRepository)
-    }
+    private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
 
     override fun onViewCreated() {
         binding.btHomeToanalyze.setOnAvoidDuplicateClick {
@@ -53,50 +51,56 @@ class HomeFragment :
                 .commitAllowingStateLoss()
         }
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+//        lifecycleScope.launch {
+//            repeatOnLifecycle(Lifecycle.State.STARTED) {
+//
+//            }
+//        }
+//        analyzeViewModel.get()
+//        analyzeViewModel.temp.observe(viewLifecycleOwner) {
+//            if (it.isSuccessful) {
+//                Log.d("whatisthis", it.body()?.response?.body?.items.toString())
+//            }
+//        }
 
-            }
-        }
-
-        shelterViewModel.getAllParkingLot()
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                shelterViewModel.allParkingLot.collect {
-                    when (it) {
-                        is ResponseState.Loading -> {
-                            Log.d("whatisthis", "로딩")
-                        }
-
-                        is ResponseState.Success -> {
-                            Log.d("whatisthis",it.data.toString())
-//                            val tempLocation = Location(LocationManager.GPS_PROVIDER)
-//                            var minDist = 100000000f
-//                            var result: Item? = null
-//                            for (i in it.data.response.body.items) {
-//                                tempLocation.longitude = (i.longitude).toDouble()
-//                                tempLocation.latitude = (i.latitude).toDouble()
-//                                val dist =
-//                                    tempLocation.distanceTo(shelterViewModel.location!!.tempLocation)
-//                                if (minDist > dist) {
-//                                    minDist = dist
-//                                    result = i
-//                                }
-//                            }
-//                            Log.d("whatisthis", "reuslt : " + result?.lnmadr.toString())
-                        }
-
-                        is ResponseState.Fail -> {
-                            Log.d("whatisthis", it.message.toString() + it.code)
-                        }
-
-                        is ResponseState.Error -> {
-                            Log.d("whatisthis", it.exception.toString())
-                        }
-                    }
-                }
-            }
-        }
+//        analyzeViewModel.getAllParkingLot()
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                analyzeViewModel.allParkingLot.collect {
+//                    when (it) {
+//                        is ResponseState.Loading -> {
+//                            Log.d("whatisthis", "로딩")
+//                        }
+//
+//                        is ResponseState.Success -> {
+//                            Log.d("whatisthis", it.data.toString())
+////                            val tempLocation = Location(LocationManager.GPS_PROVIDER)
+////                            var minDist = 100000000f
+////                            var result: Item? = null
+////                            for (i in it.data.response.body.items) {
+////                                tempLocation.longitude = (i.longitude).toDouble()
+////                                tempLocation.latitude = (i.latitude).toDouble()
+////                                val dist =
+////                                    tempLocation.distanceTo(AnalyzeViewModel.location!!.tempLocation)
+////                                if (minDist > dist) {
+////                                    minDist = dist
+////                                    result = i
+////                                }
+////                            }
+////                            Log.d("whatisthis", "reuslt : " + result?.lnmadr.toString())
+//                        }
+//
+//                        is ResponseState.Fail -> {
+//                            Log.d("whatisthis", it.message.toString() + it.code)
+//                        }
+//
+//                        is ResponseState.Error -> {
+//                            Log.d("whatisthis", it.exception.toString())
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
 
         binding.btHomeTostatistic.setOnAvoidDuplicateClick {
@@ -120,25 +124,6 @@ class HomeFragment :
             requireActivity(), arrayOf(Manifest.permission.CAMERA),
             1
         )
-
-//        lifecycleScope.launch {
-//            val permissionResult = TedPermission.create()
-//                .setRationaleTitle(R.string.rationale_title)
-//                .setRationaleMessage(R.string.rationale_message)
-//                .setDeniedTitle("Permission denied")
-//                .setDeniedMessage(
-//                    "만약 권한을 허용해주시지 않으면 졸음 감지 서비스를 사용할 수 없습니다.\n\n[설정] > [권한 확인]에서 권한을 허용해주세요"
-//                )
-//                .setGotoSettingButtonText("설정")
-//                .setPermissions(
-//                    Manifest.permission.CAMERA,
-//                    Manifest.permission.ACCESS_FINE_LOCATION,
-//                    Manifest.permission.ACCESS_COARSE_LOCATION
-//                )
-//                .check()
-//
-//            Log.d("ted", "permissionResult: $permissionResult")
-//        }
     }
 
     // 권한요청 결과

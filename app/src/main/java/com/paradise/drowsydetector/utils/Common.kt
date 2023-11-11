@@ -1,13 +1,19 @@
 package com.paradise.drowsydetector.utils
 
+import android.content.Context
 import android.location.Geocoder
 import android.location.Location
+import android.net.Uri
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.content.FileProvider
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import java.util.Locale
 
 // BaseFragment에서 사용하는 typealias
@@ -41,21 +47,32 @@ fun showToast(message: String) {
     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show()
 }
 
-
-//위도 경도로 주소 구하는 Reverse-GeoCoding
-private fun getAddress(location: Location): String {
-    return try {
-        with(Geocoder(getApplicationContext(), Locale.KOREA).getFromLocation(location.latitude, location.longitude, 1)!!.first()){
-            getAddressLine(0)   //주소
-            countryName     //국가이름 (대한민국)
-            countryCode     //국가코드
-            adminArea       //행정구역 (서울특별시)
-            locality        //관할구역 (중구)
-            thoroughfare    //상세구역 (봉래동2가)
-            featureName     //상세주소 (122-21)
+//Uri -> Path(파일경로)
+fun getPathFromFileUri(context: Context, contentUri: Uri?): String? {
+    val projection = arrayOf(MediaStore.Audio.Media.DATA)
+    context.contentResolver.query(contentUri!!, projection, null, null, null)?.use { cursor ->
+        val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+        if (cursor.moveToFirst()) {
+            return cursor.getString(columnIndex)
         }
-    } catch (e: Exception){
-        e.printStackTrace()
-        getAddress(location)
+    }
+    return null
+}
+
+// Path -> Uri
+fun getUriFromFilePath(context: Context, filePath: String): Uri? {
+    val file = File(filePath)
+    return if (file.exists()) {
+        try {
+            // FileProvider로 파일 검색후 Uri 생성
+            val authority = "${context.packageName}.provider"
+            FileProvider.getUriForFile(context, authority, file)
+        } catch (e: IllegalArgumentException) {
+            Log.d("whatisthis", "${context.packageName}ㅇㅔ러" + e.toString())
+            e.printStackTrace()
+            null
+        }
+    } else {
+        null
     }
 }

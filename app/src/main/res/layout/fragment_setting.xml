@@ -70,15 +70,87 @@
             android:id="@+id/rv_setting_usermusic"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clipToOutline="true"
             app:layout_constraintEnd_toEndOf="parent" />
 
         <com.google.android.material.imageview.ShapeableImageView
-            android:layout_width="34dp"
             android:id="@+id/iv_setting_addmusic"
+            android:layout_width="34dp"
             android:layout_height="34dp"
             android:layout_gravity="center"
             android:src="@drawable/icon_add" />
     </LinearLayout>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="알림음 크기"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_setting_musiclistbackground" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/slider_setting_sound"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_2" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="휴식 장소 안내"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/slider_setting_sound" />
+
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(졸음 감지시 음성 서비스)"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="@id/tv_setting_3"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_3" />
+
+    <Switch
+        android:id="@+id/switch_setting_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:thumb="@drawable/switch_thumb"
+        android:track="@drawable/switch_track"
+        app:layout_constraintBottom_toBottomOf="@id/tv_setting_4"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="환기 안내 주기"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_4" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:boxBackgroundColor="@color/primary5"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_5">
+
+        <AutoCompleteTextView
+            android:id="@+id/autoCompleteTextView_setting"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:inputType="none"
+            android:text="주기를 선택해 주세요" />
+    </com.google.android.material.textfield.TextInputLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

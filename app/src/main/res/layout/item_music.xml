@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layout_itemmusic"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:backgroundTint="@android:color/transparent"
+    android:clickable="true">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_itemmusic_num"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20sp"
+        android:background="@drawable/icon_number_background"
+        android:gravity="center"
+        android:text="1"
+        android:textColor="@color/primary1"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_itemmusic_musicname"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:text="오에"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/tv_itemmusic_num"
+        app:layout_constraintEnd_toStartOf="@+id/iv_itemmusic_edit"
+        app:layout_constraintStart_toEndOf="@id/tv_itemmusic_num"
+        app:layout_constraintTop_toTopOf="@id/tv_itemmusic_num" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/iv_itemmusic_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:src="@drawable/icon_edit"
+        app:layout_constraintBottom_toBottomOf="@id/tv_itemmusic_musicname"
+        app:layout_constraintEnd_toStartOf="@id/iv_itemmusic_delete"
+        app:layout_constraintTop_toTopOf="@id/tv_itemmusic_musicname" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/iv_itemmusic_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/icon_x"
+        app:layout_constraintBottom_toBottomOf="@id/tv_itemmusic_musicname"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tv_itemmusic_musicname" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

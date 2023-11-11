@@ -97,6 +97,12 @@ fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
     }
 }
 
+/**
+ * Set navigation on click listener flow binding
+ * 툴바에 있는 back버튼 이벤트 처리
+ * @param actionInMainThread
+ * @receiver
+ */
 fun Toolbar.setNavigationOnClickListenerFlowBinding(actionInMainThread: () -> Unit) {
     this.navigationClicks()
         .onEach {
@@ -105,10 +111,16 @@ fun Toolbar.setNavigationOnClickListenerFlowBinding(actionInMainThread: () -> Un
         .launchIn(mainScope)
 }
 
-fun checkPermission(permissionList: Array<String>, grantedEventListener: () -> Unit) {
+/**
+ * Check permission
+ * TedPermission 권한 확인 및 요청 메서드
+ * @param permissionList
+ * @param grantedEventListener
+ * @receiver
+ */
+fun checkPermissions(permissionList: Array<String>, grantedEventListener: () -> Unit) {
     TedPermission.create()
         .setPermissionListener(object : PermissionListener {
-
             //권한이 허용됐을 때
             override fun onPermissionGranted() {
                 grantedEventListener()

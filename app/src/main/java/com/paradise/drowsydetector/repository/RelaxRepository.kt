@@ -32,6 +32,8 @@ class RelaxRepository(
             }
     }
 
+
+
     suspend fun getAllShelter(
         ctprvnNm: String,
         signguNm: String,

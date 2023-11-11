@@ -39,6 +39,11 @@ android {
 }
 
 dependencies {
+    // ExoPlayer
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
+
     // TedPermission Normal
     implementation 'io.github.ParkSangGwon:tedpermission-normal:3.3.0'
     // TedPermission Coroutine
@@ -51,8 +56,6 @@ dependencies {
 
     // GPS api
     implementation 'com.google.android.gms:play-services-location:21.0.1'
-    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.4'
-    implementation 'androidx.navigation:navigation-ui-ktx:2.7.4'
 
     // CameraX core library using the camera2 implementation
     def camerax_version = "1.3.0-alpha05"
