@@ -8,7 +8,6 @@ import android.media.ToneGenerator
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
 import android.view.View
 import androidx.camera.core.CameraSelector
 import androidx.camera.mlkit.vision.MlKitAnalyzer
@@ -25,13 +24,15 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
-import com.paradise.drowsydetector.utils.ApplicationClass
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
-import com.paradise.drowsydetector.utils.LocationService
+import com.paradise.drowsydetector.utils.LocationHelper
 import com.paradise.drowsydetector.utils.OvalOverlayView
+import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.inflateResetMenu
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
+import com.paradise.drowsydetector.viewmodel.MusicViewModel
+import com.paradise.drowsydetector.viewmodel.SettingViewModel
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -39,9 +40,9 @@ import java.util.concurrent.Executors
 
 class AnalyzeFragment :
     BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
-    private val analyzeViewModel: AnalyzeViewModel by activityViewModels() {
-        AnalyzeViewModel.AnalyzeViewModelFactory(getApplicationContext().relaxRepository)
-    }
+    private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
+    private val settingViewModel : SettingViewModel by activityViewModels()
+    private val musicViewModel : MusicViewModel by activityViewModels()
 
     private lateinit var cameraExecutor: ExecutorService
 
@@ -63,9 +64,7 @@ class AnalyzeFragment :
     }
 
     private val mFusedLocationProviderClient by lazy {
-        LocationService.getInstance(
-            context = ApplicationClass.getApplicationContext()
-        )
+        LocationHelper.getInstance(getApplicationContext().fusedLocationProviderClient, getApplicationContext().geocoder)
     }
 
     private lateinit var overlay: OvalOverlayView
@@ -78,6 +77,12 @@ class AnalyzeFragment :
     val standardRatioList = mutableListOf<Double>()
     private var toneGenerator: ToneGenerator? = null
 
+    override fun onDestroyViewInFragMent() {
+        stopTimer()
+        faceDetector.close()
+        faceMesh.close()
+        cameraExecutor.shutdown()
+    }
     override fun onViewCreated() {
         // 툴바 세팅
         binding.analyzeToolbar
@@ -207,7 +212,6 @@ class AnalyzeFragment :
                                     // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
                                     if (maintainTime > 1800) {
                                         if (analyzeViewModel.checkDrowsy) {
-                                            Log.d("whatisthis", "?!")
                                             analyzeViewModel.checkDrowsy = false
                                             mFusedLocationProviderClient.apply {
                                                 setLastLocationEventListener {
@@ -217,11 +221,13 @@ class AnalyzeFragment :
                                                         tempLocation.latitude = it.latitude
                                                         tempLocation.longitude = it.longitude
 
-                                                        analyzeViewModel.setLocation(
-                                                            tempLocation,
-                                                            it.adminArea,
-                                                            (it.locality ?: it.subLocality)
-                                                        )
+//                                                        analyzeViewModel.getAllParkingLot2(
+//                                                            ctprvnNm = it.adminArea,
+//                                                            signguNm = (it.locality
+//                                                                ?: it.subLocality),
+//                                                            latitude = it.latitude,
+//                                                            longitude = it.longitude
+//                                                        )
                                                     }
                                                 }
                                             }
@@ -300,42 +306,4 @@ class AnalyzeFragment :
         binding.analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
     }
 
-    fun calDist(point1: PointF3D, point2: PointF3D): Double {
-        val dx = point1.x - point2.x
-        val dy = point1.y - point2.y
-        return Math.sqrt((dx * dx + dy * dy).toDouble())
-    }
-
-    fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
-        val upDownSec =
-            (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
-        var leftRightSec =
-            (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
-
-        val rightUpper = landmark.get(159).position
-        val rightLower = landmark.get(145).position
-
-        val leftUpper = landmark.get(386).position
-        val leftLower = landmark.get(374).position
-
-        var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
-        var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
-
-        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
-            heightAvg *= (upDownSec * 1.1) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-        } else { // 카메라가 아래에 있을 경우
-            heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-        }
-
-        // 종횡비 계산
-        return (heightAvg / widthLower)
-    }
-
-    override fun onDestroyView() {
-        cameraExecutor.shutdown()
-        stopTimer()
-        faceDetector.close()
-        faceMesh.close()
-        super.onDestroyView()
-    }
 }

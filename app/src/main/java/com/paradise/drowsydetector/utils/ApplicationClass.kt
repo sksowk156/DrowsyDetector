@@ -1,11 +1,19 @@
 package com.paradise.drowsydetector.utils
 
 import android.app.Application
-import com.paradise.drowsydetector.data.local.music.LocalDatabase
+import android.location.Geocoder
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.preferencesDataStore
+import com.google.android.gms.location.LocationServices
+import com.paradise.drowsydetector.data.local.room.LocalDatabase
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotService
+import com.paradise.drowsydetector.data.remote.rest.RestService
 import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelterService
 import com.paradise.drowsydetector.repository.MusicRepository
 import com.paradise.drowsydetector.repository.RelaxRepository
+import com.paradise.drowsydetector.repository.SettingRepository
+import java.util.Locale
 
 class ApplicationClass : Application() {
     companion object {
@@ -13,7 +21,17 @@ class ApplicationClass : Application() {
         fun getApplicationContext(): ApplicationClass = appInstance
     }
 
-    val database by lazy { LocalDatabase.getInstance(this) }
+    private val dataStore: DataStore<Preferences> by preferencesDataStore(name = PREFERENCES_NAME)
+
+    private val database by lazy { LocalDatabase.getInstance(this) }
+
+    val fusedLocationProviderClient by lazy {
+        LocationServices.getFusedLocationProviderClient(
+            this
+        )
+    }
+
+    val geocoder by lazy { Geocoder(this, Locale.KOREA) }
 
     val musicRepository by lazy {
         MusicRepository.getInstance(
@@ -24,7 +42,14 @@ class ApplicationClass : Application() {
     val relaxRepository by lazy {
         RelaxRepository.getInstance(
             drowyShelterInterface = DrowsyShelterService.getRetrofitRESTInstance(),
-            parkingLotInterface = ParkingLotService.getRetrofitRESTInstance()
+            parkingLotInterface = ParkingLotService.getRetrofitRESTInstance(),
+            restInterface = RestService.getRetrofitRESTInstance()
+        )
+    }
+
+    val settingRepository by lazy {
+        SettingRepository.getInstance(
+            dataStore = dataStore
         )
     }
 

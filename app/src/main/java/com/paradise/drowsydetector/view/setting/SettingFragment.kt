@@ -1,5 +1,6 @@
 package com.paradise.drowsydetector.view.setting
 
+import android.annotation.SuppressLint
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
@@ -14,8 +15,6 @@ import android.widget.ArrayAdapter
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.FileProvider
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -23,12 +22,15 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
-import com.paradise.drowsydetector.data.local.music.Music
+import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentSettingBinding
+import com.paradise.drowsydetector.utils.GUIDEMODE
+import com.paradise.drowsydetector.utils.MusicHelper
 import com.paradise.drowsydetector.utils.getPathFromFileUri
 import com.paradise.drowsydetector.utils.getUriFromFilePath
 import com.paradise.drowsydetector.utils.mainScope
 import com.paradise.drowsydetector.utils.showToast
+import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
@@ -45,66 +47,115 @@ class SettingFragment :
     BaseViewbindingFragment<FragmentSettingBinding>(FragmentSettingBinding::inflate) {
 
     private lateinit var musicAdapter: MusicAdapter
-    private var mediaPlayer: MediaPlayer? = null
+
+    //    private var mediaPlayer: MediaPlayer? = null
+    private var musicHelper: MusicHelper? = null
+    private val musicViewModel: MusicViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
 
     override fun onViewCreated() {
-        binding.toolbarSetting.setToolbarMenu("설정", true)
+        with(binding) {
+            toolbarSetting.setToolbarMenu("설정", true)
+            musicHelper = MusicHelper()
+            val regionArray = resources.getStringArray(R.array.refresh_period)
+            val arrayAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, regionArray)
+            autoCompleteTextViewSetting.setAdapter(arrayAdapter)
+            autoCompleteTextViewSetting.itemClickEvents()
+                .onEach {
+                    showToast(regionArray[it.position])
+                }.launchIn(mainScope)
 
-        val regionArray = resources.getStringArray(R.array.refresh_period)
-        val arrayAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, regionArray)
-        binding.autoCompleteTextViewSetting.setAdapter(arrayAdapter)
-        binding.autoCompleteTextViewSetting.itemClickEvents()
-            .onEach {
-                showToast(regionArray[it.position])
-            }.launchIn(mainScope)
+            btSettingUsermusic.setOnAvoidDuplicateClick {
+                musicHelper?.checkMediaPlayer()
+                binding.layoutSettingMusiclistbackground.visibility = View.VISIBLE
+            }
 
-        binding.btSettingUsermusic.setOnAvoidDuplicateClick {
-            checkMediaPlayer()
-            binding.layoutSettingMusiclistbackground.visibility = View.VISIBLE
-        }
+            ivSettingAddmusic.setOnAvoidDuplicateClick {
+                musicHelper?.checkMediaPlayer()
+                // ACTION_GET_CONTENT - 문서나 사진 등의 파일을 선택하고 앱에 그 참조를 반환하기 위해 요청하는 액션
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.type = "audio/*" // 탐색할 파일 MIME 타입 설정
+                launcher_audio.launch(intent) // 파일탐색 액션을 가진 인텐트 실행
+            }
 
-        binding.ivSettingAddmusic.setOnAvoidDuplicateClick {
-            checkMediaPlayer()
-            // ACTION_GET_CONTENT - 문서나 사진 등의 파일을 선택하고 앱에 그 참조를 반환하기 위해 요청하는 액션
-            val intent = Intent(Intent.ACTION_GET_CONTENT)
-            intent.type = "audio/*" // 탐색할 파일 MIME 타입 설정
-            launcher_audio.launch(intent) // 파일탐색 액션을 가진 인텐트 실행
-        }
+            // switch 상태
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    settingViewModel.mode.collect { mode ->
+                        if (mode != null) {
+                            switchSettingGuide.isChecked = mode
+                        }
+                    }
+                }
+            }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                settingViewModel.music.collect { musicList ->
-                    if (musicList != null) {
-                        Log.d("whatisthis", musicList.toString())
-                        initRecycler(musicList.toMutableList())
+            // switch를 변경할 때마다 값을 갱신
+            switchSettingGuide.setOnCheckedChangeListener { buttonView, isChecked ->
+                settingViewModel.setSettingMode(GUIDEMODE, isChecked)
+            }
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    musicViewModel.music.collect { musicList ->
+                        if (musicList != null) {
+                            Log.d("whatisthis", musicList.toString())
+                            initRecycler(musicList.toMutableList())
+                        }
                     }
                 }
             }
         }
     }
 
+//    fun queryAudioFiles(context: Context) {
+//        // 오디오 파일을 조회하기 위한 URI
+//        val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+//
+//        // ContentResolver를 사용하여 쿼리 수행
+//        val contentResolver: ContentResolver = context.contentResolver
+//        val cursor = contentResolver.query(uri, null, null, null, null)
+//
+//        cursor?.use {
+//            while (it.moveToNext()) {
+//                // 오디오 파일의 정보를 추출
+//                val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE))
+//                val artist = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
+//                val album = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM))
+//                val filePath = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
+//
+//                // 추출한 정보를 사용하거나 출력
+//                // 여기에서는 간단히 로그로 출력
+//                // 실제로는 UI나 다른 작업에 활용 가능
+//                val audioInfo = "Title: $title, Artist: $artist, Album: $album, Path: $filePath"
+//                android.util.Log.d("AudioFiles", audioInfo)
+//            }
+//        }
+//    }
+
     override fun onPause() {
         super.onPause()
-        mediaPlayer?.release()
-        mediaPlayer = null
+        musicHelper?.checkMediaPlayer()
+//        mediaPlayer?.release()
+//        mediaPlayer = null
     }
 
-    override fun onDestroyViewInFrag() {
-        mediaPlayer?.release()
-        mediaPlayer = null
+    override fun onDestroyViewInFragMent() {
+        musicHelper?.checkMediaPlayer()
+        musicHelper = null
+//        mediaPlayer?.release()
+//        mediaPlayer = null
     }
 
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
-                checkMediaPlayer()
-                playMusic(selectedMusic)
+                musicHelper?.checkMediaPlayer()
+                musicHelper?.playMusic(requireContext(), selectedMusic, viewLifecycleOwner)
             }, { selectedMusic ->
-                checkMediaPlayer()
+                musicHelper?.checkMediaPlayer()
                 showDialog(selectedMusic)
             }, { selectedMusic ->
-                checkMediaPlayer()
+                musicHelper?.checkMediaPlayer()
                 deleteMusic(selectedMusic)
             })
 
@@ -119,47 +170,47 @@ class SettingFragment :
         }
     }
 
-    fun checkMediaPlayer(){
-        if (mediaPlayer != null) {
-            mediaPlayer!!.stop()
-            mediaPlayer!!.release()
-            mediaPlayer = null
-        }
-    }
+//    fun checkMediaPlayer() {
+//        if (mediaPlayer != null) {
+//            mediaPlayer!!.stop()
+//            mediaPlayer!!.release()
+//            mediaPlayer = null
+//        }
+//    }
 
-    private fun playMusic(selectedMusic: Music) {
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(
-                requireContext(),
-                getUriFromFilePath(requireContext(), selectedMusic.newPath!!)!!
-            )
-
-            setOnPreparedListener {
-                seekTo(selectedMusic.startTime.toInt())
-                start()
-            }
-
-            setOnCompletionListener {
-                stop()
-                release()
-            }
-
-            prepareAsync()
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            delay(selectedMusic.durationTime)
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    it.pause()
-                }
-            }
-        }
-    }
+//    private fun playMusic(selectedMusic: Music) {
+//        mediaPlayer = MediaPlayer().apply {
+//            setDataSource(
+//                requireContext(),
+//                getUriFromFilePath(requireContext(), selectedMusic.newPath!!)!!
+//            )
+//
+//            setOnPreparedListener {
+//                seekTo(selectedMusic.startTime.toInt())
+//                start()
+//            }
+//
+//            setOnCompletionListener {
+//                stop()
+//                release()
+//            }
+//
+//            prepareAsync()
+//        }
+//
+//        viewLifecycleOwner.lifecycleScope.launch {
+//            delay(selectedMusic.durationTime)
+//            mediaPlayer?.let {
+//                if (it.isPlaying) {
+//                    it.pause()
+//                }
+//            }
+//        }
+//    }
 
     private fun showDialog(selectedMusic: Music) {
         val dialogFragment = MusicSettingDialogFragment(selectedMusic) {
-            settingViewModel.updateMusic(it)
+            musicViewModel.updateMusic(it)
         }
         dialogFragment.show(childFragmentManager, "YourDialogTag")
     }
@@ -170,7 +221,7 @@ class SettingFragment :
             val result = deleteFile.delete()
             if (result) showToast("파일 삭제")
         }
-        settingViewModel.deleteMusic(selectedMusic.id)
+        musicViewModel.deleteMusic(selectedMusic.id)
     }
 
 
@@ -207,7 +258,7 @@ class SettingFragment :
                     newPath = newFilePath,
                     originalPath = audioPath
                 )
-                settingViewModel.insertMusic(newMusic)
+                musicViewModel.insertMusic(newMusic)
             } else { // 파일이 정상적으로 생성되지 않았을 때 내부 코드 실행
                 showToast("오디오 파일을 가져오는데 문제가 생겼습니다.") // 메시지 출력
             }

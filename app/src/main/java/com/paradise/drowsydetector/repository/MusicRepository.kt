@@ -1,7 +1,7 @@
 package com.paradise.drowsydetector.repository
 
-import com.paradise.drowsydetector.data.local.music.Music
-import com.paradise.drowsydetector.data.local.music.MusicDao
+import com.paradise.drowsydetector.data.local.room.music.Music
+import com.paradise.drowsydetector.data.local.room.music.MusicDao
 
 class MusicRepository(
     private val musicDao: MusicDao,

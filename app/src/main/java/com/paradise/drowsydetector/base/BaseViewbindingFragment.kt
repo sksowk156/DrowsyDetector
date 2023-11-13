@@ -37,7 +37,7 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
     protected open fun savedInstanceStateNull() {} // 필요하면 재정의
     protected open fun savedInstanceStateNotNull(savedInstanceState: Bundle) {} // 필요하면 재정의
     protected open fun onCreateView() {} // 필요하면 재정의
-    protected open fun onDestroyViewInFrag(){} // 필요하면 재정의
+    protected open fun onDestroyViewInFragMent(){} // 필요하면 재정의
 
     protected abstract fun onViewCreated() // 반드시 재정의
 
@@ -65,7 +65,7 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
 
     override fun onDestroyView() {
         super.onDestroyView()
-        onDestroyViewInFrag()
+        onDestroyViewInFragMent()
         _binding = null
         compositeDisposable.dispose() // compositeDisposable 해제
     }

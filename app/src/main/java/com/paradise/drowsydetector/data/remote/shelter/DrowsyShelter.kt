@@ -1,10 +1,5 @@
 package com.paradise.drowsydetector.data.remote.shelter
 
-import com.paradise.drowsydetector.data.remote.parkinglot.Body
-import com.paradise.drowsydetector.data.remote.parkinglot.Header
-import com.paradise.drowsydetector.data.remote.parkinglot.Item
-import com.paradise.drowsydetector.data.remote.parkinglot.Response
-
 data class DrowsyShelter(
     val response: Response,
 )

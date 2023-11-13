@@ -5,9 +5,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
-import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.widget.SeekBar
 import androidx.fragment.app.DialogFragment
@@ -20,7 +18,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.data.local.music.Music
+import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentMusicSettingDialogBinding
 import com.paradise.drowsydetector.utils.getUriFromFilePath
 import com.paradise.drowsydetector.utils.setOnAvoidDuplicateClickFlow

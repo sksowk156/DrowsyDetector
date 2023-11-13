@@ -5,7 +5,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -17,6 +17,7 @@ import com.paradise.drowsydetector.utils.ApplicationClass
 import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.SETTING
 import com.paradise.drowsydetector.utils.STATISTIC
+import com.paradise.drowsydetector.utils.getBoundingBox
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.view.analyze.AnalyzeFragment
 import com.paradise.drowsydetector.view.setting.SettingFragment
@@ -27,7 +28,9 @@ import kotlinx.coroutines.launch
 class HomeFragment :
     BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
 
-    private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
+    val analyzeViewModel: AnalyzeViewModel by viewModels() {
+        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepository)
+    }
 
     override fun onViewCreated() {
         binding.btHomeToanalyze.setOnAvoidDuplicateClick {
@@ -49,6 +52,33 @@ class HomeFragment :
                 .replace(R.id.layout_home_main, SettingFragment(), SETTING)
                 .addToBackStack(null)
                 .commitAllowingStateLoss()
+        }
+
+        val temp = getBoundingBox(36.36564901, 127.42444290, 5.0)
+//        analyzeViewModel.getAllParkingLot2(temp)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                analyzeViewModel.parkingLots.collect {
+                    when (it) {
+                        is ResponseState.Loading -> {
+                            Log.d("whatisthis", "로딩")
+                        }
+
+                        is ResponseState.Success -> {
+                            Log.d("whatisthis", it.data.toString())
+                        }
+
+                        is ResponseState.Fail -> {
+                            Log.d("whatisthis", it.message.toString() + it.code)
+                        }
+
+                        is ResponseState.Error -> {
+                            Log.d("whatisthis", it.exception.toString())
+                        }
+                    }
+                }
+            }
         }
 
 //        lifecycleScope.launch {

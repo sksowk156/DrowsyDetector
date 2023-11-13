@@ -2,7 +2,6 @@ package com.paradise.drowsydetector.utils
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Context
 import android.location.Address
 import android.location.Geocoder
 import android.location.Location
@@ -10,24 +9,24 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import java.util.Locale
 
-class LocationService(context: Context) {
+class LocationHelper(
+    private val fusedLocationProviderClient: FusedLocationProviderClient,
+    private val geocoder: Geocoder,
+) {
 
     companion object {
         @Volatile
-        private var instance: LocationService? = null
-
-        private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
-        private lateinit var geocoder: Geocoder
-        fun getInstance(context: Context) =
+        private var instance: LocationHelper? = null
+        fun getInstance(
+            fusedLocationProviderClient: FusedLocationProviderClient,
+            geocoder: Geocoder,
+        ) =
             instance ?: synchronized(this) {
                 // LocationSercie 객체를 생성할 때 같이 한번만 객체를 생성한다.
-                geocoder = Geocoder(context, Locale.KOREA)
-                fusedLocationProviderClient =
-                    LocationServices.getFusedLocationProviderClient(context)
-                instance ?: LocationService(context).also { instance = it }
+                instance ?: LocationHelper(fusedLocationProviderClient, geocoder).also {
+                    instance = it
+                }
             }
 
     }
@@ -78,7 +77,7 @@ class LocationService(context: Context) {
                 @RequiresApi(33) object : Geocoder.GeocodeListener {
                     override fun onGeocode(addresses: MutableList<Address>) {
 //                        Log.d("whatisthis", addresses.toString())
-                        if(addresses.size > 0) reverseGeocoderListener(addresses.first())
+                        if (addresses.size > 0) reverseGeocoderListener(addresses.first())
                     }
 
                     override fun onError(errorMessage: String?) {
@@ -94,7 +93,7 @@ class LocationService(context: Context) {
             )
             if (addresses != null) {
 //                Log.d("whatisthis", "* " + addresses.toString())
-                if(addresses.size > 0) reverseGeocoderListener(addresses.first())
+                if (addresses.size > 0) reverseGeocoderListener(addresses.first())
             }
         }
     }

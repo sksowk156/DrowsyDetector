@@ -1,78 +1,113 @@
 package com.paradise.drowsydetector.viewmodel
 
-import android.location.Location
-import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLot
-import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelter
-import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelterService
 import com.paradise.drowsydetector.repository.RelaxRepository
+import com.paradise.drowsydetector.utils.BoundingBox
 import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.ioDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import retrofit2.Response
+import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
+import com.paradise.drowsydetector.data.remote.rest.Item as restItem
+import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
 
-data class temp(var tempLocation: Location, var s: String, var b: String)
-class AnalyzeViewModel(private val repository: RelaxRepository) : ViewModel() {
 
-    var temp = MutableLiveData<Response<DrowsyShelter>>()
-
-    fun get(){
-        viewModelScope.launch {
-            temp.value = DrowsyShelterService.getRetrofitRESTInstance().getAllShelter(ctprvnNm= "경기도", signguNm="김포시")
-        }
-    }
-
-    private val _allShelter: MutableStateFlow<ResponseState<DrowsyShelter>> =
-        MutableStateFlow(ResponseState.Loading)
-    val allShelter: StateFlow<ResponseState<DrowsyShelter>> get() = _allShelter.asStateFlow()
-    fun getAllShelter(ctprvnNm: String, signguNm: String) = viewModelScope.launch {
-        _allShelter.value = ResponseState.Loading
-        repository.getAllShelter(ctprvnNm, signguNm)
-            .catch { error ->
-                _allShelter.value = ResponseState.Error(error)
-            }
-            .collect {
-                _allShelter.value = it
-            }
-    }
+class AnalyzeViewModel(
+    private val relaxRepository: RelaxRepository,
+) : ViewModel() {
 
     var checkDrowsy = true
 
-    var location: temp? = null
-    fun setLocation(tempLocation: Location, s: String, b: String) {
-        location = temp(tempLocation, s, b)
+    private val _rests: MutableStateFlow<ResponseState<List<restItem>>> =
+        MutableStateFlow(ResponseState.Loading)
+    val rests: StateFlow<ResponseState<List<restItem>>> get() = _rests.asStateFlow()
+    fun getNearRest(boundingBox: BoundingBox) = viewModelScope.launch {
+        _rests.value = ResponseState.Loading
+        relaxRepository.getAllRest(boundingBox)
+            .catch { error ->
+                _rests.value = ResponseState.Error(error)
+            }
+            .collect {
+                _rests.value = it
+            }
     }
 
 
-    private val _allParkingLot: MutableStateFlow<ResponseState<ParkingLot>> =
+    private val _shelters: MutableStateFlow<ResponseState<List<shelterItem>>> =
         MutableStateFlow(ResponseState.Loading)
-    val allParkingLot: StateFlow<ResponseState<ParkingLot>> get() = _allParkingLot.asStateFlow()
-    fun getAllParkingLot() =
+    val shelters: StateFlow<ResponseState<List<shelterItem>>> get() = _shelters.asStateFlow()
+    fun getNearShelter(boundingBox: BoundingBox) = viewModelScope.launch {
+        _shelters.value = ResponseState.Loading
+        relaxRepository.getAllShelter(boundingBox)
+            .catch { error ->
+                _shelters.value = ResponseState.Error(error)
+            }
+            .collect {
+                _shelters.value = it
+            }
+    }
+
+    private val _parkingLots: MutableStateFlow<ResponseState<List<parkingLotItem>>> =
+        MutableStateFlow(ResponseState.Loading)
+    val parkingLots: StateFlow<ResponseState<List<parkingLotItem>>> get() = _parkingLots.asStateFlow()
+    fun getNearParkingLot(boundingBox: BoundingBox) {
         viewModelScope.launch(ioDispatcher) {
-            _allParkingLot.value = ResponseState.Loading
-            repository.getAllParkingLot()
+            combine(
+                relaxRepository.getAllParkingLot(boundingBox, "무료", 15)
+            ) { responses ->
+                val combinedList = responses
+                    .filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
+                    .flatMap { it.data }
+                ResponseState.Success(combinedList)
+            }.catch { error ->
+                _parkingLots.value = ResponseState.Error(error)
+            }.collect {
+                _parkingLots.value = it
+            }
+        }
+    }
+
+    /**
+     * Get all parking lot2
+     * 한 데이터를 받아와서 전체 데이터 개수를 파악한 뒤, 필요한만큼 코루틴 스코프를 생성해 모든 데이터를 한번에 불러오는 메서드(코루틴 스코프가 많을 수 있다.)
+     * @param boundingBox
+     */
+    fun getNearParkingLot2(boundingBox: BoundingBox, numOfRows: Int) {
+        viewModelScope.launch(ioDispatcher) {
+            relaxRepository.getAllParkingLot2(boundingBox, "무료", numOfRows)
                 .catch { error ->
-                    _allParkingLot.value = ResponseState.Error(error)
-                }.collect {
-                    Log.d("whatisthis","11")
-                    _allParkingLot.value = it
+                    _parkingLots.value = ResponseState.Error(error)
+                }
+                .collect {
+                    if (it is ResponseState.Success) {
+                        combine(
+                            it.data
+                        ) { responses ->
+                            val combinedList = responses
+                                .filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
+                                .flatMap { it.data }
+                            ResponseState.Success(combinedList)
+                        }.catch { error ->
+                            _parkingLots.value = ResponseState.Error(error)
+                        }.collect {
+                            _parkingLots.value = it
+                        }
+                    }
                 }
         }
+    }
 
-
-    class AnalyzeViewModelFactory(private val repository: RelaxRepository) :
+    class AnalyzeViewModelFactory(private val relaxRepository: RelaxRepository) :
         ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return if (modelClass.isAssignableFrom(AnalyzeViewModel::class.java)) {
-                AnalyzeViewModel(repository) as T
+                AnalyzeViewModel(relaxRepository) as T
             } else {
                 throw IllegalArgumentException()
             }

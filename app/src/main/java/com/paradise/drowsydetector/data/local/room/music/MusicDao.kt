@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.data.local.music
+package com.paradise.drowsydetector.data.local.room.music
 
 import androidx.room.Dao
 import androidx.room.Insert

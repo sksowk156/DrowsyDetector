@@ -3,7 +3,7 @@ package com.paradise.drowsydetector.view.setting
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.paradise.drowsydetector.data.local.music.Music
+import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.ItemMusicBinding
 import com.paradise.drowsydetector.utils.setOnAvoidDuplicateClickFlow
 
