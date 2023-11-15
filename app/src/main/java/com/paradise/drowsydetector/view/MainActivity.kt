@@ -38,7 +38,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             )
         ) {
             showToast("권한 허용")
-//            analyzeViewModel.getAllParkingLot2("충청남도", "부여군", 36.2770825820, 126.9110578117)
+            analyzeViewModel.checkDrowsy
         }
 
         settingViewModel.getSettingMode(GUIDEMODE)

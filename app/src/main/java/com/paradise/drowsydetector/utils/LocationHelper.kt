@@ -69,14 +69,12 @@ class LocationHelper(
         reverseGeocoderListener: (Address) -> Unit, // 가져온 주소로 이벤트 처리
     ) {
         if (Build.VERSION.SDK_INT >= 33) {
-            // declare here the geocodeListener, as it requires Android API 33
             geocoder.getFromLocation(
                 latitude,
                 longitude,
                 2,
                 @RequiresApi(33) object : Geocoder.GeocodeListener {
                     override fun onGeocode(addresses: MutableList<Address>) {
-//                        Log.d("whatisthis", addresses.toString())
                         if (addresses.size > 0) reverseGeocoderListener(addresses.first())
                     }
 

@@ -1,7 +1,11 @@
 package com.paradise.drowsydetector.utils
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 
@@ -41,9 +45,9 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
 
     }
 
-    fun onZeroAngle(state:Int) {
-        when(state){
-            1->{
+    fun onZeroAngle(state: Int) {
+        when (state) {
+            STANDARD_IN_ANGLE -> {
                 blurPaint.apply {
                     isAntiAlias = true
                     color = Color.GREEN
@@ -51,7 +55,8 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
                     alpha = 40
                 }
             }
-            2->{
+
+            OUT_OF_ANGLE -> {
                 blurPaint.apply {
                     isAntiAlias = true
                     color = Color.BLUE
@@ -59,7 +64,8 @@ class OvalOverlayView(context: Context, attrs: AttributeSet?) :
                     alpha = 40
                 }
             }
-            3->{
+
+            NO_STANDARD -> {
                 blurPaint.apply {
                     isAntiAlias = true
                     color = Color.RED

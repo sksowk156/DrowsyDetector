@@ -4,13 +4,19 @@ import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotInterface
 import com.paradise.drowsydetector.data.remote.rest.RestInterface
 import com.paradise.drowsydetector.data.remote.shelter.DrowyShelterInterface
 import com.paradise.drowsydetector.utils.BoundingBox
-import com.paradise.drowsydetector.utils.DEFAULTNUMOFROWS
+import com.paradise.drowsydetector.utils.DAY
+import com.paradise.drowsydetector.utils.DEFAULT_NUM_OF_ROWS
 import com.paradise.drowsydetector.utils.ResponseState
+import com.paradise.drowsydetector.utils.isInTime
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.cancel
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import java.io.IOException
+import kotlinx.coroutines.flow.map
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
@@ -56,16 +62,14 @@ class RelaxRepository(
                     emit(ResponseState.Success(nearShelter))
                 }
             } else {
-                try {
-                    emit(ResponseState.Fail(response.code(), response.message()))
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
+                emit(ResponseState.Fail(response.code(), response.message()))
             }
         } catch (e: Exception) {
             emit(ResponseState.Error(e))
+        } finally {
+            currentCoroutineContext().cancel()
         } as Unit
-    }.flowOn(Dispatchers.IO)
+    }.flowOn(Dispatchers.IO).cancellable()
 
     suspend fun getAllShelter(
         boundingBox: BoundingBox,
@@ -85,25 +89,41 @@ class RelaxRepository(
                     emit(ResponseState.Success(nearShelter))
                 }
             } else {
-                try {
-                    emit(ResponseState.Fail(response.code(), response.message()))
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
+                emit(ResponseState.Fail(response.code(), response.message()))
             }
         } catch (e: Exception) {
             emit(ResponseState.Error(e))
-        } as Unit
-    }.flowOn(Dispatchers.IO)
+        }  finally {
+            currentCoroutineContext().cancel()
+        }as Unit
+    }.flowOn(Dispatchers.IO).cancellable()
 
-    suspend fun getAllParkingLot(
-        boundingBox: BoundingBox, parkingchargeInfo: String, numOfCoroutineRequired: Int,
-    ) = (1..numOfCoroutineRequired).map { getPartParkingLot(it, boundingBox, parkingchargeInfo) }
+    private val parkingLotJobsList = mutableListOf<Flow<ResponseState<List<parkingLotItem>>>>()
 
-    suspend fun getAllParkingLot2(
+    fun cancleParkingLotFlow() {
+        parkingLotJobsList.map {  }
+    }
+
+    suspend fun getParkingLots(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
-        numOfRows: Int = DEFAULTNUMOFROWS,
+        numOfCoroutineRequired: Int,
+        day: DAY,
+        nowTime: String,
+    ) = (1..numOfCoroutineRequired).map {
+        getPartParkingLot(
+            it,
+            boundingBox,
+            parkingchargeInfo,
+            day,
+            nowTime
+        )
+    }
+
+    suspend fun getAllParkingLot(
+        boundingBox: BoundingBox,
+        parkingchargeInfo: String,
+        numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
     ): Flow<ResponseState<List<Flow<ResponseState<List<parkingLotItem>>>>>> =
         flow {
             try {
@@ -121,28 +141,28 @@ class RelaxRepository(
                         if (totalCount % numOfRows != 0) numOfCoroutineRequired++
                         emit(
                             ResponseState.Success(
-                                getAllParkingLot(
+                                getParkingLots(
                                     boundingBox = boundingBox,
                                     parkingchargeInfo = parkingchargeInfo,
-                                    numOfCoroutineRequired = numOfCoroutineRequired
+                                    numOfCoroutineRequired = numOfCoroutineRequired,
+                                    day = day,
+                                    nowTime = nowTime
                                 )
                             )
                         )
                     }
                 } else {
-                    try {
-                        emit(ResponseState.Fail(response.code(), response.message()))
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                    emit(ResponseState.Fail(response.code(), response.message()))
                 }
             } catch (e: Exception) {
                 emit(ResponseState.Error(e))
-            } as Unit
-        }.flowOn(Dispatchers.IO)
+            }  finally {
+                currentCoroutineContext().cancel()
+            }as Unit
+        }.flowOn(Dispatchers.IO).cancellable()
 
     suspend fun getPartParkingLot(
-        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String,
+        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
     ): Flow<ResponseState<List<parkingLotItem>>> =
         flow {
             try {
@@ -152,47 +172,32 @@ class RelaxRepository(
                         parkingchrgeInfo = parkingchargeInfo
                     )
                 if (response.isSuccessful) {
-                    response.body()?.let {
-                        val freeParkingLot = it.response.body.items.filter {
-                            val lat = it.latitude.toDouble()
-                            (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
-                        }.filter {
-                            val lon = it.longitude.toDouble()
-                            (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
+                    response.body()?.let { parkingLot ->
+                        val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+                            val lat = item1.latitude.toDoubleOrNull()
+                            if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                            else false
+                        }.filter { item2 ->
+                            val lon = item2.longitude.toDoubleOrNull()
+                            if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                            else false
+                        }.filter { item3 ->
+                            isInTime(
+                                day = day,
+                                nowTime = nowTime,
+                                item = item3
+                            ) // 현재 시간에 운영하고 있는지 확인
                         }
-                        emit(ResponseState.Success(freeParkingLot))
+                        emit(ResponseState.Success(freeParkingLot.toList()))
                     }
                 } else {
-                    try {
-                        emit(ResponseState.Fail(response.code(), response.message()))
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                    }
+                    emit(ResponseState.Fail(response.code(), response.message()))
                 }
             } catch (e: Exception) {
                 emit(ResponseState.Error(e))
-            } as Unit
-        }.flowOn(Dispatchers.IO)
-
-//    suspend fun getAllParkingLot(): Flow<ResponseState<ParkingLot>> =
-//        flow {
-//            try {
-//                val response =
-//                    parkingLotInterface.getAllParkingLot()
-//                if (response.isSuccessful) {
-//                    response.body()?.let {
-//                        emit(ResponseState.Success(it))
-//                    }
-//                } else {
-//                    try {
-//                        emit(ResponseState.Fail(response.code(), response.message()))
-//                    } catch (e: IOException) {
-//                        e.printStackTrace()
-//                    }
-//                }
-//            } catch (e: Exception) {
-//                emit(ResponseState.Error(e))
-//            } as Unit
-//        }.flowOn(Dispatchers.IO)
+            }  finally {
+                currentCoroutineContext().cancel()
+            }as Unit
+        }.flowOn(Dispatchers.Default).cancellable()
 
 }
