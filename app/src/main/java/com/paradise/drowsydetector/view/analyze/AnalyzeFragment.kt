@@ -1,6 +1,5 @@
 package com.paradise.drowsydetector.view.analyze
 
-import android.annotation.SuppressLint
 import android.os.CountDownTimer
 import android.util.Log
 import android.view.View
@@ -12,16 +11,15 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
-import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
-import com.paradise.drowsydetector.utils.DEFAULT_MUSIC_DURATION
 import com.paradise.drowsydetector.utils.DEFAULT_RADIUSKM
 import com.paradise.drowsydetector.utils.DROWSY_THREDHOLD
 import com.paradise.drowsydetector.utils.LEFT_RIGHT_ANGLE_THREDHOLD
@@ -41,14 +39,17 @@ import com.paradise.drowsydetector.utils.getBoundingBox
 import com.paradise.drowsydetector.utils.getCurrentTime
 import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.getRandomElement
-import com.paradise.drowsydetector.utils.inflateResetMenu
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
+import com.paradise.drowsydetector.utils.mainDispatcher
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
 import kotlinx.coroutines.Job
-import java.util.*
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
@@ -57,7 +58,7 @@ import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
 
 class AnalyzeFragment :
     BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
-    private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
+    val analyzeViewModel: AnalyzeViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private val musicViewModel: MusicViewModel by activityViewModels()
 
@@ -97,9 +98,16 @@ class AnalyzeFragment :
 //    private val record = mutableListOf<Double>()
 
     private var musicHelper: MusicHelper? = null
-
+    private var jobSortedParkingLot: Job? = null
+    private var jobSortedShelter: Job? = null
+    private var jobSortedRest: Job? = null
+    private var jobGetParkingLot: Job? = null
+    private var jobGetShelter: Job? = null
+    private var jobGetRest: Job? = null
     override fun onDestroyViewInFragMent() {
+        musicHelper?.clearContext()
         musicHelper = null
+
         stopTimer()
         faceDetector.close()
         faceMesh.close()
@@ -112,10 +120,12 @@ class AnalyzeFragment :
             binding.analyzeTextGazerequest.visibility = View.VISIBLE
             standard = null
         }
+        analyzeViewModel.checkDrowsy
 
         cameraExecutor = Executors.newSingleThreadExecutor()
+        executorList.add(cameraExecutor)
         overlay = binding.analyzeOverlay
-
+        musicHelper = MusicHelper.getInstance(requireContext())
         subscribeAllSetting()
     }
 
@@ -132,9 +142,9 @@ class AnalyzeFragment :
         subscribeMusicSetting { defaultMusic ->
             subscribeGuideSetting { onGuide ->
                 subscribeRefreshSetting { onRefresh ->
-                    startCamera() {
-                        startMusic(defaultMusic)
-                    }
+                    startCamera(startMusic = { startMusic(defaultMusic) },
+                        startGuide = { startGuide(onGuide) },
+                        startRefresh = { startRefresh(onRefresh) })
                     initTimer(2000)
                 }
             }
@@ -161,6 +171,10 @@ class AnalyzeFragment :
      * @param defaultMode
      */
     private fun startMusic(defaultMode: Boolean) {
+        if (musicHelper != null) {
+            musicHelper?.releaseMediaPlayer()
+        }
+
         if (defaultMode) {
             setResMusic()
         } else {
@@ -177,9 +191,7 @@ class AnalyzeFragment :
         val randomMusic = listOf<Int>(
             (R.raw.alert1), (R.raw.alert2), (R.raw.alert3), (R.raw.alert4), (R.raw.alert5)
         ).getRandomElement()!!
-
-        musicHelper = MusicHelper.Builder().setMusic(requireContext(), resId = randomMusic)
-            .setTime(viewLifecycleOwner, duration = DEFAULT_MUSIC_DURATION).startMusic()
+        musicHelper?.startMusic(randomMusic, viewLifecycleOwner)
     }
 
     /**
@@ -190,26 +202,10 @@ class AnalyzeFragment :
     private fun subscribeUserMusicList() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             musicViewModel.music.collect { musicList ->
-                if (musicList != null) {
-                    setRoomMusic(musicList)
-                }
+                val randomMusic = musicList.getRandomElement()!!
+                musicHelper?.startMusic(randomMusic, viewLifecycleOwner)
             }
         }
-    }
-
-    /**
-     * Start room music
-     *
-     * Room에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
-     * @param musicList
-     */
-    private fun setRoomMusic(musicList: List<Music>) {
-        val randomMusic = musicList.getRandomElement()!!
-        musicHelper = MusicHelper.Builder().setMusic(requireContext(), music = randomMusic).setTime(
-            viewLifecycleOwner,
-            startTime = randomMusic.startTime.toInt(),
-            duration = randomMusic.durationTime
-        ).startMusic()
     }
 
     /**
@@ -220,17 +216,18 @@ class AnalyzeFragment :
     private fun subscribeGuideSetting(block: (Boolean) -> Unit) {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             settingViewModel.mode.collect {
-                block(it)
                 if (it) {
                     // 내 위치를 중심으로 근처에 있는 데이터 관찰
                     subscribeParkingLotData()
                     subscribeShleterData()
                     subscribeRestData()
+
                     // 내 위치를 중심으로 가까운 순으로 정렬한 데이터 관찰
                     subscribeSortedParkingLots()
                     subscribeSortedShelterData()
                     subscribeSortedRests()
                 }
+                block(it)
             }
         }
     }
@@ -243,39 +240,17 @@ class AnalyzeFragment :
         }
     }
 
-    private fun initTimer(msFuture: Long) {
-        binding.apply {
-            analyzeProgress.setMax(msFuture.toInt())
-            timer = object : CountDownTimer(msFuture, 1000) {
-                @SuppressLint("SetTextI18n")
-                override fun onTick(msUntilFinished: Long) {
-                    analyzeProgress.visibility = View.VISIBLE
-                    analyzeTextGazerequest.text = "2초간 응시해주세요\n(눈 크기 측정 중)"
-                }
-
-                override fun onFinish() {
-                    analyzeProgress.visibility = View.INVISIBLE
-                    analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
-                    analyzeTextGazerequest.visibility = View.INVISIBLE
-
-                    if (standardRatioList.size > 0) {
-                        standardRatioList.sort()
-                        val mid = standardRatioList.slice(3 until standardRatioList.size - 3)
-                        standard = mid.average()
-                        showToast("설정 완료")
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Start camera
      *
      * @param startMusic, 음악 설정에 따라 음악 정보가 달라지기 때문에 음악 설정 값을 콜백받아서 처리
      * @receiver
      */
-    private fun startCamera(startMusic: () -> Unit) {
+    private fun startCamera(
+        startMusic: () -> Unit,
+        startGuide: () -> Unit,
+        startRefresh: () -> Unit,
+    ) {
         var cameraController = LifecycleCameraController(requireContext())
 
         val previewView: PreviewView = binding.analyzeViewFinder
@@ -296,7 +271,6 @@ class AnalyzeFragment :
                     // 분석 결과(랜드마크)
                     val analyzeResult1 = result?.getValue(faceDetector)
                     val analyzeResult2 = result?.getValue(faceMesh)
-
                     // 아무것도 인식하지 못할 땐 return
                     if (analyzeResult1 == null || analyzeResult2 == null || analyzeResult1.size == 0 || analyzeResult2.size == 0) {
                         previewView.setOnTouchListener { _, _ -> false } //no-op
@@ -308,10 +282,12 @@ class AnalyzeFragment :
 
                     val upDownAngle = resultDetector.headEulerAngleX
                     val leftRightAngle = resultDetector.headEulerAngleY
-
+//                    Log.d(
+//                        "whatisthis",
+//                        upDownAngle.toString() + " " + leftRightAngle.toString()
+//                    )
                     val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
 //                        record.add(eyeRatio)
-
                     if (standard == null) {
                         if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
                             overlay.onZeroAngle(STANDARD_IN_ANGLE)
@@ -365,10 +341,10 @@ class AnalyzeFragment :
 
                                         // 경고음
                                         startMusic()
-                                        // 환기 요청
-                                        requestRefresh()
                                         // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
-                                        guideToNearestRelaxZone()
+                                        startGuide()
+                                        // 환기 요청
+                                        startRefresh()
                                     }
                                     binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
                                 }
@@ -389,70 +365,123 @@ class AnalyzeFragment :
     }
 
     // 환기 요청
-    private fun requestRefresh() {
-
+    private fun startRefresh(a: Boolean) {
+        if (a) a
     }
 
     // 최단 거리 정보 안내
-    private fun guideToNearestRelaxZone() {
-        requestRelaxData() //
+    private fun startGuide(a: Boolean) {
+        if (a) requestRelaxData() //
     }
 
     private fun requestRelaxData() {
-//        repeatRequestWhenNull(0, "ParkingLot")
-        repeatRequestWhenNull(0, "Shelter")
-        repeatRequestWhenNull(0, "Rest")
+        analyzeViewModel.apply {
+            initParkingLotRequest()
+            repeatRequestWhenNull(parkingLotRequestTime, "ParkingLot")
+            initShelterRequest()
+            repeatRequestWhenNull(shelterRequestTime, "Shelter")
+            initRestRequest()
+            repeatRequestWhenNull(restRequestTime, "Rest")
+        }
     }
-
-    var job1: Job? = null
-    var job2: Job? = null
-    var job3: Job? = null
 
     private fun repeatRequestWhenNull(count: Int, detectType: String) {
         mFusedLocationProviderClient.setLastLocationEventListener {
             when (detectType) {
                 "ParkingLot" -> {
-                    if (job1 != null) {
-                        job1!!.cancel()
-                        job1 = null
+                    if (jobGetParkingLot != null) {
+                        if (jobGetParkingLot!!.isActive) {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                Log.d("whatisthis", "주차장 정보 이미**** 요청됨")
+                                jobGetParkingLot!!.join()
+                                jobList.remove(jobGetParkingLot)
+                            }
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                jobList.remove(jobGetParkingLot)
+                                jobGetParkingLot!!.cancelAndJoin()
+                                Log.d("whatisthis", "주차장 정보 요청 종료 완료!!!")
+                                jobGetParkingLot = analyzeViewModel.getALLNearParkingLot(
+                                    boundingBox = getBoundingBox(
+                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                                    ), day = getDayType(), nowTime = getCurrentTime()
+                                )
+                                jobList.add(jobGetParkingLot!!)
+                            }
+                        }
+                    } else {
+                        jobGetParkingLot = analyzeViewModel.getALLNearParkingLot(
+                            boundingBox = getBoundingBox(
+                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                            ), day = getDayType(), nowTime = getCurrentTime()
+                        )
+                        jobList.add(jobGetParkingLot!!)
                     }
-                    job1 = analyzeViewModel.getALLNearParkingLot(
-                        boundingBox = getBoundingBox(
-                            it.latitude,
-                            it.longitude,
-                            DEFAULT_RADIUSKM + (5.0 * count)
-                        ),
-                        day = getDayType(),
-                        nowTime = getCurrentTime()
-                    )
+                    Log.d("whatisthis", jobList.size.toString())
                 }
 
                 "Shelter" -> {
-                    if (job2 != null) {
-                        job2!!.cancel()
-                        job2 = null
-                    }
-                    job2 = analyzeViewModel.getNearShelter(
-                        boundingBox = getBoundingBox(
-                            it.latitude,
-                            it.longitude,
-                            DEFAULT_RADIUSKM + (5.0 * count)
+                    if (jobGetShelter != null) {
+                        if (jobGetShelter!!.isActive) {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                Log.d("whatisthis", "쉼터 정보 이미***** 요청됨")
+                                jobGetShelter!!.join()
+                                jobList.remove(jobGetShelter)
+                            }
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                jobList.remove(jobGetShelter!!)
+                                jobGetShelter!!.cancelAndJoin()
+                                Log.d("whatisthis", "쉼터 정보 요청 종료 완료!!!")
+                                jobGetShelter = analyzeViewModel.getNearShelter(
+                                    boundingBox = getBoundingBox(
+                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                                    )
+                                )
+                                jobList.add(jobGetShelter!!)
+                            }
+                        }
+                    } else {
+                        jobGetShelter = analyzeViewModel.getNearShelter(
+                            boundingBox = getBoundingBox(
+                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                            )
                         )
-                    )
+                        jobList.add(jobGetShelter!!)
+                    }
+                    Log.d("whatisthis", jobList.size.toString())
                 }
 
                 "Rest" -> {
-                    if (job3 != null) {
-                        job3!!.cancel()
-                        job3 = null
-                    }
-                    job3 = analyzeViewModel.getNearRest(
-                        boundingBox = getBoundingBox(
-                            it.latitude,
-                            it.longitude,
-                            DEFAULT_RADIUSKM + (5.0 * count)
+                    if (jobGetRest != null) {
+                        if (jobGetRest!!.isActive) {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                Log.d("whatisthis", "쉼터 정보 이미***** 요청됨")
+                                jobGetRest!!.join()
+                                jobList.remove(jobGetRest)
+                            }
+                        } else {
+                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                                jobList.remove(jobGetRest!!)
+                                jobGetRest!!.cancelAndJoin()
+                                Log.d("whatisthis", "휴게소 정보 요청 종료 완료!!!")
+                                jobGetRest = analyzeViewModel.getNearRest(
+                                    boundingBox = getBoundingBox(
+                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                                    )
+                                )
+                                jobList.add(jobGetRest!!)
+                            }
+                        }
+                    } else {
+                        jobGetRest = analyzeViewModel.getNearRest(
+                            boundingBox = getBoundingBox(
+                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                            )
                         )
-                    )
+                        jobList.add(jobGetRest!!)
+                    }
+                    Log.d("whatisthis", jobList.size.toString())
                 }
 
                 else -> throw IllegalArgumentException("Unsupported detectType: $detectType")
@@ -460,50 +489,46 @@ class AnalyzeFragment :
         }
     }
 
-    private fun subscribeParkingLotData() =
-        viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
-        ) {
-            analyzeViewModel.parkingLots.collect {
-                when (it) {
-                    is ResponseState.Loading -> {
-                        Log.d("whatisthis", "주차장 데이터 로딩")
-                    }
+    private fun subscribeParkingLotData() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
+        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
+    ) {
+        analyzeViewModel.parkingLots.collect {
+            when (it) {
+                is ResponseState.Uninitialized -> {}
+                is ResponseState.Loading -> {
+                    Log.d("whatisthis", "주차장 데이터 로딩")
+                }
 
-                    is ResponseState.Success -> {
-                        if (it.data.isNotEmpty()) {
-                            requestSortingData(it.data)
-                            if (job1 != null) {
-                                job1!!.cancel()
-                                job1 = null
-                            }
-                        } else {
-                            Log.d("whatisthis", "데이터 재요청")
-                            if (analyzeViewModel.parkingLotRequestTime < 3) {
-                                repeatRequestWhenNull(
-                                    analyzeViewModel.parkingLotRequestTime++,
-                                    "Shelter"
-                                )
-                            }
+                is ResponseState.Success -> {
+                    if (it.data.isNotEmpty()) {
+                        requestSortingData(it.data)
+                        if (jobGetParkingLot != null) {
+                            jobGetParkingLot!!.cancel()
+                        }
+                    } else {
+                        Log.d("whatisthis", "데이터 재요청")
+                        if (analyzeViewModel.parkingLotRequestTime < 3) {
+                            repeatRequestWhenNull(
+                                analyzeViewModel.parkingLotRequestTime++, "Shelter"
+                            )
                         }
                     }
+                }
 
-                    is ResponseState.Fail -> {
-                        Log.d("whatisthis", it.message.toString() + it.code)
-                    }
+                is ResponseState.Fail -> {
+                    Log.d("whatisthis", it.message.toString() + it.code)
+                }
 
-                    is ResponseState.Error -> {
-                        Log.d("whatisthis", it.exception.toString())
-                    }
+                is ResponseState.Error -> {
+                    Log.d("whatisthis", it.exception.toString())
                 }
             }
         }
+    }
 
     private fun subscribeSortedParkingLots() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
+            dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
             analyzeViewModel.sortedParkingLots.collect {
                 if (it.size > 0) Log.d("whatisthis", "최단 거리 주차장 " + it[0].toString())
@@ -513,11 +538,11 @@ class AnalyzeFragment :
 
     private fun subscribeShleterData() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
+            dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
             analyzeViewModel.shelters.collect {
                 when (it) {
+                    is ResponseState.Uninitialized -> {}
                     is ResponseState.Loading -> {
                         Log.d("whatisthis", "졸음 쉼터 데이터 로딩")
                     }
@@ -525,16 +550,14 @@ class AnalyzeFragment :
                     is ResponseState.Success -> {
                         if (it.data.isNotEmpty()) {
                             requestSortingData(it.data)
-                            if (job2 != null) {
-                                job2!!.cancel()
-                                job2 = null
+                            if (jobGetShelter != null) {
+                                jobGetShelter!!.cancel()
                             }
                         } else {
                             Log.d("whatisthis", "데이터 재요청")
                             if (analyzeViewModel.shelterRequestTime < 3) {
                                 repeatRequestWhenNull(
-                                    analyzeViewModel.shelterRequestTime++,
-                                    "Shelter"
+                                    analyzeViewModel.shelterRequestTime++, "Shelter"
                                 )
                             }
                         }
@@ -554,8 +577,7 @@ class AnalyzeFragment :
 
     private fun subscribeSortedShelterData() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
+            dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
             analyzeViewModel.sortedShelters.collect {
                 if (it.size > 0) Log.d("whatisthis", "최단 거리 쉼터 " + it[0].toString())
@@ -565,11 +587,11 @@ class AnalyzeFragment :
 
     private fun subscribeRestData() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
+            dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
             analyzeViewModel.rests.collect {
                 when (it) {
+                    is ResponseState.Uninitialized -> {}
                     is ResponseState.Loading -> {
                         Log.d("whatisthis", "휴게소 데이터 로딩")
                     }
@@ -577,9 +599,8 @@ class AnalyzeFragment :
                     is ResponseState.Success -> {
                         if (it.data.isNotEmpty()) {
                             requestSortingData(it.data)
-                            if (job3 != null) {
-                                job3!!.cancel()
-                                job3 = null
+                            if (jobGetRest != null) {
+                                jobGetRest!!.cancel()
                             }
                         } else {
                             Log.d("whatisthis", "데이터 재요청")
@@ -603,10 +624,9 @@ class AnalyzeFragment :
 
     private fun subscribeSortedRests() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            dispatcher = defaultDispatcher,
-            state = Lifecycle.State.STARTED
+            dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
-            analyzeViewModel.sortedShelters.collect {
+            analyzeViewModel.sortedRests.collect {
                 if (it.size > 0) Log.d("whatisthis", "최단 거리 휴게소 " + it[0].toString())
             }
         }
@@ -618,40 +638,64 @@ class AnalyzeFragment :
      * 중복되는 코드를 없애기 위해 제너릭을 활용해 코드를 줄였다.
      *
      * 제너릭 T가 타입이 다 달라 이것을 구분하기 위해서는 함수 내부에서 제너릭 타입에 따른 분기 처리가 필요했다.
-     *
+     *\
      * 제너릭 T에 대한 정보는 런타임 시 사라지기 때문에 이것을 유지하기 위해서 reified가 필요했고, reified를 사용하기 위해 inline 함수가 필요했다.
      *
      * @param T
      * @param data
      */
+
     private inline fun <reified T> requestSortingData(data: List<T>) {
         mFusedLocationProviderClient.setLastLocationEventListener { nowLocation ->
             when (T::class) { // reified T를 사용해 함수 내에서 실제 T::class를 호출한다.
                 parkingLotItem::class -> {
                     val parkingLots = data as List<parkingLotItem>
-                    if(jobSortedParkingLot!=null){
-                        jobSortedParkingLot!!.cancel()
-                        jobSortedParkingLot = null
+                    if (jobSortedParkingLot != null) {
+                        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                            jobList.remove(jobSortedParkingLot!!)
+                            jobSortedParkingLot!!.cancelAndJoin()
+                            Log.d("whatisthis", "주차장(정렬) 정보 요청 종료 완료!!!")
+                            jobSortedParkingLot =
+                                analyzeViewModel.sortParkingLots(nowLocation, parkingLots)
+                            jobList.add(jobSortedParkingLot!!)
+                        }
+                    } else {
+                        jobSortedParkingLot =
+                            analyzeViewModel.sortParkingLots(nowLocation, parkingLots)
+                        jobList.add(jobSortedParkingLot!!)
                     }
-                    jobSortedParkingLot = analyzeViewModel.sortParkingLots(nowLocation, parkingLots)
                 }
 
                 shelterItem::class -> {
                     val shelters = data as List<shelterItem>
-                    if(jobSortedShelter!=null){
-                        jobSortedShelter!!.cancel()
-                        jobSortedShelter = null
+                    if (jobSortedShelter != null) {
+                        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                            jobList.remove(jobSortedShelter!!)
+                            jobSortedShelter!!.cancelAndJoin()
+                            Log.d("whatisthis", "쉼터(정렬) 정보 요청 종료 완료!!!")
+                            jobSortedShelter = analyzeViewModel.sortShelters(nowLocation, shelters)
+                            jobList.add(jobSortedShelter!!)
+                        }
+                    } else {
+                        jobSortedShelter = analyzeViewModel.sortShelters(nowLocation, shelters)
+                        jobList.add(jobSortedShelter!!)
                     }
-                    jobSortedShelter = analyzeViewModel.sortShelters(nowLocation, shelters)
                 }
 
                 restItem::class -> {
                     val rests = data as List<restItem>
-                    if(jobSortedRest!=null){
-                        jobSortedRest!!.cancel()
-                        jobSortedRest = null
+                    if (jobSortedRest != null) {
+                        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                            jobList.remove(jobSortedRest!!)
+                            jobSortedRest!!.cancelAndJoin()
+                            Log.d("whatisthis", "휴게소(정렬) 정보 요청 종료 완료!!!")
+                            jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
+                            jobList.add(jobSortedRest!!)
+                        }
+                    } else {
+                        jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
+                        jobList.add(jobSortedRest!!)
                     }
-                    jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
                 }
 
                 else -> throw IllegalArgumentException("Unsupported type: ${T::class.simpleName}")
@@ -659,18 +703,36 @@ class AnalyzeFragment :
         }
     }
 
-    private var jobSortedParkingLot : Job ?=null
-    private var jobSortedShelter : Job ?=null
-    private var jobSortedRest : Job ?=null
+    private var timerJob: Job? = null
+
+    private fun initTimer(msFuture: Long) {
+        binding.apply {
+            analyzeProgress.setMax(msFuture.toInt())
+        }
+    }
 
     private fun startTimer() {
-        timer.start()
+        timerJob = viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
+            binding.analyzeProgress.visibility = View.VISIBLE
+            binding.analyzeTextGazerequest.text = "2초간 응시해주세요\n(눈 크기 측정 중)"
+            delay(binding.analyzeProgress.max.toLong())
+
+            binding.analyzeProgress.visibility = View.INVISIBLE
+            binding.analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
+            binding.analyzeTextGazerequest.visibility = View.INVISIBLE
+
+            if (standardRatioList.size > 0) {
+                standardRatioList.sort()
+                val mid = standardRatioList.slice(3 until standardRatioList.size - 3)
+                standard = mid.average()
+                showToast("설정 완료")
+            }
+        }
     }
 
     private fun stopTimer() {
-        timer.cancel()
+        timerJob?.cancel()
         binding.analyzeProgress.visibility = View.INVISIBLE
         binding.analyzeTextGazerequest.text = "얼굴을 정방향으로 유지해주세요"
     }
-
 }

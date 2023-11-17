@@ -3,12 +3,15 @@ package com.paradise.drowsydetector.base
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
+import com.jakewharton.rxbinding4.appcompat.navigationClicks
 import com.jakewharton.rxbinding4.view.clicks
 import com.jakewharton.rxbinding4.widget.textChanges
 import com.paradise.drowsydetector.R
@@ -17,15 +20,19 @@ import com.paradise.drowsydetector.utils.CLICK_INTERVAL_TIME
 import com.paradise.drowsydetector.utils.FragmentInflate
 import com.paradise.drowsydetector.utils.INPUT_COMPLETE_TIME
 import com.paradise.drowsydetector.utils.RXERROR
-import com.paradise.drowsydetector.utils.setNavigationOnClickListenerFlowBinding
+import com.paradise.drowsydetector.utils.mainDispatcher
+import com.paradise.drowsydetector.utils.mainScope
+import com.paradise.drowsydetector.utils.showToast
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import reactivecircus.flowbinding.activity.backPresses
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 
 abstract class BaseViewbindingFragment<VB : ViewBinding>(
@@ -37,7 +44,7 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
     protected open fun savedInstanceStateNull() {} // 필요하면 재정의
     protected open fun savedInstanceStateNotNull(savedInstanceState: Bundle) {} // 필요하면 재정의
     protected open fun onCreateView() {} // 필요하면 재정의
-    protected open fun onDestroyViewInFragMent(){} // 필요하면 재정의
+    protected open fun onDestroyViewInFragMent() {} // 필요하면 재정의
 
     protected abstract fun onViewCreated() // 반드시 재정의
 
@@ -64,12 +71,14 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
         onDestroyViewInFragMent()
         _binding = null
         compositeDisposable.dispose() // compositeDisposable 해제
+        super.onDestroyView()
     }
 
+    val jobList = mutableListOf<Job>()
+    val executorList = mutableListOf<ExecutorService>()
 
     /**
      * Init back press callback, 뒤로가기 이벤트 초기화 메서드
@@ -87,12 +96,23 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
         // FlowBinding의 backPresses 확장함수를 활용하는 방법
         requireActivity().onBackPressedDispatcher.backPresses(viewLifecycleOwner)
             .onEach {
-                if (parentFragmentManager.backStackEntryCount > 0) {
-                    parentFragmentManager.popBackStackImmediate(null, 0)
-                } else {
-                    requireActivity().finish()
+                viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
+                    Log.d("whatisthis", "dd")
+                    val temp = jobList.iterator()
+                    while (temp.hasNext()) {
+                        temp.next().cancelAndJoin()
+                    }
+                    Log.d("whatisthis", "dd22")
+                    executorList.forEach { it.shutdownNow() }
+                    jobList.clear()
+                    executorList.clear()
+                    if (parentFragmentManager.backStackEntryCount > 0) {
+                        parentFragmentManager.popBackStackImmediate(null, 0)
+                    } else {
+                        requireActivity().finish()
+                    }
                 }
-            }.launchIn(CoroutineScope(Dispatchers.Main))
+            }.launchIn(mainScope)
     }
 
     /**
@@ -168,11 +188,58 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
             if (backBT) {
                 this.toolbar.setNavigationIcon(R.drawable.icon_backarrow)
             } // backBT이 있을 경우
-            this.toolbar.setNavigationOnClickListenerFlowBinding {
+            this.toolbar.setNavigationOnClickListener {
                 backPress()
             }
             return this.toolbar
         }
+    }
+
+    fun Toolbar.setNavigationOnClickListener(actionInMainThread: () -> Unit) {
+        compositeDisposable
+            .add(
+                this.navigationClicks()
+                    .observeOn(Schedulers.io())
+                    .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            actionInMainThread()
+                        }, {
+                            Log.e(RXERROR, it.toString())
+                        }
+                    )
+            )
+    }
+
+    fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
+        this.inflateMenu(R.menu.menu_reset)
+        val menuItem = this.menu.findItem(R.id.reset_menu_standardreset)
+        menuItem.setOnMenuItemClickListenerRx {
+            editListener()
+            showToast("?")
+        }
+    }
+
+    private fun MenuItem.setOnMenuItemClickListenerRx(actionInMainThread: () -> Unit) {
+//        this.clicks { it.isEnabled } // 'isChecked'는 현재 displaying a check mark 인지 확인하는 것이므로, 여기선 'isEnabled'로 사용가능한지 확인하는 것이 맞다
+//            .onEach {
+//                actionInMainThread()
+//            }.launchIn(mainScope)
+        compositeDisposable
+            .add(
+                this.clicks { it.isEnabled }
+                    .observeOn(Schedulers.io())
+                    .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(
+                        {
+                            actionInMainThread()
+                        }, {
+                            Log.e(RXERROR, it.toString())
+                        }
+                    )
+            )
     }
 
     fun backPress() {

@@ -39,21 +39,22 @@ android {
 }
 
 dependencies {
+    // LeakCanary
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+//    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
+
     // Preferences DataStore (SharedPreferences like APIs)
-    dependencies {
-        implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
-        // optional - RxJava2 support
-        implementation("androidx.datastore:datastore-preferences-rxjava2:1.0.0")
+    // optional - RxJava2 support
+    implementation("androidx.datastore:datastore-preferences-rxjava2:1.0.0")
 
-        // optional - RxJava3 support
-        implementation("androidx.datastore:datastore-preferences-rxjava3:1.0.0")
-    }
+    // optional - RxJava3 support
+    implementation("androidx.datastore:datastore-preferences-rxjava3:1.0.0")
+
 
     // Alternatively - use the following artifact without an Android dependency.
-    dependencies {
-        implementation("androidx.datastore:datastore-preferences-core:1.0.0")
-    }
+    implementation("androidx.datastore:datastore-preferences-core:1.0.0")
 
 
     // ExoPlayer
@@ -122,13 +123,17 @@ dependencies {
 
     // RxBinding
     implementation "com.jakewharton.rxbinding4:rxbinding:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-material:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-core:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-appcompat:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-leanback:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-recyclerview:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-slidingpanelayout:4.0.0"
-    implementation "com.jakewharton.rxbinding4:rxbinding-viewpager2:4.0.0"
+    implementation 'com.jakewharton.rxbinding4:rxbinding-core:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-appcompat:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-drawerlayout:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-leanback:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-recyclerview:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-slidingpanelayout:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-swiperefreshlayout:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-viewpager:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-viewpager2:4.0.0'
+    implementation 'com.jakewharton.rxbinding4:rxbinding-material:4.0.0'
+
     // FlowBinding
     def flowbinding_version = "1.2.0"
     implementation "io.github.reactivecircus.flowbinding:flowbinding-android:${flowbinding_version}"

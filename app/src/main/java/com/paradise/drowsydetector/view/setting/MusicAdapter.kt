@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.ItemMusicBinding
-import com.paradise.drowsydetector.utils.setOnAvoidDuplicateClickFlow
 
 class MusicAdapter(
     private val musicList: MutableList<Music>,
@@ -22,15 +21,15 @@ class MusicAdapter(
 
                 tvItemmusicMusicname.text = music.title
 
-                layoutItemmusic.setOnAvoidDuplicateClickFlow {
+                layoutItemmusic.setOnClickListener {
                     onLayoutClick(music)
                 }
 
-                ivItemmusicEdit.setOnAvoidDuplicateClickFlow {
+                ivItemmusicEdit.setOnClickListener {
                     onEditClick(music)
                 }
 
-                ivItemmusicDelete.setOnAvoidDuplicateClickFlow {
+                ivItemmusicDelete.setOnClickListener {
                     onDeleteClick(music)
                 }
             }

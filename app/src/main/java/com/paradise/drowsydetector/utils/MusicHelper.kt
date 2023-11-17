@@ -5,205 +5,165 @@ import android.media.MediaPlayer
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.data.local.room.music.Music
-import com.paradise.drowsydetector.utils.getUriFromFilePath
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 
 /**
  * Music helper
  *
- * 사용법 :
+ * SettingFragment와 AnalyzeFragment에서 잠깐 사용되기에 조금 더 사용하기 쉽게 클래스로 만들었다.
  *
- *       MusicHelper.Builder()
- *           .setMusic(context, Music or resId)
- *           .setTime(
- *               lifeCycleOwner,
- *               startTime,
- *               duration
- *           )
- *           .startMusic()
- * @property mediaPlayer
- * @property job
+ * MediaPlayer에 Context가 필요해서, 약한 참조 클래스인 WeakReference<Context>로 Context가 가비지 컬렉션 대상이 될 수 있게끔 만들어 혹시 모를 메모리 누수를 방지했다.
+ *
+ * 또한 음악이 한 번에 여러개 재생되는 것을 막고 Context를 보유하는 클래스 개수를 최소화시키고자 싱글톤으로 구현했다.
+ *
+ * @property contextRef
  * @constructor Create empty Music helper
  */
-class MusicHelper private constructor(
-    private val mediaPlayer: MediaPlayer?,
-    private val job: Job?,
-) {
+class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
+    private var mediaPlayer: MediaPlayer? = null
+    private var job: Job? = null
+    private var isPrepared: Boolean = false
+
     /**
-     * Builder : 빌더 패턴
-     *
-     * context, resId, music, lifecycleowner, startTime, duration 등 음악을 한번 재생하는데 필요한 변수들이 너무 많았다.
-     *
-     * 그래서 빌더 패턴으로 구현하였다.
-     * @property mediaPlayer
-     * @property job
-     * @constructor Create empty Builder
+     * Companion
+     * 싱글톤
+     * @constructor Create empty Companion
      */
-    data class Builder(
-        private var mediaPlayer: MediaPlayer? = null,
-        private var job: Job? = null,
-    ) {
-
-        /**
-         * Set music
-         *
-         * 앱 리소스에 있는 파일로 음악을 등록한다.
-         * @param context
-         * @param resId
-         * @return
-         */
-        fun setMusic(context: Context, resId: Int): Builder {
-            releaseMediaPlayer()
-            mediaPlayer = MediaPlayer().apply {
-                // 소리 파일의 데이터 소스 설정
-                val rawDescriptor = context.resources.openRawResourceFd(resId)
-                setDataSource(
-                    rawDescriptor.fileDescriptor,
-                    rawDescriptor.startOffset,
-                    rawDescriptor.length
-                )
-                rawDescriptor.close()
-                prepareAsync()
-            }
-            return this
-        }
-
-        /**
-         * Set music
-         *
-         * Room에 저장된 Music 객체로 음악을 등록한다.
-         * @param context
-         * @param music
-         * @return
-         */
-        fun setMusic(context: Context, music: Music): Builder {
-            releaseMediaPlayer()
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(
-                    context,
-                    getUriFromFilePath(context, music.newPath!!)!!
-                )
-                prepareAsync()
-            }
-            return this
-        }
-
-        /**
-         * Set time
-         *
-         * 빌더에 mediaPlayer에 리스너를 등록하고, 종료 시간을 관리하는 job을 등록 해준다.
-         * @param lifecycleOwner
-         * @param startTime
-         * @param duration
-         * @return
-         */
-        fun setTime(
-            lifecycleOwner: LifecycleOwner,
-            startTime: Int = 0,
-            duration: Long,
-        ): Builder {
-            mediaPlayer?.run {
-                this.setListener(startTime)
-                // mediaPlayer가 null이 아닐 때만 job이 생김
-                job = setDuration(lifecycleOwner, duration)
-            }
-            return this
-        }
-
-        /**
-         * Start music
-         *
-         * 최종 호출 메서드, 모든 설정이 완료되어야 실행됨
-         * @return
-         */
-        fun startMusic(): MusicHelper {
-            return MusicHelper(mediaPlayer, job)
-        }
-
-        /**
-         * Release media player
-         *
-         * 음악을 실행하거나, 실행하고나서 내부 인자를 null처리 해준다.
-         */
-        private fun releaseMediaPlayer() {
-            mediaPlayer?.run {
-                setOnCompletionListener(null) // 리스너 해제
-                stop() // 실행 중이라면 중단
-                release() // 해제
-            }
-            mediaPlayer = null
-            job?.cancel() // 실행 중이라면 중단
-            job = null
-        }
-
-        /**
-         * Set listener
-         *
-         * 음악이 준비되었을 때 동작 리스너, startTime을 따로 설정하지 않으면 처음부터 실행
-         *
-         * 음악이 종료되었을 때 동작 리스너, mediaPlayer와 job 객체를 null 처리 해준다.
-         * @param startTime, 시작 시간(설정 안하면 0)
-         */
-        private fun MediaPlayer.setListener(startTime: Int) {
-            this.setOnPreparedListener {
-                if (startTime > 0) seekTo(startTime)
-                start()
-            }
-            this.setOnCompletionListener {
-                releaseMediaPlayer()
-            }
-        }
-
-        /**
-         * Set duration
-         *
-         * 코루틴으로 종료 시간을 설정한다.
-         * @param lifecycleOwner, 생명주기를 주입받는다.
-         * @param duration, 음악 시간을 설정한다.
-         * @return
-         */
-        private fun setDuration(lifecycleOwner: LifecycleOwner, duration: Long) =
-            lifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                delay(duration)
-                mediaPlayer?.run {
-                    if (isPlaying) {
-                        pause()
-                    }
+    companion object {
+        @Volatile
+        private var instance: MusicHelper? = null
+        fun getInstance(context: Context) =
+            instance ?: synchronized(this) {
+                // LocationSercie 객체를 생성할 때 같이 한번만 객체를 생성한다.
+                instance ?: MusicHelper(WeakReference(context)).also {
+                    instance = it
                 }
             }
-
-
     }
 
-//    private fun playMusic(selectedMusic: Music) {
-//        mediaPlayer = MediaPlayer().apply {
-//            setDataSource(
-//                requireContext(),
-//                getUriFromFilePath(requireContext(), selectedMusic.newPath!!)!!
-//            )
-//
-//            setOnPreparedListener {
-//                seekTo(selectedMusic.startTime.toInt())
-//                start()
-//            }
-//
-//            setOnCompletionListener {
-//                stop()
-//                release()
-//            }
-//
-//            prepareAsync()
-//        }
-//
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            delay(selectedMusic.durationTime)
-//            mediaPlayer?.let {
-//                if (it.isPlaying) {
-//                    it.pause()
-//                }
-//            }
-//        }
-//    }
+    /**
+     * Clear context
+     *
+     * 제일 마지막에 호출하는 함수이다.
+     *
+     * Context를 주입해주는 Activity나 Fragment가 Destroy될 때 주입받은 context 정보를 clear()하고 null 처리했다.
+     */
+    fun clearContext() {
+        releaseMediaPlayer()
+        contextRef?.clear()
+        contextRef = null
+    }
+
+    /**
+     * Release media player
+     *
+     * 내부 변수 mediaPlayer를 초기화 해주거나, 중간에 음악을 멈추거나 할 때 사용하는 함수이다.
+     */
+    fun releaseMediaPlayer() {
+        this.mediaPlayer?.run {
+            if (!isPrepared) { // mediaPlayer가 null은 아닌데 prepared가 되어있지 않다는 것은 아직 prepareAsync()호출 후 비동기적으로 prepare이 동작 중이라는 것이다.
+                release() // 비동기로 prepareAsync()가 동작 중일 땐 isPlaying이나 stop을 호출하면 에러가 발생한다. 그래서 release()만 호출
+            } else {
+                if (this.isPlaying) { // prepare가 된 상태라는 건 음악이 실행되고 있다는 것이다.
+                    stop()
+                    release()
+                }
+                isPrepared = false // 초기화
+            }
+            this.setOnCompletionListener(null) // 리스너 해제
+            this.setOnPreparedListener(null)
+        }
+        job?.cancel() // 음악이 duration 전에 끝날 경우 job을 cancle한다.
+        job = null
+    }
+
+    /**
+     * Start music
+     *
+     * 음악을 실행하는 메서드
+     * @param resId, raw package에 있는 음악 파일을 재생
+     * @param lifecycleOwner
+     */
+    fun startMusic(resId: Int, lifecycleOwner: LifecycleOwner) = contextRef?.get()?.let { context ->
+        val rawDescriptor = context.resources.openRawResourceFd(resId)
+        mediaPlayer = MediaPlayer().apply {
+            setDataSource(
+                rawDescriptor.fileDescriptor,
+                rawDescriptor.startOffset,
+                rawDescriptor.length
+            )
+            setMusic(lifecycleOwner, duration = DEFAULT_MUSIC_DURATION)
+        }
+        rawDescriptor.close()
+    }
+
+    /**
+     * Start music
+     *
+     * @param music, Room에 저장된 외부 저장소의 음악 파일 경로로 음악 재생
+     * @param lifecycleOwner
+     */
+    fun startMusic(music: Music, lifecycleOwner: LifecycleOwner) =
+        contextRef?.get()?.let { context ->
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
+                setMusic(lifecycleOwner, music.startTime.toInt(), music.durationTime)
+            }
+            this@MusicHelper
+        }
+
+    /**
+     * Set music
+     *
+     * 주어진 음악 파일 정보로부터 시작 시간과 지속 시간을 설정한다.
+     * @param lifecycleOwner
+     * @param startTime, 시작 시간(raw 파일 음악 : 기본 0 사용, Room 음악 : 커스텀 가능)
+     * @param duration, (나중에 커스텀화)
+     */
+    private fun MediaPlayer.setMusic(
+        lifecycleOwner: LifecycleOwner,
+        startTime: Int = 0,
+        duration: Long,
+    ) = this.apply {
+        // mediaPlayer가 null이 아닐 때만 job이 생김
+        setListener(startTime)
+        job = setDuration(lifecycleOwner, duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
+    }
+
+    /**
+     * Set listener
+     *
+     * mediaPlayer에 리스너를 등록한다.
+     * @param startTime
+     */
+    private fun MediaPlayer.setListener(startTime: Int) = this.apply {
+        setOnPreparedListener {// 준비 완료 여부 리스너
+            isPrepared = true // 준비가 완료됨!!
+            if (startTime > 0) seekTo(startTime) // 시작 시간이 있다면 그 시간으로 시작 시간을 초기화 한다.
+            start()
+        }
+
+        setOnCompletionListener {// 음악 완료 여부 리스너
+            releaseMediaPlayer()
+        }
+
+        prepareAsync() // 리스너 등록이 끝나면 prepareAsync()를 호출해 비동기로 음악을 준비한다.
+    }
+
+    /**
+     * Set duration
+     *
+     * 음악의 종료 시점을 정한다.
+     * @param lifecycleOwner
+     * @param duration
+     */
+    private fun setDuration(lifecycleOwner: LifecycleOwner, duration: Long) =
+        lifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+            delay(duration)
+            mediaPlayer = null
+            releaseMediaPlayer()
+        }
 }

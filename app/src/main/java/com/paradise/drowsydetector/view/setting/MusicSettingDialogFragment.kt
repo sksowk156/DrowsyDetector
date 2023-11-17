@@ -21,7 +21,6 @@ import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentMusicSettingDialogBinding
 import com.paradise.drowsydetector.utils.getUriFromFilePath
-import com.paradise.drowsydetector.utils.setOnAvoidDuplicateClickFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -142,8 +141,8 @@ class MusicSettingDialogFragment(
 
     private fun initPlayControlButtons() {
         // 재생 or 일시정지 버튼
-        binding.ivSettingdialogController.setOnAvoidDuplicateClickFlow {
-            val player = this.player ?: return@setOnAvoidDuplicateClickFlow
+        binding.ivSettingdialogController.setOnClickListener {
+            val player = this.player ?: return@setOnClickListener
             if (player.isPlaying) {
                 player.pause()
                 updateJob?.cancel()

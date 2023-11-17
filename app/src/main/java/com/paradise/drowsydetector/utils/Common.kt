@@ -116,15 +116,15 @@ const val DROWSY_THREDHOLD = 0.78
 const val TIME_THREDHOLD = 1800
 
 // 좌우 회전 각도 임계값
-const val LEFT_RIGHT_ANGLE_THREDHOLD = 60
+const val LEFT_RIGHT_ANGLE_THREDHOLD = 55
 
 // 위,아래 회전 각도 임계값
-const val UP_DOWN_ANGLE_THREDHOLD = 45
+const val UP_DOWN_ANGLE_THREDHOLD = 40
 
 // 얼굴 각도 및 기준점 설정 상태
-const val STANDARD_IN_ANGLE = 1
-const val OUT_OF_ANGLE = 2
-const val NO_STANDARD = 3
+const val STANDARD_IN_ANGLE = 1 // 기준점을 설정할 수 있는 각도일 때, 측정 각도를 벗어나지 않았을 때
+const val OUT_OF_ANGLE = 2 // 측정 각도를 벗어났을 때
+const val NO_STANDARD = 3 // 아직 기준점이 없을 때
 
 const val PREFERENCES_NAME = "my_preferences" // datasotre 이름
 const val GUIDEMODE = "guide_mode_datastore" // 가까운 휴식 장소 안내를 받을지 안받을지(Boolean)
@@ -133,7 +133,7 @@ const val MUSICVOLUME = "music_volume_datastore" // 음악의 볼륨(Int)
 const val REFRESHMODE = "refresh_mode_datastore" // 환기 주기(Int)
 
 // 한번에 가져오는 주차장 정보 개수
-const val DEFAULT_NUM_OF_ROWS = 250
+const val DEFAULT_NUM_OF_ROWS = 200
 
 // 기본 음악 지속 시간
 const val DEFAULT_MUSIC_DURATION: Long = 3000

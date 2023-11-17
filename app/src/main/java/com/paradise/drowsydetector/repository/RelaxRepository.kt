@@ -1,5 +1,6 @@
 package com.paradise.drowsydetector.repository
 
+import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLot
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotInterface
 import com.paradise.drowsydetector.data.remote.rest.RestInterface
 import com.paradise.drowsydetector.data.remote.shelter.DrowyShelterInterface
@@ -7,16 +8,19 @@ import com.paradise.drowsydetector.utils.BoundingBox
 import com.paradise.drowsydetector.utils.DAY
 import com.paradise.drowsydetector.utils.DEFAULT_NUM_OF_ROWS
 import com.paradise.drowsydetector.utils.ResponseState
+import com.paradise.drowsydetector.utils.defaultDispatcher
+import com.paradise.drowsydetector.utils.ioDispatcher
 import com.paradise.drowsydetector.utils.isInTime
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.cancel
 import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.withContext
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
@@ -34,22 +38,18 @@ class RelaxRepository(
             drowyShelterInterface: DrowyShelterInterface,
             parkingLotInterface: ParkingLotInterface,
             restInterface: RestInterface,
-        ) =
-            instance ?: synchronized(this) {
-                instance ?: RelaxRepository(
-                    drowyShelterInterface,
-                    parkingLotInterface,
-                    restInterface
-                ).also { instance = it }
-            }
+        ) = instance ?: synchronized(this) {
+            instance ?: RelaxRepository(
+                drowyShelterInterface, parkingLotInterface, restInterface
+            ).also { instance = it }
+        }
     }
 
     suspend fun getAllRest(
         boundingBox: BoundingBox,
     ): Flow<ResponseState<List<restItem>>> = flow {
         try {
-            val response =
-                restInterface.getAllRest()
+            val response = restInterface.getAllRest()
             if (response.isSuccessful) {
                 response.body()?.let {
                     val nearShelter = it.response.body.items.filter {
@@ -69,14 +69,13 @@ class RelaxRepository(
         } finally {
             currentCoroutineContext().cancel()
         } as Unit
-    }.flowOn(Dispatchers.IO).cancellable()
+    }.flowOn(ioDispatcher).cancellable()
 
     suspend fun getAllShelter(
         boundingBox: BoundingBox,
     ): Flow<ResponseState<List<shelterItem>>> = flow {
         try {
-            val response =
-                drowyShelterInterface.getAllShelter()
+            val response = drowyShelterInterface.getAllShelter()
             if (response.isSuccessful) {
                 response.body()?.let {
                     val nearShelter = it.response.body.items.filter {
@@ -93,16 +92,8 @@ class RelaxRepository(
             }
         } catch (e: Exception) {
             emit(ResponseState.Error(e))
-        }  finally {
-            currentCoroutineContext().cancel()
-        }as Unit
-    }.flowOn(Dispatchers.IO).cancellable()
-
-    private val parkingLotJobsList = mutableListOf<Flow<ResponseState<List<parkingLotItem>>>>()
-
-    fun cancleParkingLotFlow() {
-        parkingLotJobsList.map {  }
-    }
+        } as Unit
+    }.flowOn(ioDispatcher).cancellable()
 
     suspend fun getParkingLots(
         boundingBox: BoundingBox,
@@ -111,12 +102,8 @@ class RelaxRepository(
         day: DAY,
         nowTime: String,
     ) = (1..numOfCoroutineRequired).map {
-        getPartParkingLot(
-            it,
-            boundingBox,
-            parkingchargeInfo,
-            day,
-            nowTime
+        getParkingLot1(
+            it, boundingBox, parkingchargeInfo, day, nowTime
         )
     }
 
@@ -124,56 +111,69 @@ class RelaxRepository(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
-    ): Flow<ResponseState<List<Flow<ResponseState<List<parkingLotItem>>>>>> =
-        flow {
-            try {
-                val response =
-                    parkingLotInterface.getAllParkingLot(
-                        pageNo = 1,
-                        numOfRows = 1,
-                        parkingchrgeInfo = "무료"
-                    )
+    ): Flow<ResponseState<List<Flow<ResponseState<List<parkingLotItem>>>>>> = flow {
+        try {
+            val response = parkingLotInterface.getAllParkingLot(
+                pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
+            )
 
-                if (response.isSuccessful) {
-                    response.body()?.let {
-                        val totalCount = it.response.body.totalCount.toInt()
-                        var numOfCoroutineRequired = totalCount / numOfRows
-                        if (totalCount % numOfRows != 0) numOfCoroutineRequired++
-                        emit(
-                            ResponseState.Success(
-                                getParkingLots(
-                                    boundingBox = boundingBox,
-                                    parkingchargeInfo = parkingchargeInfo,
-                                    numOfCoroutineRequired = numOfCoroutineRequired,
-                                    day = day,
-                                    nowTime = nowTime
-                                )
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    val totalCount = it.response.body.totalCount.toInt()
+                    var numOfCoroutineRequired = totalCount / numOfRows
+                    if (totalCount % numOfRows != 0) numOfCoroutineRequired++
+                    emit(
+                        ResponseState.Success(
+                            getParkingLots(
+                                boundingBox = boundingBox,
+                                parkingchargeInfo = parkingchargeInfo,
+                                numOfCoroutineRequired = numOfCoroutineRequired,
+                                day = day,
+                                nowTime = nowTime
                             )
                         )
-                    }
-                } else {
-                    emit(ResponseState.Fail(response.code(), response.message()))
-                }
-            } catch (e: Exception) {
-                emit(ResponseState.Error(e))
-            }  finally {
-                currentCoroutineContext().cancel()
-            }as Unit
-        }.flowOn(Dispatchers.IO).cancellable()
-
-    suspend fun getPartParkingLot(
-        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
-    ): Flow<ResponseState<List<parkingLotItem>>> =
-        flow {
-            try {
-                val response =
-                    parkingLotInterface.getAllParkingLot(
-                        pageNo = pageNo,
-                        parkingchrgeInfo = parkingchargeInfo
                     )
-                if (response.isSuccessful) {
-                    response.body()?.let { parkingLot ->
-                        val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+                }
+            } else {
+                emit(ResponseState.Fail(response.code(), response.message()))
+            }
+        } catch (e: Exception) {
+            emit(ResponseState.Error(e))
+        } as Unit
+    }.flowOn(defaultDispatcher).cancellable()
+
+    suspend fun getOneParkingLot(
+        boundingBox: BoundingBox,
+        parkingchargeInfo: String,
+        numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
+    ) = flow {
+        val response = parkingLotInterface.getAllParkingLot(
+            pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
+        )
+        emit(response)
+    }.flowOn(defaultDispatcher).cancellable()
+
+    /**
+     * Get parking lot1
+     *
+     * ioDispatcher 내부에서 withContext로 defaultDisptcher를 잠시 생성해 연산한다.
+     * @param pageNo
+     * @param boundingBox
+     * @param parkingchargeInfo
+     * @param day
+     * @param nowTime
+     */
+    suspend fun getParkingLot1(
+        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
+    ) = flow {
+        try {
+            val response = parkingLotInterface.getAllParkingLot(
+                pageNo = pageNo, parkingchrgeInfo = parkingchargeInfo
+            )
+            if (response.isSuccessful) {
+                response.body()?.let { parkingLot ->
+                    val freeParkingLot = withContext(defaultDispatcher) {
+                        parkingLot.response.body.items.filter { item1 ->
                             val lat = item1.latitude.toDoubleOrNull()
                             if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
                             else false
@@ -183,21 +183,107 @@ class RelaxRepository(
                             else false
                         }.filter { item3 ->
                             isInTime(
-                                day = day,
-                                nowTime = nowTime,
-                                item = item3
+                                day = day, nowTime = nowTime, item = item3
                             ) // 현재 시간에 운영하고 있는지 확인
                         }
-                        emit(ResponseState.Success(freeParkingLot.toList()))
                     }
-                } else {
-                    emit(ResponseState.Fail(response.code(), response.message()))
+
+                    emit(ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
                 }
-            } catch (e: Exception) {
-                emit(ResponseState.Error(e))
-            }  finally {
-                currentCoroutineContext().cancel()
-            }as Unit
-        }.flowOn(Dispatchers.Default).cancellable()
+            } else {
+                emit(ResponseState.Fail(response.code(), response.message()))
+            }
+        } catch (e: Exception) {
+            emit(ResponseState.Error(e))
+        } as Unit
+    }.flowOn(ioDispatcher).cancellable()
+
+    /**
+     * Get parking lot2
+     *
+     * flowOn을 사용해 데이터를 filter할 때 context를 스위칭한다.(context 스위칭에 오버헤드가 더 크므로 getParkingLot1를 사용)
+     * @param pageNo
+     * @param boundingBox
+     * @param parkingchargeInfo
+     * @param day
+     * @param nowTime
+     */
+//    suspend fun getParkingLot2(
+//        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
+//    ) = flow {
+//        emit(
+//            parkingLotInterface.getAllParkingLot(
+//                pageNo = pageNo, parkingchrgeInfo = parkingchargeInfo
+//            )
+//        )
+//    }.flowOn(ioDispatcher).cancellable()
+//        .flowOn(defaultDispatcher)
+//        .catch { ResponseState.Error<List<parkingLotItem>>(it) }
+//        .mapNotNull { response ->
+//            if (response.isSuccessful) {
+//                response.body()?.let { parkingLot ->
+//                    val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+//                        val lat = item1.latitude.toDoubleOrNull()
+//                        if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
+//                        else false
+//                    }.filter { item2 ->
+//                        val lon = item2.longitude.toDoubleOrNull()
+//                        if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
+//                        else false
+//                    }.filter { item3 ->
+//                        isInTime(
+//                            day = day, nowTime = nowTime, item = item3
+//                        ) // 현재 시간에 운영하고 있는지 확인
+//                    }
+//                    (ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
+//                }
+//            } else {
+//                (ResponseState.Fail<List<parkingLotItem>>(response.code(), response.message()))
+//            }
+//        }.cancellable()
+
+    /**
+     * Get parking lot3
+     *
+     * 데이터 filter 또한 ioDispatcher에서 수행한다.
+     * @param pageNo
+     * @param boundingBox
+     * @param parkingchargeInfo
+     * @param day
+     * @param nowTime
+     * @return
+     */
+//    suspend fun getParkingLot3(
+//        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
+//    ): Flow<ResponseState<List<parkingLotItem>>> = flow {
+//        try {
+//            val response = parkingLotInterface.getAllParkingLot(
+//                pageNo = pageNo, parkingchrgeInfo = parkingchargeInfo
+//            )
+//            if (response.isSuccessful) {
+//                response.body()?.let { parkingLot ->
+//                    val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+//                        val lat = item1.latitude.toDoubleOrNull()
+//                        if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
+//                        else false
+//                    }.filter { item2 ->
+//                        val lon = item2.longitude.toDoubleOrNull()
+//                        if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
+//                        else false
+//                    }.filter { item3 ->
+//                        isInTime(
+//                            day = day, nowTime = nowTime, item = item3
+//                        ) // 현재 시간에 운영하고 있는지 확인
+//                    }
+//                    emit(ResponseState.Success(freeParkingLot.toList()))
+//                }
+//            } else {
+//                emit(ResponseState.Fail(response.code(), response.message()))
+//            }
+//        } catch (e: Exception) {
+//            emit(ResponseState.Error(e))
+//        } as Unit
+//    }.flowOn(ioDispatcher).cancellable()
+
 
 }

@@ -16,8 +16,6 @@ import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 
 class HomeFragment :
     BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
-
-    val analyzeViewModel: AnalyzeViewModel by activityViewModels()
     override fun onViewCreated() {
         binding.btHomeToanalyze.setOnAvoidDuplicateClick {
             checkPermissions(arrayOf(Manifest.permission.CAMERA)) {

@@ -44,7 +44,7 @@ class SettingFragment :
     //    private var mediaPlayer: MediaPlayer? = null
     private val musicViewModel: MusicViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
-
+    private var musicHelper: MusicHelper? = null
     override fun onViewCreated() {
         with(binding) {
             toolbarSetting.setToolbarMenu("설정", true)
@@ -81,7 +81,7 @@ class SettingFragment :
                 settingViewModel.setSettingMode(GUIDEMODE, isChecked)
             }
 
-            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED){
+            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
                 musicViewModel.music.collect { musicList ->
                     if (musicList != null) {
                         Log.d("whatisthis", musicList.toString())
@@ -94,25 +94,38 @@ class SettingFragment :
 
     override fun onPause() {
         super.onPause()
+        if (musicHelper != null) {
+            musicHelper?.releaseMediaPlayer()
+            musicHelper = null
+        }
     }
 
     override fun onDestroyViewInFragMent() {
+        if (musicHelper != null) {
+            musicHelper?.clearContext()
+            musicHelper = null
+        }
     }
 
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
-                MusicHelper.Builder()
-                    .setMusic(requireContext(), selectedMusic)
-                    .setTime(
-                        viewLifecycleOwner,
-                        startTime = selectedMusic.startTime.toInt(),
-                        duration = selectedMusic.durationTime
-                    )
-                    .startMusic()
+                if (musicHelper != null) {
+                    musicHelper?.releaseMediaPlayer()
+                    musicHelper = null
+                } else {
+                    musicHelper = MusicHelper.getInstance(requireContext())
+                        .startMusic(selectedMusic, viewLifecycleOwner)
+                }
             }, { selectedMusic ->
+                if (musicHelper != null) {
+                    musicHelper?.releaseMediaPlayer()
+                }
                 showDialog(selectedMusic)
             }, { selectedMusic ->
+                if (musicHelper != null) {
+                    musicHelper?.releaseMediaPlayer()
+                }
                 deleteMusic(selectedMusic)
             })
 
