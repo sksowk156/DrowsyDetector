@@ -32,16 +32,31 @@ class MusicSettingDialogFragment(
     private val onSaveClick: (music: Music) -> Unit,
 ) : DialogFragment() {
 
-    private lateinit var binding: FragmentMusicSettingDialogBinding
+    private var _binding: FragmentMusicSettingDialogBinding? = null
+    val binding get() = _binding!!
 
     private var player: ExoPlayer? = null
     private var updateJob: Job? = null
     private var stopJob: Job? = null
 
+    override fun onPause() {
+        super.onPause()
+        player?.pause()
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        player?.release()
+        player = null
+        updateJob = null
+        stopJob = null
+        _binding = null
+        super.onDismiss(dialog)
+    }
+
     @SuppressLint("UseGetLayoutInflater")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return activity?.let {
-            this.binding =
+            this._binding =
                 FragmentMusicSettingDialogBinding.inflate(LayoutInflater.from(it))
             val dialogLayout = this.binding.root
 
@@ -69,19 +84,6 @@ class MusicSettingDialogFragment(
                 create()
             }
         } ?: throw IllegalStateException("Activity cannot be null")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        player?.pause()
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        super.onDismiss(dialog)
-        player?.release()
-        player = null
-        updateJob = null
-        stopJob = null
     }
 
     private fun initPlayer(context: Context) {

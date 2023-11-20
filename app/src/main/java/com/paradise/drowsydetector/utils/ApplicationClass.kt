@@ -13,6 +13,7 @@ import com.paradise.drowsydetector.data.remote.shelter.DrowsyShelterService
 import com.paradise.drowsydetector.repository.MusicRepository
 import com.paradise.drowsydetector.repository.RelaxRepository
 import com.paradise.drowsydetector.repository.SettingRepository
+import com.paradise.drowsydetector.repository.StaticsRepository
 import java.util.Locale
 
 class ApplicationClass : Application() {
@@ -50,6 +51,15 @@ class ApplicationClass : Application() {
     val settingRepository by lazy {
         SettingRepository.getInstance(
             dataStore = dataStore
+        )
+    }
+
+
+    val staticRepository by lazy {
+        StaticsRepository.getInstance(
+            recordDao = database.recordDao(),
+            winkCountDao = database.winkCountDao(),
+            drowsyCountDao = database.drowsyCountDao()
         )
     }
 

@@ -28,7 +28,7 @@ class ParkingLotService {
             return OkHttpClient.Builder()
                 .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
                 .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
-                .addInterceptor(RetrofitInterceptor())
+//                .addInterceptor(RetrofitInterceptor())
                 .build()
         }
     }

@@ -1,6 +1,5 @@
 package com.paradise.drowsydetector.repository
 
-import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLot
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotInterface
 import com.paradise.drowsydetector.data.remote.rest.RestInterface
 import com.paradise.drowsydetector.data.remote.shelter.DrowyShelterInterface
@@ -14,13 +13,11 @@ import com.paradise.drowsydetector.utils.isInTime
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.withContext
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
@@ -52,14 +49,27 @@ class RelaxRepository(
             val response = restInterface.getAllRest()
             if (response.isSuccessful) {
                 response.body()?.let {
-                    val nearShelter = it.response.body.items.filter {
-                        val lat = it.latitude.toDouble()
-                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
-                    }.filter {
-                        val lon = it.longitude.toDouble()
-                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
-                    }
-                    emit(ResponseState.Success(nearShelter))
+                    val nearRest = mutableListOf<restItem>()
+                    it.response.body.items.asFlow().flowOn(defaultDispatcher)
+                        .filter { item ->
+                            val lat = item.latitude.toDoubleOrNull()
+                            val lon = item.longitude.toDoubleOrNull()
+                            val inLatRange =
+                                lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                            val inLonRange =
+                                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                            inLatRange && inLonRange
+                        }.collect { item ->
+                            nearRest.add(item)
+                        }
+//                    val nearRest = it.response.body.items.filter {
+//                        val lat = it.latitude.toDouble()
+//                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
+//                    }.filter {
+//                        val lon = it.longitude.toDouble()
+//                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
+//                    }
+                    emit(ResponseState.Success(nearRest))
                 }
             } else {
                 emit(ResponseState.Fail(response.code(), response.message()))
@@ -78,13 +88,27 @@ class RelaxRepository(
             val response = drowyShelterInterface.getAllShelter()
             if (response.isSuccessful) {
                 response.body()?.let {
-                    val nearShelter = it.response.body.items.filter {
-                        val lat = it.latitude.toDouble()
-                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
-                    }.filter {
-                        val lon = it.longitude.toDouble()
-                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
-                    }
+                    val nearShelter = mutableListOf<shelterItem>()
+                    it.response.body.items.asFlow().flowOn(defaultDispatcher)
+                        .filter { item ->
+                            val lat = item.latitude.toDoubleOrNull()
+                            val lon = item.longitude.toDoubleOrNull()
+                            val inLatRange =
+                                lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                            val inLonRange =
+                                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                            inLatRange && inLonRange
+                        }.collect { item ->
+                            nearShelter.add(item)
+                        }
+
+//                    val nearShelter = it.response.body.items.filter {
+//                        val lat = it.latitude.toDouble()
+//                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
+//                    }.filter {
+//                        val lon = it.longitude.toDouble()
+//                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
+//                    }
                     emit(ResponseState.Success(nearShelter))
                 }
             } else {
@@ -95,23 +119,21 @@ class RelaxRepository(
         } as Unit
     }.flowOn(ioDispatcher).cancellable()
 
-    suspend fun getParkingLots(
+    suspend fun getParkingLots1(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
         day: DAY,
         nowTime: String,
     ) = (1..numOfCoroutineRequired).map {
-        getParkingLot1(
-            it, boundingBox, parkingchargeInfo, day, nowTime
-        )
+        getParkingLot1(it, boundingBox, parkingchargeInfo, day, nowTime)
     }
 
     suspend fun getAllParkingLot(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
-    ): Flow<ResponseState<List<Flow<ResponseState<List<parkingLotItem>>>>>> = flow {
+    ) = flow {
         try {
             val response = parkingLotInterface.getAllParkingLot(
                 pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
@@ -124,7 +146,7 @@ class RelaxRepository(
                     if (totalCount % numOfRows != 0) numOfCoroutineRequired++
                     emit(
                         ResponseState.Success(
-                            getParkingLots(
+                            getParkingLots1(
                                 boundingBox = boundingBox,
                                 parkingchargeInfo = parkingchargeInfo,
                                 numOfCoroutineRequired = numOfCoroutineRequired,
@@ -140,17 +162,6 @@ class RelaxRepository(
         } catch (e: Exception) {
             emit(ResponseState.Error(e))
         } as Unit
-    }.flowOn(defaultDispatcher).cancellable()
-
-    suspend fun getOneParkingLot(
-        boundingBox: BoundingBox,
-        parkingchargeInfo: String,
-        numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
-    ) = flow {
-        val response = parkingLotInterface.getAllParkingLot(
-            pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
-        )
-        emit(response)
     }.flowOn(defaultDispatcher).cancellable()
 
     /**
@@ -172,23 +183,40 @@ class RelaxRepository(
             )
             if (response.isSuccessful) {
                 response.body()?.let { parkingLot ->
-                    val freeParkingLot = withContext(defaultDispatcher) {
-                        parkingLot.response.body.items.filter { item1 ->
-                            val lat = item1.latitude.toDoubleOrNull()
-                            if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
-                            else false
-                        }.filter { item2 ->
-                            val lon = item2.longitude.toDoubleOrNull()
-                            if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
-                            else false
-                        }.filter { item3 ->
-                            isInTime(
-                                day = day, nowTime = nowTime, item = item3
-                            ) // 현재 시간에 운영하고 있는지 확인
-                        }
-                    }
+                    val freeParkingLot = mutableListOf<parkingLotItem>()
 
-                    emit(ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
+                    parkingLot.response.body.items.asFlow().flowOn(defaultDispatcher)
+                        .filter { item ->
+                            val lat = item.latitude.toDoubleOrNull()
+                            val lon = item.longitude.toDoubleOrNull()
+                            val inLatRange =
+                                lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                            val inLonRange =
+                                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                            val inTime = isInTime(day = day, nowTime = nowTime, item = item)
+                            inLatRange && inLonRange && inTime
+                        }.collect { item ->
+                            freeParkingLot.add(item)
+                        }
+
+                    emit(ResponseState.Success(freeParkingLot))
+//                    val freeParkingLot = withContext(defaultDispatcher) {
+//                        parkingLot.response.body.items.filter { item1 ->
+//                            val lat = item1.latitude.toDoubleOrNull()
+//                            if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
+//                            else false
+//                        }.filter { item2 ->
+//                            val lon = item2.longitude.toDoubleOrNull()
+//                            if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
+//                            else false
+//                        }.filter { item3 ->
+//                            isInTime(
+//                                day = day, nowTime = nowTime, item = item3
+//                            ) // 현재 시간에 운영하고 있는지 확인
+//                        }
+//                    }
+
+//                    emit(ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
                 }
             } else {
                 emit(ResponseState.Fail(response.code(), response.message()))
@@ -197,6 +225,50 @@ class RelaxRepository(
             emit(ResponseState.Error(e))
         } as Unit
     }.flowOn(ioDispatcher).cancellable()
+
+    /**
+     * Get one parking lot
+     *
+     * 데이터를 하나를 먼저 요청하는 부분을 위 코드와 다르게 따로 빼서 실행함
+     * @return
+     */
+//    suspend fun getOneParkingLot(): Flow<ResponseState<ParkingLot>> = flow {
+//        try {
+//            val response = parkingLotInterface.getAllParkingLot(
+//                pageNo = 1,
+//                numOfRows = 1,
+//                parkingchrgeInfo = "무료"
+//            )
+//            if (response.isSuccessful) {
+//                response.body()?.let {
+//                    emit(ResponseState.Success(it))
+//                }
+//            } else {
+//                emit(ResponseState.Fail(response.code(), response.message()))
+//            }
+//        } catch (e: Exception) {
+//            emit(ResponseState.Error(e))
+//        } as Unit
+//    }.flowOn(defaultDispatcher).cancellable()
+//
+//    suspend fun getAllParkingLot(
+//        boundingBox: BoundingBox,
+//        parkingchargeInfo: String,
+//        numOfCoroutineRequired: Int,
+//        day: DAY,
+//        nowTime: String,
+//    ) = combine((1..numOfCoroutineRequired).map {
+//        getParkingLot1(it, boundingBox, parkingchargeInfo, day, nowTime)
+//    }) { responses ->
+//        try {
+//            val combinedList =
+//                responses.filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
+//                    .flatMap { it.data }
+//            ResponseState.Success(combinedList)
+//        } catch (error: Throwable) {
+//            ResponseState.Error(error)
+//        }
+//    }.cancellable()
 
     /**
      * Get parking lot2
@@ -222,20 +294,31 @@ class RelaxRepository(
 //        .mapNotNull { response ->
 //            if (response.isSuccessful) {
 //                response.body()?.let { parkingLot ->
-//                    val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+//                    parkingLot.response.body.items.asFlow().filter { item1 ->
 //                        val lat = item1.latitude.toDoubleOrNull()
-//                        if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
-//                        else false
+//                        lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
 //                    }.filter { item2 ->
 //                        val lon = item2.longitude.toDoubleOrNull()
-//                        if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
-//                        else false
+//                        lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
 //                    }.filter { item3 ->
-//                        isInTime(
-//                            day = day, nowTime = nowTime, item = item3
-//                        ) // 현재 시간에 운영하고 있는지 확인
-//                    }
-//                    (ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
+//                        isInTime(day = day, nowTime = nowTime, item = item3)
+//                    }.toList().let { freeParkingLot ->
+//                            ResponseState.Success<List<parkingLotItem>>(freeParkingLot)
+//                        }
+////                    val freeParkingLot = parkingLot.response.body.items.filter { item1 ->
+////                        val lat = item1.latitude.toDoubleOrNull()
+////                        if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
+////                        else false
+////                    }.filter { item2 ->
+////                        val lon = item2.longitude.toDoubleOrNull()
+////                        if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
+////                        else false
+////                    }.filter { item3 ->
+////                        isInTime(
+////                            day = day, nowTime = nowTime, item = item3
+////                        ) // 현재 시간에 운영하고 있는지 확인
+////                    }
+////                    (ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
 //                }
 //            } else {
 //                (ResponseState.Fail<List<parkingLotItem>>(response.code(), response.message()))

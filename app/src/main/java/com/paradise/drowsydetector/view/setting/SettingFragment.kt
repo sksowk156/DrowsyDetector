@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
@@ -45,16 +46,33 @@ class SettingFragment :
     private val musicViewModel: MusicViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private var musicHelper: MusicHelper? = null
+
+    override fun onPause() {
+        super.onPause()
+        if (musicHelper != null) {
+            musicHelper?.releaseMediaPlayer()
+            musicHelper = null
+        }
+    }
+
+    override fun onDestroyViewInFragMent() {
+        if (musicHelper != null) {
+            musicHelper?.clearContext()
+            musicHelper = null
+        }
+    }
+
     override fun onViewCreated() {
         with(binding) {
             toolbarSetting.setToolbarMenu("설정", true)
+
             val regionArray = resources.getStringArray(R.array.refresh_period)
             val arrayAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, regionArray)
             autoCompleteTextViewSetting.setAdapter(arrayAdapter)
             autoCompleteTextViewSetting.itemClickEvents()
                 .onEach {
                     showToast(regionArray[it.position])
-                }.launchIn(mainScope)
+                }.launchIn(viewLifecycleOwner.lifecycleScope)
 
             btSettingUsermusic.setOnAvoidDuplicateClick {
                 binding.layoutSettingMusiclistbackground.visibility = View.VISIBLE
@@ -92,27 +110,11 @@ class SettingFragment :
         }
     }
 
-    override fun onPause() {
-        super.onPause()
-        if (musicHelper != null) {
-            musicHelper?.releaseMediaPlayer()
-            musicHelper = null
-        }
-    }
-
-    override fun onDestroyViewInFragMent() {
-        if (musicHelper != null) {
-            musicHelper?.clearContext()
-            musicHelper = null
-        }
-    }
-
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
                 if (musicHelper != null) {
                     musicHelper?.releaseMediaPlayer()
-                    musicHelper = null
                 } else {
                     musicHelper = MusicHelper.getInstance(requireContext())
                         .startMusic(selectedMusic, viewLifecycleOwner)

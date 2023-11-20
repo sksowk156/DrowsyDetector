@@ -14,11 +14,16 @@ import com.paradise.drowsydetector.utils.checkPermissions
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
+import com.paradise.drowsydetector.viewmodel.StaticsViewModel
 
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
     val analyzeViewModel: AnalyzeViewModel by viewModels() {
         AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepository)
+    }
+
+    val staticsViewModel: StaticsViewModel by viewModels() {
+        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
     }
 
     val musicViewModel: MusicViewModel by viewModels() {
@@ -40,7 +45,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             showToast("권한 허용")
             analyzeViewModel.checkDrowsy
         }
-
+        staticsViewModel.getAllRecord()
         settingViewModel.getSettingMode(GUIDEMODE)
         musicViewModel.getAllMusic()
     }

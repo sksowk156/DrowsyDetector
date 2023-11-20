@@ -21,7 +21,6 @@ import com.paradise.drowsydetector.utils.FragmentInflate
 import com.paradise.drowsydetector.utils.INPUT_COMPLETE_TIME
 import com.paradise.drowsydetector.utils.RXERROR
 import com.paradise.drowsydetector.utils.mainDispatcher
-import com.paradise.drowsydetector.utils.mainScope
 import com.paradise.drowsydetector.utils.showToast
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -72,12 +71,13 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
 
     override fun onDestroyView() {
         onDestroyViewInFragMent()
-        _binding = null
         compositeDisposable.dispose() // compositeDisposable 해제
+        _binding = null
         super.onDestroyView()
     }
 
     val jobList = mutableListOf<Job>()
+
     val executorList = mutableListOf<ExecutorService>()
 
     /**
@@ -92,27 +92,28 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
      * 부모 fragment의 stack이 비었다면 그것은 Activity에 붙어 있는 가장 첫번째 fragment이므로 앱을 종료한다.
      * @author 진혁
      */
+    var inBackPress = false
     private fun initBackPressCallback() {
         // FlowBinding의 backPresses 확장함수를 활용하는 방법
         requireActivity().onBackPressedDispatcher.backPresses(viewLifecycleOwner)
             .onEach {
+                val jobListCopy = mutableListOf<Job>()
+                inBackPress = true
                 viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
-                    Log.d("whatisthis", "dd")
-                    val temp = jobList.iterator()
-                    while (temp.hasNext()) {
-                        temp.next().cancelAndJoin()
-                    }
-                    Log.d("whatisthis", "dd22")
                     executorList.forEach { it.shutdownNow() }
-                    jobList.clear()
-                    executorList.clear()
+                    jobListCopy.addAll(jobList) // 복사
+                    for (i in jobListCopy) {
+                        if (i.isCancelled) continue // 종료된거면 종료 X
+                        i.cancelAndJoin() // 진행이 끝났을 때 종료
+                    }
+                    jobListCopy.clear()
                     if (parentFragmentManager.backStackEntryCount > 0) {
                         parentFragmentManager.popBackStackImmediate(null, 0)
                     } else {
                         requireActivity().finish()
                     }
                 }
-            }.launchIn(mainScope)
+            }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     /**

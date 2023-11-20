@@ -12,14 +12,15 @@ import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.calculateDistance
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.ioDispatcher
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
@@ -109,12 +110,6 @@ class AnalyzeViewModel(
         MutableStateFlow(ResponseState.Uninitialized)
     val parkingLots: StateFlow<ResponseState<List<parkingLotItem>>> get() = _parkingLots.asStateFlow()
 
-
-    var job: Job? = null
-
-    private val _jobList: MutableStateFlow<Job> = MutableStateFlow(Job())
-    val jobList: StateFlow<Job> get() = _jobList.asStateFlow()
-
     /**
      * Get a l l near parking lot
      *
@@ -136,19 +131,25 @@ class AnalyzeViewModel(
         try {
             relaxRepository.getAllParkingLot(
                 boundingBox, parkingchargeInfo, numOfRows, day, nowTime
-            ).collect {
+            ).catch { error ->
+                _parkingLots.value = ResponseState.Error(error)
+            }.collect {
+
                 if (it is ResponseState.Success) {
                     combine(it.data) { responses ->
                         val combinedList =
                             responses.filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
                                 .flatMap { it.data }
                         ResponseState.Success(combinedList)
-                    }.catch { error ->
+                    }.cancellable().catch { error ->
                         _parkingLots.value = ResponseState.Error(error)
-                    }.collect { listItem ->
+                    }.collectLatest { listItem ->
                         _parkingLots.value = listItem
                     }
+                } else if (it is ResponseState.Fail) {
+                    _parkingLots.value = ResponseState.Fail(it.code, it.message)
                 }
+
             }
         } catch (error: Throwable) {
             _parkingLots.value = ResponseState.Error(error)
@@ -174,6 +175,47 @@ class AnalyzeViewModel(
                 )
             })
         }
+
+//    private val _oneParkingLot: MutableStateFlow<ResponseState<ParkingLot>> =
+//        MutableStateFlow(ResponseState.Uninitialized)
+//    val oneParkingLot: StateFlow<ResponseState<ParkingLot>> get() = _oneParkingLot.asStateFlow()
+//    fun getOneParkingLot() =
+//        viewModelScope.launch(defaultDispatcher) {
+//            try {
+//                relaxRepository.getOneParkingLot().collect {
+//                    _oneParkingLot.value = it
+//                }
+//            } catch (error: Throwable) {
+//                _oneParkingLot.value = ResponseState.Error(error)
+//            }
+//        }
+//
+//    private val _parkingLots: MutableStateFlow<ResponseState<List<parkingLotItem>>> =
+//        MutableStateFlow(ResponseState.Uninitialized)
+//    val parkingLots: StateFlow<ResponseState<List<parkingLotItem>>> get() = _parkingLots.asStateFlow()
+//    fun getALLNearParkingLot(
+//        boundingBox: BoundingBox,
+//        numOfCoroutineRequired: Int,
+//        day: DAY,
+//        nowTime: String,
+//        parkingchargeInfo: String = "무료",
+//    ) = viewModelScope.launch(defaultDispatcher) {
+//        _parkingLots.value = ResponseState.Loading
+//        try {
+//            relaxRepository.getAllParkingLot(
+//                boundingBox = boundingBox,
+//                numOfCoroutineRequired = numOfCoroutineRequired,
+//                day = day,
+//                nowTime = nowTime,
+//                parkingchargeInfo = parkingchargeInfo
+//                ).collectLatest {
+//                _parkingLots.value = it
+//            }
+//        } catch (error: Throwable) {
+//            _parkingLots.value = ResponseState.Error(error)
+//        }
+//    }
+
 
     /**
      * Get near parking lot2

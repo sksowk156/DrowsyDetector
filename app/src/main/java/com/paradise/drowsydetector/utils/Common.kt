@@ -33,6 +33,7 @@ import java.lang.Math.cos
 import java.lang.Math.sin
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Random
 
@@ -65,6 +66,12 @@ const val STATISTIC = "statistic"
 const val CUURRENTFRAGMENTTAG = "currentfragment"
 
 enum class DAY { WEEKDAY, SAT, HOLIDAY }
+
+fun getTodayDate(): String {
+    val currentDate = LocalDate.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+    return currentDate.format(formatter)
+}
 
 fun getDayType(): DAY = when (LocalDate.now().dayOfWeek) {
     in DayOfWeek.MONDAY..DayOfWeek.FRIDAY -> DAY.WEEKDAY
@@ -110,10 +117,10 @@ fun compareTime(nowTime: String, openTime: String?, closeTime: String?) =
 const val SMILE_THREDHOLD = 0.9
 
 // 졸음 인식 EAR 임계값
-const val DROWSY_THREDHOLD = 0.78
+const val DROWSY_THREDHOLD = 0.8
 
 // 졸음 인식 지속 시간 임계값
-const val TIME_THREDHOLD = 1800
+const val TIME_THREDHOLD = 1500
 
 // 좌우 회전 각도 임계값
 const val LEFT_RIGHT_ANGLE_THREDHOLD = 55
