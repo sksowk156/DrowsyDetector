@@ -12,16 +12,19 @@ interface RecordDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRecord(drowsyRecord: DrowsyRecord)
 
-    @Query("SELECT * FROM DrowsyRecord WHERE id = :id")
+    @Query("SELECT * FROM drowsy_table WHERE id = :id")
     fun getRecord(id: Int): Flow<DrowsyRecord>
 
-    @Query("SELECT * FROM DrowsyRecord WHERE time = :time")
+    @Query("SELECT * FROM drowsy_table WHERE time = :time")
     fun getRecord(time: String): Flow<DrowsyRecord>
 
-    @Query("SELECT * FROM DrowsyRecord")
+    @Query("SELECT * FROM drowsy_table")
     fun getAllRecord(): Flow<List<DrowsyRecord>>
 
     @Delete
     suspend fun deleteRecord(drowsyRecord: DrowsyRecord)
+
+    @Query("DELETE FROM drowsy_table")
+    suspend fun deleteAllRecords()
 
 }

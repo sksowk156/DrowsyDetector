@@ -45,7 +45,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             showToast("권한 허용")
             analyzeViewModel.checkDrowsy
         }
-        staticsViewModel.getAllRecord()
+        staticsViewModel.deleteAllRecords()
         settingViewModel.getSettingMode(GUIDEMODE)
         musicViewModel.getAllMusic()
     }

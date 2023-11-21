@@ -2,13 +2,15 @@ package com.paradise.drowsydetector.data.local.room.record
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(tableName = "drowsy_table", indices = [Index(value = ["id"], unique = true)])
 data class DrowsyRecord(
     @ColumnInfo(name = "time") // 총 감지 시간
     val time: String? = "",
     @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
     val id: Int = 0,    // 음원 자체의 ID
 )
 

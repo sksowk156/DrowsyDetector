@@ -44,22 +44,34 @@ class StaticsRepository(
         recordDao.deleteRecord(drowsyRecord)
     }
 
+    suspend fun deleteAllRecords() {
+        recordDao.deleteAllRecords()
+    }
+
 
     // WinkCount
     suspend fun insertWinkCount(winkCount: WinkCount) {
         winkCountDao.insertWinkCount(winkCount)
     }
 
-    fun getAllWinkCount(recordId: Int) =
-        winkCountDao.getAllWinkCount(recordId)
+    fun getWinkCount(recordId: Int) = winkCountDao.getWinkCount(recordId)
 
+    fun getAllWinkCount() = winkCountDao.getAllWinkCount()
+
+    suspend fun deleteAllWinkCount() = winkCountDao.deleteAllWinkCount()
 
     // DrowsyCount
     suspend fun insertDrowsyCount(drowsyCount: DrowsyCount) {
         drowsyCountDao.insertDrowsyCount(drowsyCount)
     }
 
-    fun getAllDrowsyCount(recordId: Int) =
-        drowsyCountDao.getAllDrowsyCount(recordId)
+    fun getDrowsyCount(recordId: Int) =
+        drowsyCountDao.getDrowsyCount(recordId)
 
+    fun getAllDrowsyCount() =
+        drowsyCountDao.getAllDrowsyCount()
+
+    suspend fun deleteAllDrowsyCount(){
+        drowsyCountDao.deleteAllDrowsyCount()
+    }
 }

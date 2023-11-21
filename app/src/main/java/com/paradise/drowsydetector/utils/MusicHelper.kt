@@ -55,6 +55,7 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
         releaseMediaPlayer()
         contextRef?.clear()
         contextRef = null
+        instance= null
     }
 
     /**

@@ -45,6 +45,7 @@ import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.getRandomElement
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
+import com.paradise.drowsydetector.utils.mainDispatcher
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
@@ -136,10 +137,9 @@ class AnalyzeFragment :
         executorList.add(cameraExecutor)
         overlay = binding.analyzeOverlay
         musicHelper = MusicHelper.getInstance(requireContext())
-        subscribeAllSetting()
-
         subscribeRecord()
-        staticsViewModel.getRecord(0)
+        staticsViewModel.getRecord(getTodayDate())
+        subscribeAllSetting()
     }
 
     /**
@@ -396,6 +396,7 @@ class AnalyzeFragment :
         viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
             while (this.isActive) {
                 delay(1 * 60 * 1000)  // 30분 대기
+                Log.d("whatisthis","counting : "+staticsViewModel.currentDrowsyRecord!!.id.toString()+" "+staticsViewModel.currentWinkCount+" "+staticsViewModel.currentDrowsyCount )
                 staticsViewModel.run {
                     insertWinkCount(
                         WinkCount(
@@ -771,7 +772,7 @@ class AnalyzeFragment :
     }
 
     private fun startTimer() {
-        timerJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+        timerJob = viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
             binding.analyzeProgress.visibility = View.VISIBLE
             binding.analyzeTextGazerequest.text = "2초간 응시해주세요\n(눈 크기 측정 중)"
             delay(binding.analyzeProgress.max.toLong())
@@ -795,6 +796,8 @@ class AnalyzeFragment :
                     jobList.add(datajob!!)
                 }
 
+                staticsViewModel.insertRecord(staticsViewModel.currentDrowsyRecord!!)
+
                 datajob!!.start()
                 showToast("설정 완료")
             }
@@ -806,9 +809,12 @@ class AnalyzeFragment :
             dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
             staticsViewModel.drowsyRecord.collect {
-                if(it==null) staticsViewModel.currentDrowsyRecord = DrowsyRecord(getTodayDate(),0)
-                else staticsViewModel.currentDrowsyRecord = it
-                staticsViewModel.insertRecord(staticsViewModel.currentDrowsyRecord!!)
+                if(it==null) {
+                    staticsViewModel.currentDrowsyRecord = DrowsyRecord(getTodayDate(),1)
+                }
+                else{
+                    staticsViewModel.currentDrowsyRecord = it
+                }
             }
         }
     }

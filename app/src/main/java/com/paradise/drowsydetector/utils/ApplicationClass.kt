@@ -54,7 +54,6 @@ class ApplicationClass : Application() {
         )
     }
 
-
     val staticRepository by lazy {
         StaticsRepository.getInstance(
             recordDao = database.recordDao(),

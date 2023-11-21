@@ -37,17 +37,18 @@ class StaticsViewModel(
 
     private val _drowsyRecord = MutableSharedFlow<DrowsyRecord>()
     val drowsyRecord: SharedFlow<DrowsyRecord> = _drowsyRecord.asSharedFlow()
-    fun getRecord(id: Int) {
+
+    fun getRecord(time: String) {
         viewModelScope.launch {
-            staticsRepository.getRecord(id).collect {
+            staticsRepository.getRecord(time).collect {
                 _drowsyRecord.emit(it)
             }
         }
     }
 
-    fun getRecord(time: String) {
+    fun getRecord(id: Int) {
         viewModelScope.launch {
-            staticsRepository.getRecord(time).collect {
+            staticsRepository.getRecord(id).collect {
                 _drowsyRecord.emit(it)
             }
         }
@@ -62,24 +63,46 @@ class StaticsViewModel(
         }
     }
 
+    fun deleteAllRecords() {
+        viewModelScope.launch {
+            staticsRepository.deleteAllRecords()
+        }
+    }
+
+
     var currentWinkCount = 0
     fun initWinkCount() {
         currentWinkCount = 0
     }
 
-    private val _winkCount = MutableStateFlow<List<WinkCount>>(emptyList())
-    val winkCount: StateFlow<List<WinkCount>> = _winkCount.asStateFlow()
+
     fun insertWinkCount(winkCount: WinkCount) {
         viewModelScope.launch() {
             staticsRepository.insertWinkCount(winkCount)
         }
     }
 
+    private val _winkCount = MutableStateFlow<List<WinkCount>>(emptyList())
+    val winkCount: StateFlow<List<WinkCount>> = _winkCount.asStateFlow()
     fun getWinkCount(recordId: Int) {
         viewModelScope.launch {
-            staticsRepository.getAllWinkCount(recordId).collect {
+            staticsRepository.getWinkCount(recordId).collect {
                 _winkCount.value = it
             }
+        }
+    }
+
+    fun getAllWinkCount() {
+        viewModelScope.launch {
+            staticsRepository.getAllWinkCount().collect {
+                _winkCount.value = it
+            }
+        }
+    }
+
+    fun deleteAllWinkCount() {
+        viewModelScope.launch {
+            staticsRepository.deleteAllWinkCount()
         }
     }
 
@@ -98,9 +121,23 @@ class StaticsViewModel(
 
     fun getDrowsyCount(recordId: Int) {
         viewModelScope.launch {
-            staticsRepository.getAllDrowsyCount(recordId).collect {
+            staticsRepository.getDrowsyCount(recordId).collect {
                 _drowsyCount.value = it
             }
+        }
+    }
+
+    fun getAllDrowsyCount() {
+        viewModelScope.launch {
+            staticsRepository.getAllDrowsyCount().collect {
+                _drowsyCount.value = it
+            }
+        }
+    }
+
+    fun deleteAllDrowsyCount() {
+        viewModelScope.launch {
+            staticsRepository.deleteAllDrowsyCount()
         }
     }
 
