@@ -1,65 +1,69 @@
 package com.paradise.drowsydetector.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
-import com.paradise.drowsydetector.data.local.room.record.DrowsyRecord
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
 import com.paradise.drowsydetector.repository.StaticsRepository
+import com.paradise.drowsydetector.utils.defaultDispatcher
+import com.paradise.drowsydetector.utils.mainDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 
 class StaticsViewModel(
     private val staticsRepository: StaticsRepository,
 ) : ViewModel() {
 
-    private val _allDrowsyRecord = MutableStateFlow<List<DrowsyRecord>>(emptyList())
-    val allDrowsyRecord: StateFlow<List<DrowsyRecord>> = _allDrowsyRecord.asStateFlow()
-    fun insertRecord(drowsyRecord: DrowsyRecord) {
+    private val _allAnalyzeRecord = MutableStateFlow<List<AnalyzeResult>>(emptyList())
+    val allAnalyzeRecord: StateFlow<List<AnalyzeResult>> = _allAnalyzeRecord.asStateFlow()
+    fun insertRecord(analyzeResult: AnalyzeResult) {
         viewModelScope.launch() {
-            staticsRepository.insertRecord(drowsyRecord)
+            staticsRepository.insertRecord(analyzeResult)
         }
     }
 
     fun getAllRecord() {
-        viewModelScope.launch {
+        viewModelScope.launch(mainDispatcher) {
             staticsRepository.getAllRecord().collect {
-                _allDrowsyRecord.value = it
+                _allAnalyzeRecord.value = it
             }
         }
     }
 
-    private val _drowsyRecord = MutableSharedFlow<DrowsyRecord>()
-    val drowsyRecord: SharedFlow<DrowsyRecord> = _drowsyRecord.asSharedFlow()
+    private val _analyzeRecord = MutableSharedFlow<AnalyzeResult>()
+    val analyzeRecord: SharedFlow<AnalyzeResult> = _analyzeRecord.asSharedFlow()
 
     fun getRecord(time: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(mainDispatcher) {
             staticsRepository.getRecord(time).collect {
-                _drowsyRecord.emit(it)
+                _analyzeRecord.emit(it)
             }
         }
     }
 
     fun getRecord(id: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(mainDispatcher) {
             staticsRepository.getRecord(id).collect {
-                _drowsyRecord.emit(it)
+                _analyzeRecord.emit(it)
             }
         }
     }
 
-    var currentDrowsyRecord: DrowsyRecord? = null
+    var currentAnayzeResult: AnalyzeResult? = null
 
     /* D : 이벤트 삭제 메서드 */
-    fun deleteRecord(drowsyRecord: DrowsyRecord) {
+    fun deleteRecord(analyzeResult: AnalyzeResult) {
         viewModelScope.launch {
-            staticsRepository.deleteRecord(drowsyRecord)
+            staticsRepository.deleteRecord(analyzeResult)
         }
     }
 
@@ -69,8 +73,30 @@ class StaticsViewModel(
         }
     }
 
+    private val _allAnayzeResult = MutableStateFlow<Pair<List<WinkCount>, List<DrowsyCount>>>(
+        emptyList<WinkCount>() to emptyList<DrowsyCount>()
+    )
+    val allAnayzeResult: StateFlow<Pair<List<WinkCount>, List<DrowsyCount>>> =
+        _allAnayzeResult.asStateFlow()
 
-    var currentWinkCount = 0
+    /**
+     * Get analyze result
+     *
+     * zip은 combine과 다르게 두 Flow에서 각각 값이 다 방출되야지 나온다.
+     *
+     * 결과를 한번에 보여줘야 하기 때문에 동시에 나오게 만들었다.
+     * @param recordId, 검색할 recordId == AnaylzeResult의 id
+     */
+    fun getAnalyzeResult(recordId: Int) =
+        viewModelScope.launch(defaultDispatcher) {
+            staticsRepository.getWinkCount(recordId)
+                .zip(staticsRepository.getDrowsyCount(recordId)) { value1, value2 -> value1 to value2 }
+                .collect {
+                    _allAnayzeResult.value = it
+                }
+        }
+
+    var currentWinkCount = 0 //
     fun initWinkCount() {
         currentWinkCount = 0
     }

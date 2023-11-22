@@ -125,7 +125,7 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
      * @receiver 모든 view
      * @author 진혁
      */
-    fun View.setOnAvoidDuplicateClick(actionInMainThread: () -> Unit) {
+    open fun View.setOnAvoidDuplicateClick(actionInMainThread: () -> Unit) {
         compositeDisposable
             .add(
                 this.clicks()

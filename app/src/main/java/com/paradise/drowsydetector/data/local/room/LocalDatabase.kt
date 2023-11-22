@@ -6,23 +6,19 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.data.local.room.music.MusicDao
+import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
-import com.paradise.drowsydetector.data.local.room.record.DrowsyCountDao
-import com.paradise.drowsydetector.data.local.room.record.DrowsyRecord
-import com.paradise.drowsydetector.data.local.room.record.RecordDao
+import com.paradise.drowsydetector.data.local.room.record.AnalyzeResultDao
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
-import com.paradise.drowsydetector.data.local.room.record.WinkCountDao
 
 @Database(
-    entities = [Music::class, DrowsyRecord::class, WinkCount::class, DrowsyCount::class],
+    entities = [Music::class, AnalyzeResult::class, WinkCount::class, DrowsyCount::class],
     version = 1,
     exportSchema = false
 )
 abstract class LocalDatabase : RoomDatabase() {
     abstract fun musicDao(): MusicDao
-    abstract fun recordDao(): RecordDao
-    abstract fun winkCountDao(): WinkCountDao
-    abstract fun drowsyCountDao(): DrowsyCountDao
+    abstract fun recordDao(): AnalyzeResultDao
 
     companion object {
         @Volatile

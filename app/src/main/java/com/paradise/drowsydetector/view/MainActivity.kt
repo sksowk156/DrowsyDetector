@@ -1,16 +1,24 @@
 package com.paradise.drowsydetector.view
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
+import com.paradise.drowsydetector.utils.ACTION_SHOW_TRACKING_FRAGMENT
 import com.paradise.drowsydetector.utils.ApplicationClass
+import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MAINBASE
 import com.paradise.drowsydetector.utils.checkPermissions
+import com.paradise.drowsydetector.utils.defaultDispatcher
+import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
@@ -34,6 +42,21 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
         SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepository)
     }
 
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        navigateToTrackingFragmentIfNeeded(intent)
+    }
+
+    private fun navigateToTrackingFragmentIfNeeded(intent: Intent?) {
+        if (intent?.action == ACTION_SHOW_TRACKING_FRAGMENT) {
+//            supportFragmentManager.beginTransaction()
+//                .add(binding.homeFramelayout.id, HomeBaseFragment(), "homebase")
+//                .addToBackStack(null)
+//                .commit()
+        }
+    }
+
     override fun onCreate() {
         checkPermissions(
             arrayOf(
@@ -45,9 +68,23 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             showToast("권한 허용")
             analyzeViewModel.checkDrowsy
         }
-        staticsViewModel.deleteAllRecords()
-        settingViewModel.getSettingMode(GUIDEMODE)
+        staticsViewModel.getAllRecord()
+        settingViewModel.getSettingModeBool(GUIDEMODE)
+        settingViewModel.getSettingModeBool(BASICMUSICMODE)
+        settingViewModel.getAllSetting()
         musicViewModel.getAllMusic()
+
+        this.launchWithRepeatOnLifecycle(
+            state = Lifecycle.State.STARTED,
+            dispatcher = defaultDispatcher
+        ) {
+            staticsViewModel.allAnalyzeRecord.collect {
+                if (it != null) {
+                    Log.d("whatisthis",it.toString())
+                }
+            }
+        }
+        navigateToTrackingFragmentIfNeeded(intent)
     }
 
     override fun saveInstanceStateNull() {

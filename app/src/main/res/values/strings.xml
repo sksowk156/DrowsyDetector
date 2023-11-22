@@ -16,6 +16,10 @@
     <string name="second_fragment_label">Second Fragment</string>
     <string name="next">Next</string>
     <string name="previous">Previous</string>
+
+    <string name="total_drowsy_count">총 졸음 인식 횟수</string>
+    <string name="analyze_result_inhour">시간대별 눈 깜빡임 횟수,\n졸음 인식 횟수</string>
+
     <string-array name="refresh_period">
         <item>선택안함</item>
         <item>10분</item>

@@ -1,6 +1,6 @@
 package com.paradise.drowsydetector.view.analyze
 
-import android.os.CountDownTimer
+import android.location.Location
 import android.util.Log
 import android.view.View
 import androidx.camera.core.CameraSelector
@@ -13,20 +13,20 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
+import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
-import com.paradise.drowsydetector.data.local.room.record.DrowsyRecord
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
 import com.paradise.drowsydetector.utils.DEFAULT_RADIUSKM
 import com.paradise.drowsydetector.utils.DROWSY_THREDHOLD
-import com.paradise.drowsydetector.utils.LEFT_RIGHT_ANGLE_THREDHOLD
 import com.paradise.drowsydetector.utils.LocationHelper
 import com.paradise.drowsydetector.utils.MusicHelper
 import com.paradise.drowsydetector.utils.NO_STANDARD
@@ -36,14 +36,16 @@ import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.STANDARD_IN_ANGLE
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
-import com.paradise.drowsydetector.utils.UP_DOWN_ANGLE_THREDHOLD
 import com.paradise.drowsydetector.utils.calRatio
+import com.paradise.drowsydetector.utils.checkHeadAngleInNoStandard
+import com.paradise.drowsydetector.utils.checkHeadAngleInStandard
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getBoundingBox
 import com.paradise.drowsydetector.utils.getCurrentTime
 import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.getRandomElement
 import com.paradise.drowsydetector.utils.getTodayDate
+import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.mainDispatcher
 import com.paradise.drowsydetector.utils.showToast
@@ -99,13 +101,14 @@ class AnalyzeFragment :
     }
 
     private lateinit var overlay: OvalOverlayView
-
     private var standard: Double? = null
-    private lateinit var timer: CountDownTimer
-    var isInAngleRange = false
-    var isInDrowsyState = false
-    var timeCheckDrowsy: Long? = null
-    val standardRatioList = mutableListOf<Double>()
+    private var isInAngleRange = false
+    private var isInDrowsyState = false
+    private var timeCheckDrowsy: Long? = null
+    private val standardRatioList = mutableListOf<Double>()
+    private var eyeClosed: Boolean = false
+    private var timerJob: Job? = null // 기본값 설정 타이머
+    private var datajob: Job? = null // 눈 깜빡임 감지
 
     private var musicHelper: MusicHelper? = null
     private var jobSortedParkingLot: Job? = null
@@ -152,27 +155,32 @@ class AnalyzeFragment :
      * 이런 현상을 피하기 위해 콜백으로 설정해 한 번의 subscribe만 발생하도록 하였다.
      */
     private fun subscribeAllSetting() {
-        subscribeMusicSetting { defaultMusic ->
-            subscribeGuideSetting { onGuide ->
-                subscribeRefreshSetting { onRefresh ->
-                    startCamera(startMusic = { startMusic(defaultMusic) },
-                        startGuide = { startGuide(onGuide) },
-                        startRefresh = { startRefresh(onRefresh) })
-                    initTimer(2000)
-                }
-            }
-        }
-    }
-
-    /**
-     * Subscribe music setting
-     *
-     * 음악 설정을 관찰한다.(true : 기본 음악, false : 사용자 음악)
-     */
-    private fun subscribeMusicSetting(block: (Boolean) -> Unit) {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
-            settingViewModel.mode.collect {
-                block(it)
+            settingViewModel.allSettings.collect {
+                val defaultMusic = it.first[1]
+                val onGuide = it.first[0]
+                val onRefresh = it.second[1]
+                Log.d(
+                    "whatisthis",
+                    defaultMusic.toString() + " " + onGuide.toString() + " " + onRefresh.toString()
+                )
+
+                if (onGuide) {
+                    // 내 위치를 중심으로 근처에 있는 데이터 관찰
+                    subscribeParkingLotData()
+                    subscribeShleterData()
+                    subscribeRestData()
+
+                    // 내 위치를 중심으로 가까운 순으로 정렬한 데이터 관찰
+                    subscribeSortedParkingLots()
+                    subscribeSortedShelterData()
+                    subscribeSortedRests()
+                }
+
+                startCamera(startMusic = { startMusic(defaultMusic) },
+                    startGuide = { startGuide(onGuide) },
+                    startRefresh = { startRefresh(onRefresh) })
+                initTimer(2000)
             }
         }
     }
@@ -189,22 +197,10 @@ class AnalyzeFragment :
         }
 
         if (defaultMode) {
-            setResMusic()
+            musicHelper?.setResMusic(viewLifecycleOwner)
         } else {
             subscribeUserMusicList()
         }
-    }
-
-    /**
-     * Start res music
-     *
-     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
-     */
-    private fun setResMusic() {
-        val randomMusic = listOf<Int>(
-            (R.raw.alert1), (R.raw.alert2), (R.raw.alert3), (R.raw.alert4), (R.raw.alert5)
-        ).getRandomElement()!!
-        musicHelper?.startMusic(randomMusic, viewLifecycleOwner)
     }
 
     /**
@@ -221,37 +217,32 @@ class AnalyzeFragment :
         }
     }
 
-    /**
-     * Subscribe guide setting
-     *
-     * 안내 설정을 관찰한다. (true : 졸음 감지시 최단 거리 졸음 쉼터, 주차장, 휴게소에 대한 정보를 안내 받음, false : 안받음)
-     */
-    private fun subscribeGuideSetting(block: (Boolean) -> Unit) {
-        viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
-            settingViewModel.mode.collect {
-                if (it) {
-                    // 내 위치를 중심으로 근처에 있는 데이터 관찰
-                    subscribeParkingLotData()
-                    subscribeShleterData()
-                    subscribeRestData()
+    private fun initJob() =
+        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
+            while (this.isActive) {
+                delay(1 * 60 * 1000)  // 30분 대기
+                Log.d(
+                    "whatisthis",
+                    "counting : " + staticsViewModel.currentAnayzeResult!!.id.toString() + " " + staticsViewModel.currentWinkCount + " " + staticsViewModel.currentDrowsyCount
+                )
+                staticsViewModel.run {
+                    insertWinkCount(
+                        WinkCount(
+                            recordId = currentAnayzeResult!!.id, value = currentWinkCount
+                        )
+                    )
+                    insertDrowsyCount(
+                        DrowsyCount(
+                            recordId = currentAnayzeResult!!.id, value = currentDrowsyCount
+                        )
+                    )
 
-                    // 내 위치를 중심으로 가까운 순으로 정렬한 데이터 관찰
-                    subscribeSortedParkingLots()
-                    subscribeSortedShelterData()
-                    subscribeSortedRests()
+                    // 초기화
+                    initWinkCount()
+                    initDrowsyCount()
                 }
-                block(it)
             }
         }
-    }
-
-    private fun subscribeRefreshSetting(block: (Boolean) -> Unit) {
-        viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
-            settingViewModel.mode.collect {
-                block(it)
-            }
-        }
-    }
 
     /**
      * Start camera
@@ -265,7 +256,6 @@ class AnalyzeFragment :
         startRefresh: () -> Unit,
     ) {
         var cameraController = LifecycleCameraController(requireContext())
-
         val previewView: PreviewView = binding.analyzeViewFinder
 
         // 전면 카메라
@@ -279,10 +269,10 @@ class AnalyzeFragment :
                 ContextCompat.getMainExecutor(requireContext())
             ) { result: MlKitAnalyzer.Result? ->
                 // 화면 회전 시 쓰레드가 종료되는 도중에 binding이 null이 되기 때문에 binding이 먼저 null 되면 쓰레드 내부가 동작하지 못하게 막는다.(nullpointexception 방지)
-                if (this@AnalyzeFragment.isAdded) {
+                if (this@AnalyzeFragment.isAdded && result != null) {
                     // 분석 결과(랜드마크)
-                    val analyzeResult1 = result?.getValue(faceDetector)
-                    val analyzeResult2 = result?.getValue(faceMesh)
+                    val analyzeResult1 = result.getValue(faceDetector)
+                    val analyzeResult2 = result.getValue(faceMesh)
                     // 아무것도 인식하지 못할 땐 return
                     if (analyzeResult1 == null || analyzeResult2 == null || analyzeResult1.size == 0 || analyzeResult2.size == 0) {
                         previewView.setOnTouchListener { _, _ -> false } //no-op
@@ -295,137 +285,143 @@ class AnalyzeFragment :
                     val upDownAngle = resultDetector.headEulerAngleX
                     val leftRightAngle = resultDetector.headEulerAngleY
 
-//                    Log.d(
-//                        "whatisthis",
-//                        upDownAngle.toString() + " " + leftRightAngle.toString()
-//                    )
                     val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
-//                        drowsyRecord.add(eyeRatio)
+
                     if (standard == null) {
-                        if (upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4) {
-                            overlay.onZeroAngle(STANDARD_IN_ANGLE)
-                            if (!isInAngleRange) {
-                                startTimer()
-                                isInAngleRange = true
-                            } else {
-                                standardRatioList.add(eyeRatio)
-                            }
-                        } else {
-                            if (upDownAngle > 4 && leftRightAngle < 4 && leftRightAngle > -4) binding.analyzeTextGazerequest.text =
-                                "고개를 살짝만 내려 주세요"
-                            if (upDownAngle < -4 && leftRightAngle < 4 && leftRightAngle > -4) binding.analyzeTextGazerequest.text =
-                                "고개를 살짝만 들어 주세요"
-                            if ((leftRightAngle > 4 || leftRightAngle < -4) && upDownAngle < 4 && upDownAngle > -4) binding.analyzeTextGazerequest.text =
-                                "고개를 살짝만 돌려 주세요"
-
-                            overlay.onZeroAngle(NO_STANDARD)
-                            if (isInAngleRange) {
-                                isInAngleRange = false
-                                stopTimer()
-                                standardRatioList.clear()
-                            }
-                        }
+                        checkHeadPoseInNoStandard(eyeRatio, leftRightAngle, upDownAngle)
                     } else {
-                        val leftEyeOpen = resultDetector.leftEyeOpenProbability
-                        val righEyeOpen = resultDetector.rightEyeOpenProbability
-
-                        if (datajob != null && datajob!!.isActive) {
-                            if (leftEyeOpen != null && righEyeOpen != null) {
-                                if (leftEyeOpen < 0.4 || righEyeOpen < 0.4) {
-                                    // 눈이 감겨 있음
-                                    staticsViewModel.currentWinkCount++
-                                }
-                            }
-                        }
-
                         val eyeState = eyeRatio / standard!! // 눈 상태
-                        // 각도 임계값
-                        if (leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD) {
-                            // 카메라 정면 요청
-                            binding.analyzeTextScreenrequest.visibility = View.VISIBLE
-                            binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
-                            overlay.onZeroAngle(OUT_OF_ANGLE)
-                        } else {
-                            binding.analyzeTextScreenrequest.visibility = View.INVISIBLE
-                            overlay.onZeroAngle(STANDARD_IN_ANGLE)
-                        }
+                        checkHeadPoseInStandard(leftRightAngle, upDownAngle)
 
-                        // 비율이 제한을 벗어나거나 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐)
-                        if (eyeState <= DROWSY_THREDHOLD && resultDetector.smilingProbability!! <= SMILE_THREDHOLD) {
-                            if (!isInDrowsyState) {
-                                isInDrowsyState = true
-                                timeCheckDrowsy = Date().time
-                            }
+                        // 비율이 제한을 벗어났을 때
+                        if (eyeState <= DROWSY_THREDHOLD) {
 
-                            if (timeCheckDrowsy != null) {
-                                val maintainTime = Date().time - timeCheckDrowsy!!
-                                // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                if (maintainTime > TIME_THREDHOLD) {
-                                    if (analyzeViewModel.checkDrowsy) { // 한번만 동작하게
-                                        analyzeViewModel.checkDrowsy = false
-                                        staticsViewModel.currentDrowsyCount++
-                                        // 경고음
-                                        startMusic()
-                                        // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
-                                        startGuide()
-                                        // 환기 요청
-                                        startRefresh()
+                            // 눈 깜빡임 카운팅
+                            checkEyeWink(eyeState, resultDetector)
+
+                            // 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐)
+                            if (resultDetector.smilingProbability!! <= SMILE_THREDHOLD) {
+                                if (!isInDrowsyState) {
+                                    isInDrowsyState = true
+                                    timeCheckDrowsy = Date().time
+                                }
+
+                                if (timeCheckDrowsy != null) {
+                                    val maintainTime = Date().time - timeCheckDrowsy!!
+
+                                    // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
+                                    if (maintainTime > TIME_THREDHOLD) {
+                                        if (analyzeViewModel.checkDrowsy) { // 한번만 동작하게
+                                            analyzeViewModel.checkDrowsy = false
+                                            staticsViewModel.currentDrowsyCount++
+                                            // 경고음
+                                            startMusic()
+                                            // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
+                                            startGuide()
+                                            // 환기 요청
+                                            startRefresh()
+                                        }
+                                        binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
                                     }
-                                    binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
                                 }
                             }
                         } else {
-                            if (isInDrowsyState) {
-                                analyzeViewModel.checkDrowsy = true
-                                binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
-                                isInDrowsyState = false
-                                timeCheckDrowsy = null
-                            }
+                            setEyeStateInOpen()
                         }
-//                        Log.d("whatisthis", "상태 : " + eyeState + " ")
                     }
                 }
             })
         }
-
     }
 
-    // 이미지 분석
-    var datajob: Job? = null
-    private fun initJob() =
-        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
-            while (this.isActive) {
-                delay(1 * 60 * 1000)  // 30분 대기
-                Log.d("whatisthis","counting : "+staticsViewModel.currentDrowsyRecord!!.id.toString()+" "+staticsViewModel.currentWinkCount+" "+staticsViewModel.currentDrowsyCount )
-                staticsViewModel.run {
-                    insertWinkCount(
-                        WinkCount(
-                            recordId = currentDrowsyRecord!!.id,
-                            value = currentWinkCount
-                        )
-                    )
-                    insertDrowsyCount(
-                        DrowsyCount(
-                            recordId = currentDrowsyRecord!!.id,
-                            value = currentDrowsyCount
-                        )
-                    )
+    private fun checkHeadPoseInNoStandard(
+        eyeRatio: Double,
+        leftRightAngle: Float,
+        upDownAngle: Float,
+    ) {// 각도 임계값
+        if (checkHeadAngleInNoStandard(upDownAngle, leftRightAngle)) {
+            setHeadIn(eyeRatio)
+        } else {
+            setHeadOut(leftRightAngle, upDownAngle)
+        }
+    }
 
-                    // 초기화
-                    initWinkCount()
-                    initDrowsyCount()
+    private fun setHeadIn(eyeRatio: Double) {
+        overlay.onZeroAngle(STANDARD_IN_ANGLE)
+        if (!isInAngleRange) {
+            startTimer()
+            isInAngleRange = true
+        } else {
+            standardRatioList.add(eyeRatio)
+        }
+    }
+
+    private fun setHeadOut(leftRightAngle: Float, upDownAngle: Float) {
+        if (isInLeftRight(leftRightAngle)) {
+            if (upDownAngle > 4) binding.analyzeTextGazerequest.text = "고개를 살짝만 내려 주세요"
+            else if (upDownAngle < -4) binding.analyzeTextGazerequest.text = "고개를 살짝만 들어 주세요"
+        } else {
+            binding.analyzeTextGazerequest.text = "고개를 살짝만 돌려 주세요"
+        }
+
+        overlay.onZeroAngle(NO_STANDARD)
+        if (isInAngleRange) {
+            isInAngleRange = false
+            stopTimer()
+            standardRatioList.clear()
+        }
+    }
+
+    private fun checkHeadPoseInStandard(leftRightAngle: Float, upDownAngle: Float) {// 각도 임계값
+        if (checkHeadAngleInStandard(leftRightAngle, upDownAngle)) {
+            // 카메라 정면 요청
+            binding.analyzeTextScreenrequest.visibility = View.VISIBLE
+            binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
+            overlay.onZeroAngle(OUT_OF_ANGLE)
+        } else {
+            binding.analyzeTextScreenrequest.visibility = View.INVISIBLE
+            overlay.onZeroAngle(STANDARD_IN_ANGLE)
+        }
+    }
+
+    private fun setEyeStateInOpen() {
+        eyeClosed = false
+        if (isInDrowsyState) {
+            analyzeViewModel.checkDrowsy = true
+            binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE
+            isInDrowsyState = false
+            timeCheckDrowsy = null
+        }
+    }
+
+    private fun checkEyeWink(eyeState: Double, resultDetector: Face) {
+        // 눈 깜빡임 카운팅
+        if (eyeState <= 0.4) {
+            val leftEyeOpen = resultDetector.leftEyeOpenProbability
+            val righEyeOpen = resultDetector.rightEyeOpenProbability
+
+            if (datajob != null && datajob!!.isActive) {
+                if (leftEyeOpen != null && righEyeOpen != null) {
+                    if (leftEyeOpen < 0.3 && righEyeOpen < 0.3 && !eyeClosed) {
+                        eyeClosed = true // frame이 높아서 한번에 많이 처리될 수 있기 때문
+                        // 눈이 감겨 있음
+                        staticsViewModel.currentWinkCount++
+                    }
                 }
             }
         }
+    }
 
     // 환기 요청
-    private fun startRefresh(a: Boolean) {
-        if (a) a
+    private fun startRefresh(a: Int) {
+
     }
 
     // 최단 거리 정보 안내
-    private fun startGuide(a: Boolean) {
-        if (a) requestRelaxData() //
+    private fun startGuide(guideMode: Boolean) {
+        if (guideMode) {
+            requestRelaxData()
+        }
     }
 
     private fun requestRelaxData() {
@@ -440,109 +436,77 @@ class AnalyzeFragment :
     }
 
     private fun repeatRequestWhenNull(count: Int, detectType: String) {
-        mFusedLocationProviderClient.setLastLocationEventListener {
-            when (detectType) {
-                "ParkingLot" -> {
-                    if (jobGetParkingLot != null) {
-                        if (jobGetParkingLot!!.isActive && !jobGetParkingLot!!.isCompleted) {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                Log.d("whatisthis", "주차장 정보 이미 요청됨**** ")
-                                jobGetParkingLot!!.join()
-                                jobList.remove(jobGetParkingLot)
-                            }
-                        } else {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                jobList.remove(jobGetParkingLot)
-                                jobGetParkingLot!!.cancelAndJoin()
-                                Log.d("whatisthis", "주차장 정보 요청 종료후 재요청!!!!")
-                                jobGetParkingLot = analyzeViewModel.getALLNearParkingLot(
-                                    boundingBox = getBoundingBox(
-                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                                    ), day = getDayType(), nowTime = getCurrentTime()
-                                )
-                                jobList.add(jobGetParkingLot!!)
-                            }
-                        }
-                    } else {
-                        Log.d("whatisthis", "주차장 정보 첫요청1")
-                        jobGetParkingLot = analyzeViewModel.getALLNearParkingLot(
-                            boundingBox = getBoundingBox(
-                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                            ), day = getDayType(), nowTime = getCurrentTime()
-                        )
-                        jobList.add(jobGetParkingLot!!)
-                    }
-                    Log.d("whatisthis", jobList.size.toString())
-                }
+        val job = when (detectType) {
+            "ParkingLot" -> jobGetParkingLot
+            "Shelter" -> jobGetShelter
+            "Rest" -> jobGetRest
+            else -> throw IllegalArgumentException("Unsupported detectType: $detectType")
+        }
 
-                "Shelter" -> {
-                    if (jobGetShelter != null) {
-                        if (jobGetShelter!!.isActive && !jobGetShelter!!.isCompleted) {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                Log.d("whatisthis", "쉼터 정보 이미 요청됨*****")
-                                jobGetShelter!!.join()
-                                jobList.remove(jobGetShelter)
-                            }
-                        } else {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                jobList.remove(jobGetShelter!!)
-                                jobGetShelter!!.cancelAndJoin()
-                                Log.d("whatisthis", "쉼터 정보 요청 종료후 재요청!!!!")
-                                jobGetShelter = analyzeViewModel.getNearShelter(
-                                    boundingBox = getBoundingBox(
-                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                                    )
-                                )
-                                jobList.add(jobGetShelter!!)
-                            }
-                        }
-                    } else {
-                        Log.d("whatisthis", "쉼터 정보 첫요청1")
-                        jobGetShelter = analyzeViewModel.getNearShelter(
-                            boundingBox = getBoundingBox(
-                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                            )
-                        )
-                        jobList.add(jobGetShelter!!)
-                    }
-                    Log.d("whatisthis", jobList.size.toString())
-                }
-
-                "Rest" -> {
-                    if (jobGetRest != null) {
-                        if (jobGetRest!!.isActive && !jobGetRest!!.isCompleted) {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                Log.d("whatisthis", "쉼터 정보 이미 요청됨*****")
-                                jobGetRest!!.join()
-                                jobList.remove(jobGetRest)
-                            }
-                        } else {
-                            viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                jobList.remove(jobGetRest!!)
-                                jobGetRest!!.cancelAndJoin()
-                                Log.d("whatisthis", "휴게소 정보 요청 종료후 재요청!!!!")
-                                jobGetRest = analyzeViewModel.getNearRest(
-                                    boundingBox = getBoundingBox(
-                                        it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                                    )
-                                )
-                                jobList.add(jobGetRest!!)
-                            }
-                        }
-                    } else {
-                        Log.d("whatisthis", "휴게소 정보 첫요청1")
-                        jobGetRest = analyzeViewModel.getNearRest(
-                            boundingBox = getBoundingBox(
-                                it.latitude, it.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-                            )
-                        )
-                        jobList.add(jobGetRest!!)
-                    }
-                    Log.d("whatisthis", jobList.size.toString())
-                }
-
-                else -> throw IllegalArgumentException("Unsupported detectType: $detectType")
+        job?.let {
+            if (it.isActive && !it.isCompleted) {
+                handleRequestCompletion(it, detectType, count)
+            } else {
+                handleRequestCancellation(it, detectType, count)
             }
+        } ?: run {
+            handleFirstRequest(detectType, count)
+        }
+
+        Log.d("whatisthis", jobList.size.toString())
+    }
+
+    private fun handleRequestCompletion(job: Job, detectType: String, count: Int) {
+        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+            Log.d("whatisthis", "$detectType 정보 이미 요청됨**** ")
+            job.join()
+            jobList.remove(job)
+        }
+    }
+
+    private fun handleRequestCancellation(job: Job, detectType: String, count: Int) {
+        viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+            jobList.remove(job)
+            job.cancelAndJoin()
+            Log.d("whatisthis", "$detectType 정보 요청 종료후 재요청!!!!")
+            mFusedLocationProviderClient.setLastLocationEventListener { location ->
+                getJobForType(detectType, count, location)?.let {
+                    jobList.add(it)
+                }
+            }
+        }
+    }
+
+    private fun handleFirstRequest(detectType: String, count: Int) {
+        Log.d("whatisthis", "$detectType 정보 첫요청1")
+        mFusedLocationProviderClient.setLastLocationEventListener { location ->
+            getJobForType(detectType, count, location)?.let {
+                jobList.add(it)
+            }
+        }
+    }
+
+    private fun getJobForType(detectType: String, count: Int, location: Location): Job? {
+        return when (detectType) {
+            "ParkingLot" -> analyzeViewModel.getALLNearParkingLot(
+                boundingBox = getBoundingBox(
+                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                ), day = getDayType(), nowTime = getCurrentTime()
+            )
+
+            "Shelter" -> analyzeViewModel.getNearShelter(
+                boundingBox = getBoundingBox(
+                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                )
+            )
+
+            "Rest" -> analyzeViewModel.getNearRest(
+                boundingBox = getBoundingBox(
+                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+                )
+            )
+
+            else -> null
         }
     }
 
@@ -659,8 +623,7 @@ class AnalyzeFragment :
                                 Log.d("whatisthis", "근처에 휴게소가 없음 반경을 늘려서 재요청")
                                 if (analyzeViewModel.restRequestTime < 3) {
                                     repeatRequestWhenNull(
-                                        analyzeViewModel.restRequestTime++,
-                                        "Shelter"
+                                        analyzeViewModel.restRequestTime++, "Shelter"
                                     )
                                 }
                             }
@@ -763,8 +726,6 @@ class AnalyzeFragment :
         }
     }
 
-    private var timerJob: Job? = null
-
     private fun initTimer(msFuture: Long) {
         binding.apply {
             analyzeProgress.setMax(msFuture.toInt())
@@ -796,7 +757,7 @@ class AnalyzeFragment :
                     jobList.add(datajob!!)
                 }
 
-                staticsViewModel.insertRecord(staticsViewModel.currentDrowsyRecord!!)
+                staticsViewModel.insertRecord(staticsViewModel.currentAnayzeResult!!)
 
                 datajob!!.start()
                 showToast("설정 완료")
@@ -808,12 +769,11 @@ class AnalyzeFragment :
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
             dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
         ) {
-            staticsViewModel.drowsyRecord.collect {
-                if(it==null) {
-                    staticsViewModel.currentDrowsyRecord = DrowsyRecord(getTodayDate(),1)
-                }
-                else{
-                    staticsViewModel.currentDrowsyRecord = it
+            staticsViewModel.analyzeRecord.collect {
+                if (it == null) {
+                    staticsViewModel.currentAnayzeResult = AnalyzeResult(getTodayDate(), 1)
+                } else {
+                    staticsViewModel.currentAnayzeResult = it
                 }
             }
         }

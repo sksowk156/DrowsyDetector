@@ -56,9 +56,7 @@ class ApplicationClass : Application() {
 
     val staticRepository by lazy {
         StaticsRepository.getInstance(
-            recordDao = database.recordDao(),
-            winkCountDao = database.winkCountDao(),
-            drowsyCountDao = database.drowsyCountDao()
+            analyzeResultDao = database.recordDao()
         )
     }
 

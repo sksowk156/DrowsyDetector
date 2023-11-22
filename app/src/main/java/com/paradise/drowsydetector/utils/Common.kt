@@ -40,6 +40,13 @@ import java.util.Random
 // BaseFragment에서 사용하는 typealias
 typealias FragmentInflate<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
 
+// Notification
+const val NOTIFICATION_CHANNEL_ID = "tracking_channel"
+const val NOTIFICATION_CHANNEL_NAME = "Tracking"
+const val NOTIFICATION_ID = 199 // 0 하면 안됨!!!
+const val ACTION_SHOW_TRACKING_FRAGMENT = "ACTION_SHOW_TRACKING_FRAGMENT"
+const val ACTION_START_OR_RESUME_SERVICE = "ACTION_START_OR_RESUME_SERVICE"
+const val ACTION_STOP_SERVICE = "ACTION_STOP_SERVICE"
 
 // Rx Event 에러 태그
 const val RXERROR = "RX_ERROR"
@@ -107,8 +114,7 @@ fun compareTime(nowTime: String, openTime: String?, closeTime: String?) =
         } else {
             nowTime.substring(0, 2).toInt() in openTime.substring(0, 2)
                 .toInt()..closeTime.substring(
-                0,
-                2
+                0, 2
             ).toInt()
         }
     }
@@ -137,7 +143,7 @@ const val PREFERENCES_NAME = "my_preferences" // datasotre 이름
 const val GUIDEMODE = "guide_mode_datastore" // 가까운 휴식 장소 안내를 받을지 안받을지(Boolean)
 const val BASICMUSICMODE = "basic_music_mode_datastore" // 기본 음악을 들을지 개인 설정 음악을 들을지(Boolean)
 const val MUSICVOLUME = "music_volume_datastore" // 음악의 볼륨(Int)
-const val REFRESHMODE = "refresh_mode_datastore" // 환기 주기(Int)
+const val REFRESHTERM = "refresh_term_datastore" // 환기 주기(Int)
 
 // 한번에 가져오는 주차장 정보 개수
 const val DEFAULT_NUM_OF_ROWS = 200
@@ -217,6 +223,14 @@ fun calDist(point1: PointF3D, point2: PointF3D): Double {
     return Math.sqrt((dx * dx + dy * dy).toDouble())
 }
 
+fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
+    upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
+
+fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
+
+fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
+    leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
+
 /**
  * Launch with repeat on lifecycle
  *
@@ -251,6 +265,7 @@ fun <T> List<T>.getRandomElement(): T? {
 }
 
 const val DEFAULT_RADIUSKM = 10.0
+
 /**
  * Get bounding box
  *

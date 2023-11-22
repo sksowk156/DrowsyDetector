@@ -4,6 +4,7 @@ import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.data.local.room.music.Music
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -55,7 +56,7 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
         releaseMediaPlayer()
         contextRef?.clear()
         contextRef = null
-        instance= null
+        instance = null
     }
 
     /**
@@ -79,6 +80,18 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
         }
         job?.cancel() // 음악이 duration 전에 끝날 경우 job을 cancle한다.
         job = null
+    }
+
+    /**
+     * Start res music
+     *
+     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
+     */
+    fun setResMusic(lifecycleOwner: LifecycleOwner) {
+        val randomMusic = listOf<Int>(
+            (R.raw.alert1), (R.raw.alert2), (R.raw.alert3), (R.raw.alert4), (R.raw.alert5)
+        ).getRandomElement()!!
+        startMusic(randomMusic, lifecycleOwner)
     }
 
     /**
@@ -131,7 +144,8 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
     ) = this.apply {
         // mediaPlayer가 null이 아닐 때만 job이 생김
         setListener(startTime)
-        job = setDuration(lifecycleOwner, duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
+        job =
+            setDuration(lifecycleOwner, duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
     }
 
     /**

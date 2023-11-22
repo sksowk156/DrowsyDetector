@@ -9,9 +9,11 @@ import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.RadioButton
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -20,11 +22,11 @@ import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentSettingBinding
+import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MusicHelper
 import com.paradise.drowsydetector.utils.getPathFromFileUri
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
-import com.paradise.drowsydetector.utils.mainScope
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
@@ -74,27 +76,43 @@ class SettingFragment :
                     showToast(regionArray[it.position])
                 }.launchIn(viewLifecycleOwner.lifecycleScope)
 
-            btSettingUsermusic.setOnAvoidDuplicateClick {
-                binding.layoutSettingMusiclistbackground.visibility = View.VISIBLE
-            }
-
             ivSettingAddmusic.setOnAvoidDuplicateClick {
                 // ACTION_GET_CONTENT - 문서나 사진 등의 파일을 선택하고 앱에 그 참조를 반환하기 위해 요청하는 액션
                 val intent = Intent(Intent.ACTION_GET_CONTENT)
                 intent.type = "audio/*" // 탐색할 파일 MIME 타입 설정
                 launcher_audio.launch(intent) // 파일탐색 액션을 가진 인텐트 실행
             }
+            initButton()
 
-            // switch 상태
+            // 알림음 설정 상태
             viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-                settingViewModel.mode.collect { mode ->
+                settingViewModel.basicMusicMode.collect { mode ->
+                    if (mode != null) {
+                        if (mode) {
+                            radiogroupSetting.check(radiobtSettingBasicmusic.id)
+                            setRadioButtonBackground(radiobtSettingBasicmusic, true)
+                            setRadioButtonBackground(radiobtSettingUsermusic, false)
+                            layoutSettingMusiclistbackground.visibility = View.GONE
+                        } else {
+                            radiogroupSetting.check(radiobtSettingUsermusic.id)
+                            setRadioButtonBackground(radiobtSettingBasicmusic, false)
+                            setRadioButtonBackground(radiobtSettingUsermusic, true)
+                            layoutSettingMusiclistbackground.visibility = View.VISIBLE
+                        }
+                    }
+                }
+            }
+
+            // 안내 설정 상태
+            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+                settingViewModel.guideMode.collect { mode ->
                     if (mode != null) {
                         switchSettingGuide.isChecked = mode
                     }
                 }
             }
 
-            // switch를 변경할 때마다 값을 갱신
+            // 안내 설정을 변경할 때마다 값을 갱신
             switchSettingGuide.setOnCheckedChangeListener { buttonView, isChecked ->
                 settingViewModel.setSettingMode(GUIDEMODE, isChecked)
             }
@@ -110,11 +128,43 @@ class SettingFragment :
         }
     }
 
+    private fun initButton() {
+        with(binding) {
+            radiobtSettingBasicmusic.setOnAvoidDuplicateClick {
+                settingViewModel.setSettingMode(BASICMUSICMODE, true)
+                if (musicHelper != null) {
+                    musicHelper?.releaseMediaPlayer()
+                    musicHelper = null
+                }
+            }
+            radiobtSettingUsermusic.setOnAvoidDuplicateClick {
+                settingViewModel.setSettingMode(BASICMUSICMODE, false)
+                if (musicHelper != null) {
+                    musicHelper?.releaseMediaPlayer()
+                    musicHelper = null
+                }
+            }
+        }
+    }
+
+    private fun setRadioButtonBackground(radioButton: RadioButton, isSelected: Boolean) {
+        with(radioButton) {
+            if (isSelected) {
+                setBackgroundResource(R.drawable.button_background2)
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            } else {
+                setBackgroundResource(R.drawable.button_background)
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.primary1))
+            }
+        }
+    }
+
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
                 if (musicHelper != null) {
                     musicHelper?.releaseMediaPlayer()
+                    musicHelper = null
                 } else {
                     musicHelper = MusicHelper.getInstance(requireContext())
                         .startMusic(selectedMusic, viewLifecycleOwner)
