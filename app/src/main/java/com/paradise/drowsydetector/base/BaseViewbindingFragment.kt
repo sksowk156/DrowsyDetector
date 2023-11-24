@@ -78,8 +78,6 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
 
     val jobList = mutableListOf<Job>()
 
-    val executorList = mutableListOf<ExecutorService>()
-
     /**
      * Init back press callback, 뒤로가기 이벤트 초기화 메서드
      *
@@ -100,7 +98,6 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
                 val jobListCopy = mutableListOf<Job>()
                 inBackPress = true
                 viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
-                    executorList.forEach { it.shutdownNow() }
                     jobListCopy.addAll(jobList) // 복사
                     for (i in jobListCopy) {
                         if (i.isCancelled) continue // 종료된거면 종료 X

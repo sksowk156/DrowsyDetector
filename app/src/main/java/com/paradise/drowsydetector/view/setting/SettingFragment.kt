@@ -166,8 +166,8 @@ class SettingFragment :
                     musicHelper?.releaseMediaPlayer()
                     musicHelper = null
                 } else {
-                    musicHelper = MusicHelper.getInstance(requireContext())
-                        .startMusic(selectedMusic, viewLifecycleOwner)
+                    musicHelper = MusicHelper.getInstance(requireContext(),viewLifecycleOwner)
+                        .startMusic(selectedMusic)
                 }
             }, { selectedMusic ->
                 if (musicHelper != null) {

@@ -23,7 +23,10 @@ import java.lang.ref.WeakReference
  * @property contextRef
  * @constructor Create empty Music helper
  */
-class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
+class MusicHelper(
+    private var contextRef: WeakReference<Context>,
+    private var lifecycleOwner: WeakReference<LifecycleOwner>,
+) {
     private var mediaPlayer: MediaPlayer? = null
     private var job: Job? = null
     private var isPrepared: Boolean = false
@@ -36,10 +39,13 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
     companion object {
         @Volatile
         private var instance: MusicHelper? = null
-        fun getInstance(context: Context) =
+        fun getInstance(context: Context, lifecycleOwner: LifecycleOwner) =
             instance ?: synchronized(this) {
                 // LocationSercie 객체를 생성할 때 같이 한번만 객체를 생성한다.
-                instance ?: MusicHelper(WeakReference(context)).also {
+                instance ?: MusicHelper(
+                    WeakReference(context),
+                    WeakReference(lifecycleOwner)
+                ).also {
                     instance = it
                 }
             }
@@ -54,8 +60,8 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      */
     fun clearContext() {
         releaseMediaPlayer()
-        contextRef?.clear()
-        contextRef = null
+        contextRef.clear()
+        lifecycleOwner.clear()
         instance = null
     }
 
@@ -87,11 +93,16 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      *
      * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
      */
-    fun setResMusic(lifecycleOwner: LifecycleOwner) {
+    fun setResMusic() {
         val randomMusic = listOf<Int>(
             (R.raw.alert1), (R.raw.alert2), (R.raw.alert3), (R.raw.alert4), (R.raw.alert5)
-        ).getRandomElement()!!
-        startMusic(randomMusic, lifecycleOwner)
+        ).getRandomElement()
+        if (randomMusic != null) startMusic(randomMusic)
+    }
+
+    fun setMyMusic(musicList: List<Music>) {
+        val randomMusic = musicList.getRandomElement()
+        if (randomMusic != null) startMusic(randomMusic)
     }
 
     /**
@@ -99,9 +110,8 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      *
      * 음악을 실행하는 메서드
      * @param resId, raw package에 있는 음악 파일을 재생
-     * @param lifecycleOwner
      */
-    fun startMusic(resId: Int, lifecycleOwner: LifecycleOwner) = contextRef?.get()?.let { context ->
+    fun startMusic(resId: Int) = contextRef.get()?.let { context ->
         val rawDescriptor = context.resources.openRawResourceFd(resId)
         mediaPlayer = MediaPlayer().apply {
             setDataSource(
@@ -109,7 +119,7 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
                 rawDescriptor.startOffset,
                 rawDescriptor.length
             )
-            setMusic(lifecycleOwner, duration = DEFAULT_MUSIC_DURATION)
+            setMusic(duration = DEFAULT_MUSIC_DURATION)
         }
         rawDescriptor.close()
     }
@@ -118,13 +128,12 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      * Start music
      *
      * @param music, Room에 저장된 외부 저장소의 음악 파일 경로로 음악 재생
-     * @param lifecycleOwner
      */
-    fun startMusic(music: Music, lifecycleOwner: LifecycleOwner) =
-        contextRef?.get()?.let { context ->
+    fun startMusic(music: Music) =
+        contextRef.get()?.let { context ->
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
-                setMusic(lifecycleOwner, music.startTime.toInt(), music.durationTime)
+                setMusic(music.startTime.toInt(), music.durationTime)
             }
             this@MusicHelper
         }
@@ -133,19 +142,17 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      * Set music
      *
      * 주어진 음악 파일 정보로부터 시작 시간과 지속 시간을 설정한다.
-     * @param lifecycleOwner
      * @param startTime, 시작 시간(raw 파일 음악 : 기본 0 사용, Room 음악 : 커스텀 가능)
      * @param duration, (나중에 커스텀화)
      */
     private fun MediaPlayer.setMusic(
-        lifecycleOwner: LifecycleOwner,
         startTime: Int = 0,
         duration: Long,
     ) = this.apply {
         // mediaPlayer가 null이 아닐 때만 job이 생김
         setListener(startTime)
-        job =
-            setDuration(lifecycleOwner, duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
+        job = setDuration(duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
+        if(job==null) releaseMediaPlayer()
     }
 
     /**
@@ -172,13 +179,13 @@ class MusicHelper(private var contextRef: WeakReference<Context>? = null) {
      * Set duration
      *
      * 음악의 종료 시점을 정한다.
-     * @param lifecycleOwner
      * @param duration
      */
-    private fun setDuration(lifecycleOwner: LifecycleOwner, duration: Long) =
-        lifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-            delay(duration)
-            mediaPlayer = null
-            releaseMediaPlayer()
+    private fun setDuration(duration: Long) =
+        lifecycleOwner.get()?.let {
+            it.lifecycleScope.launch(defaultDispatcher) {
+                delay(duration)
+                releaseMediaPlayer()
+            }
         }
 }

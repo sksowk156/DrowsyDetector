@@ -3,10 +3,7 @@ package com.paradise.drowsydetector.view
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.viewModels
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
@@ -17,8 +14,6 @@ import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MAINBASE
 import com.paradise.drowsydetector.utils.checkPermissions
-import com.paradise.drowsydetector.utils.defaultDispatcher
-import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
@@ -74,16 +69,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
         settingViewModel.getAllSetting()
         musicViewModel.getAllMusic()
 
-        this.launchWithRepeatOnLifecycle(
-            state = Lifecycle.State.STARTED,
-            dispatcher = defaultDispatcher
-        ) {
-            staticsViewModel.allAnalyzeRecord.collect {
-                if (it != null) {
-                    Log.d("whatisthis",it.toString())
-                }
-            }
-        }
         navigateToTrackingFragmentIfNeeded(intent)
     }
 

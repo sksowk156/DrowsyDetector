@@ -62,13 +62,6 @@ class RelaxRepository(
                         }.collect { item ->
                             nearRest.add(item)
                         }
-//                    val nearRest = it.response.body.items.filter {
-//                        val lat = it.latitude.toDouble()
-//                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
-//                    }.filter {
-//                        val lon = it.longitude.toDouble()
-//                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
-//                    }
                     emit(ResponseState.Success(nearRest))
                 }
             } else {
@@ -101,14 +94,6 @@ class RelaxRepository(
                         }.collect { item ->
                             nearShelter.add(item)
                         }
-
-//                    val nearShelter = it.response.body.items.filter {
-//                        val lat = it.latitude.toDouble()
-//                        (lat < boundingBox.maxLatitude && lat > boundingBox.minLatitude)
-//                    }.filter {
-//                        val lon = it.longitude.toDouble()
-//                        (lon < boundingBox.maxLongitude && lon > boundingBox.minLongitude)
-//                    }
                     emit(ResponseState.Success(nearShelter))
                 }
             } else {
@@ -200,23 +185,6 @@ class RelaxRepository(
                         }
 
                     emit(ResponseState.Success(freeParkingLot))
-//                    val freeParkingLot = withContext(defaultDispatcher) {
-//                        parkingLot.response.body.items.filter { item1 ->
-//                            val lat = item1.latitude.toDoubleOrNull()
-//                            if (lat != null) lat in boundingBox.minLatitude..boundingBox.maxLatitude
-//                            else false
-//                        }.filter { item2 ->
-//                            val lon = item2.longitude.toDoubleOrNull()
-//                            if (lon != null) lon in boundingBox.minLongitude..boundingBox.maxLongitude
-//                            else false
-//                        }.filter { item3 ->
-//                            isInTime(
-//                                day = day, nowTime = nowTime, item = item3
-//                            ) // 현재 시간에 운영하고 있는지 확인
-//                        }
-//                    }
-
-//                    emit(ResponseState.Success<List<parkingLotItem>>(freeParkingLot.toList()))
                 }
             } else {
                 emit(ResponseState.Fail(response.code(), response.message()))

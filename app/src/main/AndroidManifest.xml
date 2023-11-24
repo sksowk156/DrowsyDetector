@@ -65,7 +65,7 @@
         </activity>
 
         <service
-            android:name=".service.AnalyzeeService"
+            android:name=".service.AnalyzeService"
             android:foregroundServiceType="camera"
             android:enabled="true"
             android:exported="false"
