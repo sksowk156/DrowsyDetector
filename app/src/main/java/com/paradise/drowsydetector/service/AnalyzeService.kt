@@ -17,6 +17,7 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -41,13 +42,12 @@ import com.paradise.drowsydetector.data.local.room.record.WinkCount
 import com.paradise.drowsydetector.repository.MusicRepository
 import com.paradise.drowsydetector.repository.SettingRepository
 import com.paradise.drowsydetector.repository.StaticsRepository
-import com.paradise.drowsydetector.utils.ACTION_SHOW_TRACKING_FRAGMENT
+import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
 import com.paradise.drowsydetector.utils.ApplicationClass
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.DROWSY_THREDHOLD
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MUSICVOLUME
-import com.paradise.drowsydetector.utils.MusicHelper
 import com.paradise.drowsydetector.utils.NOTIFICATION_CHANNEL_ID
 import com.paradise.drowsydetector.utils.NOTIFICATION_CHANNEL_NAME
 import com.paradise.drowsydetector.utils.NOTIFICATION_ID
@@ -57,6 +57,8 @@ import com.paradise.drowsydetector.utils.TIME_THREDHOLD
 import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
+import com.paradise.drowsydetector.utils.helper.MusicHelper
+import com.paradise.drowsydetector.utils.helper.TtsHelper
 import com.paradise.drowsydetector.utils.mainDispatcher
 import com.paradise.drowsydetector.view.MainActivity
 import kotlinx.coroutines.CoroutineStart
@@ -65,20 +67,31 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 import java.util.Date
 
 class AnalyzeService : LifecycleService() {
 
-    inner class MyBinder : Binder() {
+    private val binder = MyBinder(this)
+
+    class MyBinder(service: AnalyzeService) : Binder() {
+        private val weakService = WeakReference(service)
         fun getService(): AnalyzeService {
-            return this@AnalyzeService
+            return weakService.get()!!
         }
     }
 
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        return binder
+    }
+
     private var mWindowManager: WindowManager? = null
+    private var mParams: WindowManager.LayoutParams? = null
     private var mFloatingView: View? = null
 
     private var musicHelper: MusicHelper? = null
+    var ttsHelper: TtsHelper? = null
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -102,30 +115,28 @@ class AnalyzeService : LifecycleService() {
     private var staticsRepository: StaticsRepository? = null
 
     var standard: Double? = null
+    fun initStandard() {
+        standard = null
+    }
+
     private var isInDrowsyState = false
     private var timeCheckDrowsy: Long? = null
-    private var eyeClosed: Boolean = false
+    var eyeClosed: Boolean = false
 
-    var datajob: Job? = null // 눈 깜빡임 감지
+    private var datajob: Job? = null // 눈 깜빡임 감지
     private var musicList = mutableListOf<Music>()
-    var checkDrowsy: Boolean = true
-        set(value) {
-            field = value
-        }
-        get() = field
+    private var checkDrowsy: Boolean = true
 
-    private val binder = MyBinder()
-    override fun onBind(intent: Intent): IBinder {
-        super.onBind(intent)
-        return binder
-    }
-
+    @SuppressLint("RestrictedApi")
     override fun onDestroy() {
-        super.onDestroy()
+        Log.d("whatisthis", "service onDestroy()")
         killForegroundService()
+        ttsHelper?.clearContext()
+        mWindowManager = null
+        mParams = null
+        super.onDestroy()
     }
 
-    ////////////////////////////////////////////////////////////////////////////////////////
     override fun onCreate() {
         super.onCreate()
         musicRepository = ApplicationClass.getApplicationContext().musicRepository
@@ -133,95 +144,137 @@ class AnalyzeService : LifecycleService() {
         staticsRepository = ApplicationClass.getApplicationContext().staticRepository
 
         musicHelper = MusicHelper.getInstance(this@AnalyzeService, this@AnalyzeService)
+        ttsHelper = TtsHelper.getInstance(this@AnalyzeService)
+
+        initWindowManagerParams()
+        subscribeRecord()
+        subscribeUserMusicList()
+        getRecord(getTodayDate())
+        getAllMusic() // 사용자 설정 음악을 사용할 경우, 모든 음악 정보를 들고 온다.
+    }
+
+    fun initWindowManagerParams() {
+        mWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        mParams = WindowManager.LayoutParams(
+            300, // 너비
+            500,// 높이
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+            PixelFormat.TRANSLUCENT
+        )
+    }
+
+    fun initFloatingView() {
+        // floating view
+        mFloatingView =
+            LayoutInflater.from(this@AnalyzeService).inflate(R.layout.floating_view, null)
+        // 종료 버튼
+        val closeButtonCollapsed = mFloatingView!!.findViewById<ImageView>(R.id.iv_floating_close)
+        closeButtonCollapsed.setOnClickListener {
+            killForegroundService()
+            stopSelf() // service를 중지시킨다. onDestry()를 호출한다.
+        }
+        // 플로팅 뷰 전체
+        val comebackFloatingView = mFloatingView!!.findViewById<View>(R.id.layout_floating)
+        comebackFloatingView.setOnTouchListener(object : View.OnTouchListener {
+            private var initialX: Int = 0
+            private var initialY: Int = 0
+            private var initialTouchX: Float = 0.toFloat()
+            private var initialTouchY: Float = 0.toFloat()
+
+            @SuppressLint("RestrictedApi")
+            override fun onTouch(v: View, event: MotionEvent): Boolean {
+                when (event.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        initialX = mParams!!.x
+                        initialY = mParams!!.y
+                        initialTouchX = event.rawX  // 터치 다운 시의 좌표 저장
+                        initialTouchY = event.rawY
+                        return true
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        val upX = event.rawX
+                        val upY = event.rawY
+                        if (isAClick(initialTouchX, upX, initialTouchY, upY)) { // 클릭 동작이 감지됨
+                            stopForegroundInBackground()
+                            restartActivity()
+                            return true
+                        }
+                        return true
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        mParams?.x = initialX + (event.rawX - initialTouchX).toInt()
+                        mParams?.y = initialY + (event.rawY - initialTouchY).toInt()
+                        mWindowManager!!.updateViewLayout(mFloatingView, mParams)
+                        return true
+                    }
+                }
+                return false
+            }
+        })
+        subscribeAllSetting(mFloatingView!!.findViewById<PreviewView>(R.id.preview_floating))
+    }
+
+    fun startForegroundInBackground() {
+        addFloatingView()
+        getAllSetting()
+    }
+
+    fun addFloatingView() {
+        if (mFloatingView == null) {
+            initFloatingView()
+        }
+        mWindowManager!!.addView(mFloatingView, mParams)
+    }
+
+    fun removeFloatingView() {
+        if (mFloatingView != null) {
+            mWindowManager!!.removeViewImmediate(mFloatingView)
+        }
+        _allSettings.removeObservers(this@AnalyzeService)
+        mFloatingView = null
+    }
+
+    @SuppressLint("RestrictedApi")
+    fun stopForegroundInBackground() {
+        cameraProvider?.unbindAll() // 모든 카메라를 해제한다. 이 메소드는 카메라를 재사용할 수 있도록 하며, 카메라의 리소스를 해제하지 않는다.
+        cameraProvider?.shutdown() // 모든 카메라를 해제하고, 카메라의 리소스를 해제한다다.
+        cameraProvider = null
+        removeFloatingView()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         // 서비스가 시작될 때 수행할 작업을 여기에 작성합니다.
         intent?.let {
-            startForegroundService2()
-            // floating view
-            mFloatingView =
-                LayoutInflater.from(this@AnalyzeService).inflate(R.layout.floating_view, null)
-
-            val params = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT
-            )
-
-            mWindowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-            mWindowManager!!.addView(mFloatingView, params)
-
-            // 종료 버튼
-            val closeButtonCollapsed =
-                mFloatingView!!.findViewById<ImageView>(R.id.iv_floating_close)
-
-            closeButtonCollapsed.setOnClickListener {
-                stopSelf() // service를 종료한다
-            }
-
-            // 플로팅 뷰 전체
-            val comebackFloatingView = mFloatingView!!.findViewById<View>(R.id.layout_floating)
-            comebackFloatingView.setOnTouchListener(object : View.OnTouchListener {
-                private var initialX: Int = 0
-                private var initialY: Int = 0
-                private var initialTouchX: Float = 0.toFloat()
-                private var initialTouchY: Float = 0.toFloat()
-                override fun onTouch(v: View, event: MotionEvent): Boolean {
-                    when (event.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            initialX = params.x
-                            initialY = params.y
-                            initialTouchX = event.rawX  // 터치 다운 시의 좌표 저장
-                            initialTouchY = event.rawY
-                            return true
-                        }
-
-                        MotionEvent.ACTION_UP -> {
-                            val upX = event.rawX
-                            val upY = event.rawY
-                            if (isAClick(initialTouchX, upX, initialTouchY, upY)) {
-                                // 클릭 동작이 감지됨
-                                val intent =
-                                    this@AnalyzeService.packageManager.getLaunchIntentForPackage(
-                                        this@AnalyzeService.packageName
-                                    )
-                                // 새로운 Activity를 실행하는 것이 아니라 기존에 있던 것을 실행한다.
-                                intent?.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                                this@AnalyzeService.startActivity(intent)
-
-                                // 다시 fragment로 돌아왔기 때문에 foreground service를 먼저 정지한다
-                                if (mFloatingView != null) mWindowManager!!.removeView(mFloatingView)
-                                mFloatingView = null
-                                stopForeground(STOP_FOREGROUND_REMOVE)
-
-                                return true
-                            }
-                            return true
-                        }
-
-                        MotionEvent.ACTION_MOVE -> {
-                            params.x = initialX + (event.rawX - initialTouchX).toInt()
-                            params.y = initialY + (event.rawY - initialTouchY).toInt()
-                            mWindowManager!!.updateViewLayout(mFloatingView, params)
-                            return true
-                        }
-                    }
-                    return false
-                }
-            })
-            subscribeRecord()
-            subscribeAllSetting(mFloatingView!!.findViewById<PreviewView>(R.id.preview_floating))
-            subscribeUserMusicList()
-
-            getRecord(getTodayDate()) // 오늘 눈 깜빡임 정보와, 졸음 횟수 정보를 저장할 Record 객체 생성
-            getAllMusic() // 사용자 설정 음악을 사용할 경우, 모든 음악 정보를 들고 온다.
-            getAllSetting()
+            Log.d("whatisthis", "standard in service : $standard")
+            startForeground()
         }
-        return START_NOT_STICKY
+        return START_NOT_STICKY // 서비스가 종료되었을 때, 서비스 재 실행을 하지 않음
+    }
+
+    private fun restartActivity() { // Service를 호출한 Activity(Fragment) 재실행
+        val intent = this@AnalyzeService.packageManager.getLaunchIntentForPackage(
+            this@AnalyzeService.packageName
+        )
+        intent?.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+        this@AnalyzeService.startActivity(intent) // 새로운 Activity를 실행하는 것이 아니라 기존에 있던(Main Activity) 것을 실행한다.
+    }
+
+    @SuppressLint("RestrictedApi")
+    fun killForegroundService() {
+        faceMesh.close()
+        faceDetector.close()
+        stopForegroundInBackground()
+        mFloatingView = null
+        musicHelper?.clearContext()
+        musicHelper = null
+        datajob?.cancel()
+        datajob = null
+        initStandard()
+        stopForeground(STOP_FOREGROUND_REMOVE) // service를 foreground에서 제거한다. 상태 표시줄의 알림도 함께 제거한다. 이 메소드를 호출하더라도 서비스는 계속 실행된다.
     }
 
     // 클릭 여부를 판단하는 함수
@@ -232,17 +285,6 @@ class AnalyzeService : LifecycleService() {
         return distanceSquared < (ViewConfiguration.get(this).scaledTouchSlop * ViewConfiguration.get(
             this
         ).scaledTouchSlop)
-    }
-
-    fun killForegroundService() {
-        faceMesh.close()
-        faceDetector.close()
-        cameraProvider = null
-        musicHelper?.clearContext()
-        musicHelper = null
-        if (mFloatingView != null) mWindowManager!!.removeView(mFloatingView)
-        mFloatingView = null
-        stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
     fun startRecording() {
@@ -256,10 +298,11 @@ class AnalyzeService : LifecycleService() {
         _analyzeRecord.observe(this@AnalyzeService) {
             if (it == null) {
                 currentAnayzeResult = AnalyzeResult(getTodayDate(), 1)
+                Log.d("whatisthis", currentAnayzeResult.toString() + " null")
             } else {
                 currentAnayzeResult = it
+                Log.d("whatisthis", it.toString())
             }
-            insertRecord(currentAnayzeResult!!)
         }
     }
 
@@ -297,6 +340,7 @@ class AnalyzeService : LifecycleService() {
     private fun initJob() = lifecycleScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
         while (this.isActive) {
             delay(1 * 60 * 1000)  // 30분 대기
+            Log.d("whatisthis", "깜빡임 : " + currentWinkCount + " 졸음 인식 : " + currentDrowsyCount)
             insertWinkCount(
                 WinkCount(
                     recordId = currentAnayzeResult!!.id, value = currentWinkCount
@@ -307,7 +351,6 @@ class AnalyzeService : LifecycleService() {
                     recordId = currentAnayzeResult!!.id, value = currentDrowsyCount
                 )
             )
-
             // 초기화
             initWinkCount()
             initDrowsyCount()
@@ -320,8 +363,7 @@ class AnalyzeService : LifecycleService() {
         analyzedData: (Face, List<FaceMeshPoint>) -> Unit,
     ) {
         // 카메라 및 ML Kit 설정
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this@AnalyzeService)
-
+        var cameraProviderFuture = ProcessCameraProvider.getInstance(this@AnalyzeService)
         // 카메라 미리보기 설정
         val preview = Preview.Builder().build().also {
             it.setSurfaceProvider(previewView.surfaceProvider)
@@ -331,6 +373,7 @@ class AnalyzeService : LifecycleService() {
         val imageAnalysis =
             ImageAnalysis.Builder().setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
+
         // 이미지 분석기 설정
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this@AnalyzeService)) { imageProxy ->
             val mediaImage = imageProxy.image
@@ -346,11 +389,7 @@ class AnalyzeService : LifecycleService() {
                         val resultDetector = analyzeResult1[0]
                         val resultMesh = analyzeResult2[0].allPoints
                         analyzedData(resultDetector, resultMesh)
-                    }.addOnFailureListener {
-
-                    }.addOnCompleteListener {
-                        imageProxy.close()
-                    }
+                    }.addOnFailureListener {}.addOnCompleteListener {}
                 }.addOnFailureListener { e ->
                     // 에러 처리
                 }.addOnCompleteListener {
@@ -359,16 +398,17 @@ class AnalyzeService : LifecycleService() {
                 }
             }
         }
-
         // 카메라 바인딩
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
 
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-            cameraProvider?.unbindAll()
-            cameraProvider?.bindToLifecycle(
-                this@AnalyzeService, cameraSelector, preview, imageAnalysis
-            )
+            val camera = cameraProvider?.let {
+                val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                it.unbindAll()
+                it.bindToLifecycle(
+                    this@AnalyzeService, cameraSelector, preview, imageAnalysis
+                )
+            }
         }, ContextCompat.getMainExecutor(this@AnalyzeService))
     }
 
@@ -380,7 +420,7 @@ class AnalyzeService : LifecycleService() {
         startAnalyze(floatingPreviewView) { resultDetector, resultMesh ->
             val upDownAngle = resultDetector.headEulerAngleX
             val leftRightAngle = resultDetector.headEulerAngleY
-            startRecording()
+//            startRecording()
             val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
             val eyeState = eyeRatio / standard!! // 눈 상태
             // 비율이 제한을 벗어났을 때
@@ -436,7 +476,7 @@ class AnalyzeService : LifecycleService() {
                     if (leftEyeOpen < 0.3 && righEyeOpen < 0.3 && !eyeClosed) {
                         eyeClosed = true // frame이 높아서 한번에 많이 처리될 수 있기 때문
                         // 눈이 감겨 있음
-                        currentWinkCount++
+                        countUpWinkCount()
                     }
                 }
             }
@@ -447,189 +487,6 @@ class AnalyzeService : LifecycleService() {
     private fun startRefresh(a: Int) {
 
     }
-
-    // musicRepository ///////////////////////////////////////////////////////////////////////////////////////
-    private val _music = MutableLiveData<List<Music>>(emptyList())
-
-    /* R : 이벤트 전체 조회 메서드 */
-    fun getAllMusic() {
-        lifecycleScope.launch {
-            musicRepository?.getAllMusic()?.collect {
-                _music.value = it
-            }
-        }
-    }
-
-    // settingRepository ///////////////////////////////////////////////////////////////////////////////////////
-    private val _guideMode = MutableLiveData<Boolean>(true)
-
-    private val _basicMusicMode = MutableLiveData<Boolean>(true)
-
-    private val _musicVolume = MutableLiveData<Int>(0)
-
-    private val _refreshTerm = MutableLiveData<Int>(0)
-    fun getSettingModeInt(key: String) {
-        lifecycleScope.launch {
-            settingRepository?.getInt(key)?.collect {
-                when (key) {
-                    MUSICVOLUME -> {
-                        _musicVolume.value = it
-                    }
-
-                    REFRESHTERM -> {
-                        _refreshTerm.value = it
-                    }
-                }
-            }
-        }
-    }
-
-    fun setSettingMode(key: String, value: Int) {
-        lifecycleScope.launch {
-            settingRepository?.setInt(key, value)
-        }
-    }
-
-    fun getSettingModeBool(key: String) {
-        lifecycleScope.launch {
-            settingRepository?.getBoolean(key)?.collect {
-                when (key) {
-                    GUIDEMODE -> {
-                        _guideMode.value = it
-                    }
-
-                    BASICMUSICMODE -> {
-                        _basicMusicMode.value = it
-                    }
-                }
-            }
-        }
-    }
-
-    fun setSettingMode(key: String, value: Boolean) {
-        lifecycleScope.launch {
-            settingRepository?.setBoolean(key, value)
-        }
-    }
-
-    private val _allSettings = MutableLiveData<Pair<MutableList<Boolean>, MutableList<Int>>>(
-        mutableListOf<Boolean>() to mutableListOf<Int>()
-    )
-
-    fun getAllSetting() {
-        lifecycleScope.launch() {
-            with(settingRepository) {
-                if (this != null) {
-                    this.getBoolean(GUIDEMODE)
-                        .zip(this.getBoolean(BASICMUSICMODE)) { a, b -> mutableListOf(a, b) }
-                        .zip(this.getInt(MUSICVOLUME)) { list, c -> list to mutableListOf(c) }
-                        .zip(this.getInt(REFRESHTERM)) { pair, d ->
-                            pair.second.add(d)
-                            pair.first to pair.second
-                        }.collect {
-                            Log.d("whatisthis", it.toString())
-                            _allSettings.value = it
-                        }
-                }
-            }
-        }
-    }
-
-    // staticsRepository ///////////////////////////////////////////////////////////////////////////////////////
-
-    private val _allAnalyzeRecord = MutableLiveData<List<AnalyzeResult>>(emptyList())
-    fun insertRecord(analyzeResult: AnalyzeResult) {
-        lifecycleScope.launch() {
-            staticsRepository?.insertRecord(analyzeResult)
-        }
-    }
-
-    private val _analyzeRecord = MutableLiveData<AnalyzeResult>()
-
-    fun getRecord(time: String) {
-        lifecycleScope.launch(mainDispatcher) {
-            staticsRepository?.getRecord(time)?.collect {
-                _analyzeRecord.value = (it)
-            }
-        }
-    }
-
-    fun getRecord(id: Int) {
-        lifecycleScope.launch(mainDispatcher) {
-            staticsRepository?.getRecord(id)?.collect {
-                _analyzeRecord.value = (it)
-            }
-        }
-    }
-
-    var currentAnayzeResult: AnalyzeResult? = null
-
-    private val _allAnayzeResult = MutableLiveData<Pair<List<WinkCount>, List<DrowsyCount>>>(
-        emptyList<WinkCount>() to emptyList<DrowsyCount>()
-    )
-
-    var currentWinkCount = 0 //
-    fun initWinkCount() {
-        currentWinkCount = 0
-    }
-
-    fun insertWinkCount(winkCount: WinkCount) {
-        lifecycleScope.launch() {
-            staticsRepository?.insertWinkCount(winkCount)
-        }
-    }
-
-    private val _winkCount = MutableLiveData<List<WinkCount>>(emptyList())
-
-    var currentDrowsyCount = 0
-    fun initDrowsyCount() {
-        currentDrowsyCount = 0
-    }
-
-    private val _drowsyCount = MutableLiveData<List<DrowsyCount>>(emptyList())
-    fun insertDrowsyCount(drowsyCount: DrowsyCount) {
-        lifecycleScope.launch() {
-            staticsRepository?.insertDrowsyCount(drowsyCount)
-        }
-    }
-
-    // 알림 관리 ***********************************************************************************************
-    private fun startForegroundService2() {
-        val channel = createNotificationChannel()
-        val notificationManager: NotificationManager = createNotificationManager()
-        val notificationBuilder = createNotificationBuilder()
-        notificationManager.createNotificationChannel(channel)
-        startForeground(NOTIFICATION_ID, notificationBuilder.build())
-//        // 알림창 시간 변경
-//        timeRunInSeconds.observe(this, Observer { time ->
-//            if (serviceKilled.value == false) { // 서비스가 종료 되지 않았을 때
-//                notificationBuilder.setContentText(TrackingUtility.getFormattedStopWatchTime(time * 1000L))
-//                notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
-//            }
-//        })
-    }
-
-    private fun createNotificationChannel() = NotificationChannel(
-        NOTIFICATION_CHANNEL_ID,
-        NOTIFICATION_CHANNEL_NAME,
-        NotificationManager.IMPORTANCE_LOW // 알림음이 없습니다.
-    ).apply { description = "졸음 감지" }
-
-    private fun createNotificationManager() =
-        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-    private fun createNotificationBuilder() =
-        NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID).setAutoCancel(false)
-            .setOngoing(true) // 스와이프로 지울 수 없다.
-            .setSmallIcon(R.drawable.icon_x).setContentTitle("WatchOut").setContentText("졸음 감지 중")
-            .setContentIntent(getMainActivityPendingIntent())
-
-    private fun getMainActivityPendingIntent(): PendingIntent = PendingIntent.getActivity(
-        this, 199, Intent(this, MainActivity::class.java).apply {
-            this.action = ACTION_SHOW_TRACKING_FRAGMENT
-        }, PendingIntent.FLAG_IMMUTABLE
-    )
-}
 
 
 //    // 최단 거리 정보 안내
@@ -1000,3 +857,192 @@ class AnalyzeService : LifecycleService() {
 //                )
 //            }))
 //        }
+
+
+    // musicRepository ///////////////////////////////////////////////////////////////////////////////////////
+    private val _music = MutableLiveData<List<Music>>(emptyList())
+
+    /* R : 이벤트 전체 조회 메서드 */
+    fun getAllMusic() {
+        lifecycleScope.launch {
+            musicRepository?.getAllMusic()?.collect {
+                _music.value = it
+            }
+        }
+    }
+
+    // settingRepository ///////////////////////////////////////////////////////////////////////////////////////
+    private val _guideMode = MutableLiveData<Boolean>(true)
+
+    private val _basicMusicMode = MutableLiveData<Boolean>(true)
+
+    private val _musicVolume = MutableLiveData<Int>(0)
+
+    private val _refreshTerm = MutableLiveData<Int>(0)
+    fun getSettingModeInt(key: String) {
+        lifecycleScope.launch {
+            settingRepository?.getInt(key)?.collect {
+                when (key) {
+                    MUSICVOLUME -> {
+                        _musicVolume.value = it
+                    }
+
+                    REFRESHTERM -> {
+                        _refreshTerm.value = it
+                    }
+                }
+            }
+        }
+    }
+
+    fun setSettingMode(key: String, value: Int) {
+        lifecycleScope.launch {
+            settingRepository?.setInt(key, value)
+        }
+    }
+
+    fun getSettingModeBool(key: String) {
+        lifecycleScope.launch {
+            settingRepository?.getBoolean(key)?.collect {
+                when (key) {
+                    GUIDEMODE -> {
+                        _guideMode.value = it
+                    }
+
+                    BASICMUSICMODE -> {
+                        _basicMusicMode.value = it
+                    }
+                }
+            }
+        }
+    }
+
+    fun setSettingMode(key: String, value: Boolean) {
+        lifecycleScope.launch {
+            settingRepository?.setBoolean(key, value)
+        }
+    }
+
+    private val _allSettings = MutableLiveData(mutableListOf<Boolean>() to mutableListOf<Int>())
+    fun getAllSetting() {
+        lifecycleScope.launch {
+            with(settingRepository) {
+                if (this != null) {
+                    this.getBoolean(GUIDEMODE)
+                        .zip(this.getBoolean(BASICMUSICMODE)) { a, b -> mutableListOf(a, b) }
+                        .zip(this.getInt(MUSICVOLUME)) { list, c -> list to mutableListOf(c) }
+                        .zip(this.getInt(REFRESHTERM)) { pair, d ->
+                            pair.second.add(d)
+                            pair.first to pair.second
+                        }.collect {
+                            Log.d("whatisthis", it.toString())
+                            _allSettings.value = it
+                        }
+                }
+            }
+        }
+    }
+
+    // staticsRepository ///////////////////////////////////////////////////////////////////////////////////////
+
+    private val _allAnalyzeRecord = MutableLiveData<List<AnalyzeResult>>(emptyList())
+    fun insertRecord(analyzeResult: AnalyzeResult) {
+        lifecycleScope.launch() {
+            staticsRepository?.insertRecord(analyzeResult)
+        }
+    }
+
+    private val _analyzeRecord = MutableLiveData<AnalyzeResult>()
+
+    fun getRecord(time: String) {
+        lifecycleScope.launch(mainDispatcher) {
+            staticsRepository?.getRecord(time)?.collect {
+                _analyzeRecord.value = (it)
+            }
+        }
+    }
+
+    fun getRecord(id: Int) {
+        lifecycleScope.launch(mainDispatcher) {
+            staticsRepository?.getRecord(id)?.collect {
+                _analyzeRecord.value = (it)
+            }
+        }
+    }
+
+    var currentAnayzeResult: AnalyzeResult? = null
+
+    private val _allAnayzeResult = MutableLiveData<Pair<List<WinkCount>, List<DrowsyCount>>>(
+        emptyList<WinkCount>() to emptyList<DrowsyCount>()
+    )
+
+    var currentWinkCount = 0 //
+    fun initWinkCount() {
+        currentWinkCount = 0
+    }
+
+    fun countUpWinkCount() {
+        currentWinkCount++
+    }
+
+    fun insertWinkCount(winkCount: WinkCount) {
+        lifecycleScope.launch() {
+            staticsRepository?.insertWinkCount(winkCount)
+        }
+    }
+
+    private val _winkCount = MutableLiveData<List<WinkCount>>(emptyList())
+
+    var currentDrowsyCount = 0
+    fun initDrowsyCount() {
+        currentDrowsyCount = 0
+    }
+
+    fun countUpDrowsyCount() {
+        currentDrowsyCount++
+    }
+
+    private val _drowsyCount = MutableLiveData<List<DrowsyCount>>(emptyList())
+    fun insertDrowsyCount(drowsyCount: DrowsyCount) {
+        lifecycleScope.launch() {
+            staticsRepository?.insertDrowsyCount(drowsyCount)
+        }
+    }
+
+    // 알림 관리 ***********************************************************************************************
+    private fun startForeground() {
+        val channel = createNotificationChannel()
+        val notificationManager: NotificationManager = createNotificationManager()
+        val notificationBuilder = createNotificationBuilder()
+        notificationManager.createNotificationChannel(channel)
+        startForeground(NOTIFICATION_ID, notificationBuilder.build())
+//        // 알림창 시간 변경
+//        timeRunInSeconds.observe(this, Observer { time ->
+//            if (serviceKilled.value == false) { // 서비스가 종료 되지 않았을 때
+//                notificationBuilder.setContentText(TrackingUtility.getFormattedStopWatchTime(time * 1000L))
+//                notificationManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+//            }
+//        })
+    }
+
+    private fun createNotificationChannel() = NotificationChannel(
+        NOTIFICATION_CHANNEL_ID,
+        NOTIFICATION_CHANNEL_NAME,
+        NotificationManager.IMPORTANCE_LOW // 알림음이 없습니다.
+    ).apply { description = "졸음 감지" }
+
+    private fun createNotificationManager() =
+        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    private fun createNotificationBuilder() =
+        NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID).setAutoCancel(false)
+            .setOngoing(true) // 스와이프로 지울 수 없다.
+            .setSmallIcon(R.drawable.icon_x).setContentTitle("WatchOut").setContentText("졸음 감지 중")
+            .setContentIntent(getMainActivityPendingIntent())
+
+    private fun getMainActivityPendingIntent(): PendingIntent = PendingIntent.getActivity(
+        this, 199, Intent(this, MainActivity::class.java).apply {
+            this.action = ACTION_SHOW_ANALYZING_FRAGMENT
+        }, PendingIntent.FLAG_IMMUTABLE
+    )
+}

@@ -37,6 +37,12 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".utils.ApplicationClass"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -49,8 +55,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31"
         tools:ignore="MissingTvBanner">
+
+        <!-- screenOrientation="portrait" 로 핸드폰 회전을 막음 -->
         <activity
             android:name=".view.MainActivity"
+            android:screenOrientation="portrait"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

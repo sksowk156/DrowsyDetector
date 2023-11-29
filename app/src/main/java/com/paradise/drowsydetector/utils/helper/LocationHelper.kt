@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.utils
+package com.paradise.drowsydetector.utils.helper
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -9,6 +9,7 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.paradise.drowsydetector.utils.checkPermissions
 
 class LocationHelper(
     private val fusedLocationProviderClient: FusedLocationProviderClient,

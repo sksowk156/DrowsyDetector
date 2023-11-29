@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.utils
+package com.paradise.drowsydetector.utils.helper
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -20,6 +20,7 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
 import java.lang.ref.WeakReference
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class CameraHelper(
@@ -40,7 +41,7 @@ class CameraHelper(
             }
     }
 
-    private var cameraExecutor = Executors.newSingleThreadExecutor()
+    private lateinit var cameraExecutor: ExecutorService
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -66,17 +67,22 @@ class CameraHelper(
         instance = null
     }
 
-    fun releaseCameraHelper() {
-        faceDetector.close()
-        faceMesh.close()
+    fun stopCameraHelper(){
         cameraExecutor.shutdown()
     }
 
-    fun startCamera(
+    fun releaseCameraHelper() {
+        cameraExecutor.shutdown()
+        faceDetector.close()
+        faceMesh.close()
+    }
+
+    fun startAnalyze(
         previewView: PreviewView,
         analyzedData: (Face, List<FaceMeshPoint>) -> Unit,
     ) {
         contextRef.get()?.let { context ->
+            cameraExecutor = Executors.newSingleThreadExecutor()
             val cameraController = LifecycleCameraController(context)
             // 전면 카메라
             cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA

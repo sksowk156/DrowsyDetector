@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.utils
+package com.paradise.drowsydetector.utils.helper
 
 import android.content.Context
 import android.media.MediaPlayer
@@ -6,6 +6,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.data.local.room.music.Music
+import com.paradise.drowsydetector.utils.DEFAULT_MUSIC_DURATION
+import com.paradise.drowsydetector.utils.defaultDispatcher
+import com.paradise.drowsydetector.utils.getRandomElement
+import com.paradise.drowsydetector.utils.getUriFromFilePath
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -86,6 +90,15 @@ class MusicHelper(
         }
         job?.cancel() // 음악이 duration 전에 끝날 경우 job을 cancle한다.
         job = null
+    }
+
+    /**
+     * Start res music
+     *
+     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
+     */
+    fun setStandardMusic() {
+        startMusic(R.raw.setstandard)
     }
 
     /**

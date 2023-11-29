@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.YAxis
@@ -38,6 +39,7 @@ class StatisticFragment :
         staticsViewModel.getRecord(getTodayDate())
     }
 
+
     private fun subscribeTodayRecord() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
             state = Lifecycle.State.STARTED,
@@ -48,6 +50,7 @@ class StatisticFragment :
                     staticsViewModel.getAnalyzeResult(it.id)
                 }
             }
+
         }
 
         viewLifecycleOwner.launchWithRepeatOnLifecycle(

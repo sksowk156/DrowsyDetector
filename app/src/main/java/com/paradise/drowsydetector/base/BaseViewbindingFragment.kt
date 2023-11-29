@@ -95,9 +95,9 @@ abstract class BaseViewbindingFragment<VB : ViewBinding>(
         // FlowBinding의 backPresses 확장함수를 활용하는 방법
         requireActivity().onBackPressedDispatcher.backPresses(viewLifecycleOwner)
             .onEach {
-                val jobListCopy = mutableListOf<Job>()
                 inBackPress = true
                 viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
+                    val jobListCopy = mutableListOf<Job>()
                     jobListCopy.addAll(jobList) // 복사
                     for (i in jobListCopy) {
                         if (i.isCancelled) continue // 종료된거면 종료 X

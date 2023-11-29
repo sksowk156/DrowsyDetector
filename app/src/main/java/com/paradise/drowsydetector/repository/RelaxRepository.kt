@@ -1,5 +1,6 @@
 package com.paradise.drowsydetector.repository
 
+import android.util.Log
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotInterface
 import com.paradise.drowsydetector.data.remote.rest.RestInterface
 import com.paradise.drowsydetector.data.remote.shelter.DrowyShelterInterface
@@ -104,7 +105,7 @@ class RelaxRepository(
         } as Unit
     }.flowOn(ioDispatcher).cancellable()
 
-    suspend fun getParkingLots1(
+    fun getParkingLots1(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
@@ -114,7 +115,7 @@ class RelaxRepository(
         getParkingLot1(it, boundingBox, parkingchargeInfo, day, nowTime)
     }
 
-    suspend fun getAllParkingLot(
+    fun getAllParkingLot(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
@@ -159,7 +160,7 @@ class RelaxRepository(
      * @param day
      * @param nowTime
      */
-    suspend fun getParkingLot1(
+    fun getParkingLot1(
         pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
     ) = flow {
         try {
@@ -169,7 +170,6 @@ class RelaxRepository(
             if (response.isSuccessful) {
                 response.body()?.let { parkingLot ->
                     val freeParkingLot = mutableListOf<parkingLotItem>()
-
                     parkingLot.response.body.items.asFlow().flowOn(defaultDispatcher)
                         .filter { item ->
                             val lat = item.latitude.toDoubleOrNull()
@@ -183,7 +183,6 @@ class RelaxRepository(
                         }.collect { item ->
                             freeParkingLot.add(item)
                         }
-
                     emit(ResponseState.Success(freeParkingLot))
                 }
             } else {

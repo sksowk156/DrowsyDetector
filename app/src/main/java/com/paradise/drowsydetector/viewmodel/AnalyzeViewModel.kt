@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
@@ -51,6 +52,25 @@ class AnalyzeViewModel(
             field = value
         }
         get() = field
+
+
+    private val _sortedAll: MutableSharedFlow<Triple<List<restItem>, List<shelterItem>, List<parkingLotItem>>> =
+        MutableSharedFlow()
+    val sortedAll: SharedFlow<Triple<List<restItem>, List<shelterItem>, List<parkingLotItem>>> get() = _sortedAll
+    fun sortAll() =
+        viewModelScope.launch(defaultDispatcher) {
+            sortedRests.zip(sortedShelters) { rest, shelter -> Pair(rest, shelter) }
+                .zip(sortedParkingLots) { pair, parkinglot ->
+                    Triple(
+                        pair.first,
+                        pair.second,
+                        parkinglot
+                    )
+                }
+                .collect {
+                    _sortedAll.emit(it)
+                }
+        }
 
 
     // 모든 휴게소 데이터
@@ -134,7 +154,6 @@ class AnalyzeViewModel(
             ).catch { error ->
                 _parkingLots.value = ResponseState.Error(error)
             }.collect {
-
                 if (it is ResponseState.Success) {
                     combine(it.data) { responses ->
                         val combinedList =

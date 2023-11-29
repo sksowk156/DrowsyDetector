@@ -3,13 +3,18 @@ package com.paradise.drowsydetector.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import com.google.mlkit.vision.face.Face
 import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
 import com.paradise.drowsydetector.repository.StaticsRepository
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.mainDispatcher
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,14 +22,71 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.zip
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class StaticsViewModel(
     private val staticsRepository: StaticsRepository,
 ) : ViewModel() {
 
-    private val _allAnalyzeRecord = MutableStateFlow<List<AnalyzeResult>>(emptyList())
-    val allAnalyzeRecord: StateFlow<List<AnalyzeResult>> = _allAnalyzeRecord.asStateFlow()
+//    var standard: Double?= null
+//
+//    fun initStandard(){
+//        standard = null
+//    }
+
+//    var datajob: Job? = null // 눈 깜빡임 감지
+//    var eyeClosed : Boolean = false
+//    var currentAnayzeResult: AnalyzeResult? = null
+//
+//    fun startRecording() {
+//        if (datajob == null) {
+//            datajob = initJob()
+//            datajob!!.start()
+//        }
+//    }
+//
+//    private fun initJob() = viewModelScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
+//        while (this.isActive) {
+//            delay(1 * 60 * 1000)  // 30분 대기
+//            Log.d("whatisthis", currentWinkCount.toString()+ " " + currentDrowsyCount.toString())
+//            insertWinkCount(
+//                WinkCount(
+//                    recordId = currentAnayzeResult!!.id, value = currentWinkCount
+//                )
+//            )
+//            insertDrowsyCount(
+//                DrowsyCount(
+//                    recordId = currentAnayzeResult!!.id, value = currentDrowsyCount
+//                )
+//            )
+//            // 초기화
+//            initWinkCount()
+//            initDrowsyCount()
+//        }
+//    }
+//
+//    fun checkEyeWink(eyeState: Double, resultDetector: Face) {
+//        // 눈 깜빡임 카운팅
+//        if (eyeState <= 0.4) {
+//            val leftEyeOpen = resultDetector.leftEyeOpenProbability
+//            val righEyeOpen = resultDetector.rightEyeOpenProbability
+//
+//            if (datajob != null && datajob!!.isActive) {
+//                if (leftEyeOpen != null && righEyeOpen != null) {
+//                    if (leftEyeOpen < 0.3 && righEyeOpen < 0.3 && !eyeClosed) {
+//                        eyeClosed = true // frame이 높아서 한번에 많이 처리될 수 있기 때문
+//                        // 눈이 감겨 있음
+//                        currentWinkCount++
+//                        Log.d("whatisthis",currentWinkCount.toString())
+//                    }
+//                }
+//            }
+//        }
+//    }
+
+    private val _allAnalyzeRecord = MutableSharedFlow<List<AnalyzeResult>>()
+    val allAnalyzeRecord: SharedFlow<List<AnalyzeResult>> get() = _allAnalyzeRecord.asSharedFlow()
     fun insertRecord(analyzeResult: AnalyzeResult) {
         viewModelScope.launch() {
             staticsRepository.insertRecord(analyzeResult)
@@ -32,18 +94,18 @@ class StaticsViewModel(
     }
 
     fun getAllRecord() {
-        viewModelScope.launch(mainDispatcher) {
+        viewModelScope.launch() {
             staticsRepository.getAllRecord().collect {
-                _allAnalyzeRecord.value = it
+                _allAnalyzeRecord.emit(it)
             }
         }
     }
 
     private val _analyzeRecord = MutableSharedFlow<AnalyzeResult>()
-    val analyzeRecord: SharedFlow<AnalyzeResult> = _analyzeRecord.asSharedFlow()
+    val analyzeRecord: SharedFlow<AnalyzeResult> get() = _analyzeRecord
 
     fun getRecord(time: String) {
-        viewModelScope.launch(mainDispatcher) {
+        viewModelScope.launch() {
             staticsRepository.getRecord(time).collect {
                 _analyzeRecord.emit(it)
             }
@@ -51,14 +113,12 @@ class StaticsViewModel(
     }
 
     fun getRecord(id: Int) {
-        viewModelScope.launch(mainDispatcher) {
+        viewModelScope.launch() {
             staticsRepository.getRecord(id).collect {
                 _analyzeRecord.emit(it)
             }
         }
     }
-
-    var currentAnayzeResult: AnalyzeResult? = null
 
     /* D : 이벤트 삭제 메서드 */
     fun deleteRecord(analyzeResult: AnalyzeResult) {

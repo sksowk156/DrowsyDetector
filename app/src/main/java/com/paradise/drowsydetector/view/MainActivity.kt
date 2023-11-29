@@ -2,12 +2,13 @@ package com.paradise.drowsydetector.view
 
 import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.viewModels
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
-import com.paradise.drowsydetector.utils.ACTION_SHOW_TRACKING_FRAGMENT
+import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
 import com.paradise.drowsydetector.utils.ApplicationClass
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
@@ -44,7 +45,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
     }
 
     private fun navigateToTrackingFragmentIfNeeded(intent: Intent?) {
-        if (intent?.action == ACTION_SHOW_TRACKING_FRAGMENT) {
+        if (intent?.action == ACTION_SHOW_ANALYZING_FRAGMENT) {
 //            supportFragmentManager.beginTransaction()
 //                .add(binding.homeFramelayout.id, HomeBaseFragment(), "homebase")
 //                .addToBackStack(null)
@@ -57,12 +58,22 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             arrayOf(
                 Manifest.permission.CAMERA,
                 Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
+                Manifest.permission.ACCESS_COARSE_LOCATION,
             )
         ) {
             showToast("권한 허용")
             analyzeViewModel.checkDrowsy
         }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            checkPermissions(arrayOf(Manifest.permission.FOREGROUND_SERVICE)) {}
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) {}
+        }
+
+        checkPermissions(arrayOf(Manifest.permission.SYSTEM_ALERT_WINDOW)) {}
+
         staticsViewModel.getAllRecord()
         settingViewModel.getSettingModeBool(GUIDEMODE)
         settingViewModel.getSettingModeBool(BASICMUSICMODE)
