@@ -10,10 +10,12 @@ import com.paradise.drowsydetector.utils.TTS_FINISHING
 import com.paradise.drowsydetector.utils.TTS_SPEAKING
 import com.paradise.drowsydetector.utils.TTS_WAITING
 import com.paradise.drowsydetector.utils.showToast
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.lang.ref.WeakReference
 import java.util.Locale
 
-class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.OnInitListener {
+class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.OnInitListener { // 서비스에서 사용하면 계속 메모리 릭이 뜬다.
     companion object {
         @Volatile
         private var instance: TtsHelper? = null
@@ -30,15 +32,15 @@ class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.O
     private var tts: TextToSpeech? = null
     fun initTTS() {
         contextRef.get()?.let { context ->
-            tts = TextToSpeech(context, this)
+            tts = TextToSpeech(context, instance)
         }
     }
 
     private var _isInitialized = MutableLiveData<Boolean>(false)
     val isInitialized: LiveData<Boolean> get() = _isInitialized
 
-    private var _isSpeaking = MutableLiveData<Int>(TTS_WAITING)
-    val isSpeaking: LiveData<Int> get() = _isSpeaking
+    private var _isSpeaking = MutableStateFlow<Int>(TTS_WAITING)
+    val isSpeaking: StateFlow<Int> get() = _isSpeaking
 
     fun releaseTtsHelper() {
         tts?.stop()
@@ -47,6 +49,9 @@ class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.O
 
     fun clearContext() {
         releaseTtsHelper()
+        tts?.setOnUtteranceProgressListener(null)
+
+        tts = null
         contextRef.clear()
         instance = null
     }

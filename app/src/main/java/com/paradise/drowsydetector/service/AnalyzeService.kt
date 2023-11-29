@@ -17,7 +17,6 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.ImageView
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -40,6 +39,7 @@ import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
 import com.paradise.drowsydetector.repository.MusicRepository
+import com.paradise.drowsydetector.repository.RelaxRepository
 import com.paradise.drowsydetector.repository.SettingRepository
 import com.paradise.drowsydetector.repository.StaticsRepository
 import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
@@ -58,7 +58,6 @@ import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.helper.MusicHelper
-import com.paradise.drowsydetector.utils.helper.TtsHelper
 import com.paradise.drowsydetector.utils.mainDispatcher
 import com.paradise.drowsydetector.view.MainActivity
 import kotlinx.coroutines.CoroutineStart
@@ -70,9 +69,10 @@ import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.Date
 
+
 class AnalyzeService : LifecycleService() {
 
-    private val binder = MyBinder(this)
+    private val binder = MyBinder(this@AnalyzeService)
 
     class MyBinder(service: AnalyzeService) : Binder() {
         private val weakService = WeakReference(service)
@@ -91,7 +91,6 @@ class AnalyzeService : LifecycleService() {
     private var mFloatingView: View? = null
 
     private var musicHelper: MusicHelper? = null
-    var ttsHelper: TtsHelper? = null
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -113,6 +112,7 @@ class AnalyzeService : LifecycleService() {
     private var musicRepository: MusicRepository? = null
     private var settingRepository: SettingRepository? = null
     private var staticsRepository: StaticsRepository? = null
+    private var relaxRepository: RelaxRepository? = null
 
     var standard: Double? = null
     fun initStandard() {
@@ -131,7 +131,6 @@ class AnalyzeService : LifecycleService() {
     override fun onDestroy() {
         Log.d("whatisthis", "service onDestroy()")
         killForegroundService()
-        ttsHelper?.clearContext()
         mWindowManager = null
         mParams = null
         super.onDestroy()
@@ -142,10 +141,9 @@ class AnalyzeService : LifecycleService() {
         musicRepository = ApplicationClass.getApplicationContext().musicRepository
         settingRepository = ApplicationClass.getApplicationContext().settingRepository
         staticsRepository = ApplicationClass.getApplicationContext().staticRepository
+        relaxRepository = ApplicationClass.getApplicationContext().relaxRepository
 
         musicHelper = MusicHelper.getInstance(this@AnalyzeService, this@AnalyzeService)
-        ttsHelper = TtsHelper.getInstance(this@AnalyzeService)
-
         initWindowManagerParams()
         subscribeRecord()
         subscribeUserMusicList()
@@ -310,6 +308,7 @@ class AnalyzeService : LifecycleService() {
         _allSettings.observe(this@AnalyzeService) {
             if (it.first.size > 0 && it.second.size > 0) {
                 val defaultMusic = it.first[1]
+                val onGuide = it.first[0]
                 val onRefresh = it.second[1]
 
                 startCamera(
@@ -487,376 +486,6 @@ class AnalyzeService : LifecycleService() {
     private fun startRefresh(a: Int) {
 
     }
-
-
-//    // 최단 거리 정보 안내
-//    private fun startGuide(guideMode: Boolean) {
-//        if (guideMode) {
-//            requestRelaxData()
-//        }
-//    }
-//
-//    private fun requestRelaxData() {
-//        initParkingLotRequest()
-//        repeatRequestWhenNull(parkingLotRequestTime, "ParkingLot")
-//        initShelterRequest()
-//        repeatRequestWhenNull(shelterRequestTime, "Shelter")
-//        initRestRequest()
-//        repeatRequestWhenNull(restRequestTime, "Rest")
-//    }
-//
-//    private fun repeatRequestWhenNull(count: Int, detectType: String) {
-//        val job = when (detectType) {
-//            "ParkingLot" -> jobGetParkingLot
-//            "Shelter" -> jobGetShelter
-//            "Rest" -> jobGetRest
-//            else -> throw IllegalArgumentException("Unsupported detectType: $detectType")
-//        }
-//
-//        job?.let {
-//            if (it.isActive && !it.isCompleted) {
-//                handleRequestCompletion(it, detectType)
-//            } else {
-//                handleRequestCancellation(it, detectType, count)
-//            }
-//        } ?: run {
-//            handleFirstRequest(detectType, count)
-//        }
-//    }
-//
-//    private fun handleRequestCompletion(job: Job, detectType: String) {
-//        lifecycleScope.launch(defaultDispatcher) {
-//            Log.d("whatisthis", "$detectType 정보 이미 요청됨**** ")
-//            job.join()
-//        }
-//    }
-//
-//    private fun handleRequestCancellation(job: Job, detectType: String, count: Int) {
-//        lifecycleScope.launch(defaultDispatcher) {
-//            job.cancelAndJoin()
-//            Log.d("whatisthis", "$detectType 정보 요청 종료후 재요청!!!!")
-//            mFusedLocationProviderClient.setLastLocationEventListener { location ->
-//                getJobForType(detectType, count, location)?.let {}
-//            }
-//        }
-//    }
-//
-//    private fun handleFirstRequest(detectType: String, count: Int) {
-//        Log.d("whatisthis", "$detectType 정보 첫요청1")
-//        mFusedLocationProviderClient.setLastLocationEventListener { location ->
-//            getJobForType(detectType, count, location)?.let {}
-//        }
-//    }
-//
-//    private fun getJobForType(detectType: String, count: Int, location: Location): Job? {
-//        return when (detectType) {
-//            "ParkingLot" -> getALLNearParkingLot(
-//                boundingBox = getBoundingBox(
-//                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-//                ), day = getDayType(), nowTime = getCurrentTime()
-//            )
-//
-//            "Shelter" -> getNearShelter(
-//                boundingBox = getBoundingBox(
-//                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-//                )
-//            )
-//
-//            "Rest" -> getNearRest(
-//                boundingBox = getBoundingBox(
-//                    location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
-//                )
-//            )
-//
-//            else -> null
-//        }
-//    }
-//
-//    private fun subscribeParkingLotData() {
-//        _parkingLots.observe(this@AnalyzeService) {
-//            when (it) {
-//                is ResponseState.Uninitialized -> {}
-//                is ResponseState.Loading -> {
-//                    Log.d("whatisthis", "주차장 데이터 로딩")
-//                }
-//
-//                is ResponseState.Success -> {
-//                    if (it.data.isNotEmpty()) {
-//                        requestSortingData(it.data)
-//                    } else {
-//                        Log.d("whatisthis", "근처에 주차장이 없음 반경을 늘려서 재요청")
-//                        if (parkingLotRequestTime < 3) {
-//                            repeatRequestWhenNull(
-//                                parkingLotRequestTime++, "Shelter"
-//                            )
-//                        }
-//                    }
-//                }
-//
-//                is ResponseState.Fail -> {
-//                    Log.d("whatisthis", it.message.toString() + it.code)
-//                }
-//
-//                is ResponseState.Error -> {
-//                    Log.d("whatisthis", it.exception.toString())
-//                }
-//            }
-//        }
-//    }
-//
-//    private fun subscribeSortedParkingLots() {
-//        _sortedParkingLots.observe(this@AnalyzeService) {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 주차장 " + it[0].toString())
-//        }
-//
-//    }
-//
-//    private fun subscribeShleterData() {
-//        _shelters.observe(this@AnalyzeService) {
-//            when (it) {
-//                is ResponseState.Uninitialized -> {}
-//                is ResponseState.Loading -> {
-//                    Log.d("whatisthis", "졸음 쉼터 데이터 로딩")
-//                }
-//
-//                is ResponseState.Success -> {
-//                    if (it.data.isNotEmpty()) {
-//                        requestSortingData(it.data)
-//                    } else {
-//                        Log.d("whatisthis", "근처에 쉼터가 없음 반경을 늘려서 재요청")
-//                        if (shelterRequestTime < 3) {
-//                            repeatRequestWhenNull(
-//                                shelterRequestTime++, "Shelter"
-//                            )
-//                        }
-//                    }
-//                }
-//
-//                is ResponseState.Fail -> {
-//                    Log.d("whatisthis", it.message.toString() + it.code)
-//                }
-//
-//                is ResponseState.Error -> {
-//                    Log.d("whatisthis", it.exception.toString())
-//                }
-//            }
-//        }
-//
-//    }
-//
-//    private fun subscribeSortedShelterData() {
-//        _sortedShelters.observe(this@AnalyzeService) {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 쉼터 " + it[0].toString())
-//        }
-//
-//    }
-//
-//    private fun subscribeRestData() {
-//        _rests.observe(this@AnalyzeService) {
-//            when (it) {
-//                is ResponseState.Uninitialized -> {}
-//                is ResponseState.Loading -> {
-//                    Log.d("whatisthis", "휴게소 데이터 로딩")
-//                }
-//
-//                is ResponseState.Success -> {
-//                    if (it.data.isNotEmpty()) {
-//                        requestSortingData(it.data)
-//                    } else {
-//                        Log.d("whatisthis", "근처에 휴게소가 없음 반경을 늘려서 재요청")
-//                        if (restRequestTime < 3) {
-//                            repeatRequestWhenNull(
-//                                restRequestTime++, "Shelter"
-//                            )
-//                        }
-//                    }
-//                }
-//
-//                is ResponseState.Fail -> {
-//                    Log.d("whatisthis", it.message.toString() + it.code)
-//                }
-//
-//                is ResponseState.Error -> {
-//                    Log.d("whatisthis", it.exception.toString())
-//                }
-//            }
-//
-//
-//        }
-//    }
-//
-//    private fun subscribeSortedRests() {
-//        _sortedRests.observe(this@AnalyzeService) {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 휴게소 " + it[0].toString())
-//        }
-//
-//    }
-//
-//    private inline fun <reified T> requestSortingData(data: List<T>) {
-//        mFusedLocationProviderClient.setLastLocationEventListener { nowLocation ->
-//            when (T::class) { // reified T를 사용해 함수 내에서 실제 T::class를 호출한다.
-//                parkingLotItem::class -> {
-//                    val parkingLots = data as List<parkingLotItem>
-//                    if (jobSortedParkingLot != null) {
-//                        lifecycleScope.launch(defaultDispatcher) {
-//                            jobSortedParkingLot!!.cancelAndJoin()
-//                            Log.d("whatisthis", "주차장(정렬) 정보 요청 종료후 재요청")
-//                            jobSortedParkingLot = sortParkingLots(nowLocation, parkingLots)
-//                        }
-//                    } else {
-//                        Log.d("whatisthis", "주차장(정렬) 정보 첫요청2")
-//                        jobSortedParkingLot = sortParkingLots(nowLocation, parkingLots)
-//                    }
-//                }
-//
-//                shelterItem::class -> {
-//                    val shelters = data as List<shelterItem>
-//                    if (jobSortedShelter != null) {
-//                        lifecycleScope.launch(defaultDispatcher) {
-//                            jobSortedShelter!!.cancelAndJoin()
-//                            Log.d("whatisthis", "쉼터(정렬) 정보 요청 종료후 재요청")
-//                            jobSortedShelter = sortShelters(nowLocation, shelters)
-//                        }
-//                    } else {
-//                        Log.d("whatisthis", "쉼터(정렬) 정보 첫요청2")
-//                        jobSortedShelter = sortShelters(nowLocation, shelters)
-//                    }
-//                }
-//
-//                restItem::class -> {
-//                    val rests = data as List<restItem>
-//                    if (jobSortedRest != null) {
-//                        lifecycleScope.launch(defaultDispatcher) {
-//                            jobSortedRest!!.cancelAndJoin()
-//                            Log.d("whatisthis", "휴게소(정렬) 정보 요청 종료후 재요청")
-//                            jobSortedRest = sortRests(nowLocation, rests)
-//                        }
-//                    } else {
-//                        Log.d("whatisthis", "휴게소(정렬) 정보 첫요청2")
-//                        jobSortedRest = sortRests(nowLocation, rests)
-//                    }
-//                }
-//
-//                else -> throw IllegalArgumentException("Unsupported type: ${T::class.simpleName}")
-//            }
-//        }
-//    }
-
-//    // relaxRepository ///////////////////////////////////////////////////////////////////////////////////////
-//    var shelterRequestTime: Int = 0
-//    fun initShelterRequest() {
-//        shelterRequestTime = 0
-//    }
-//
-//    var restRequestTime: Int = 0
-//    fun initRestRequest() {
-//        restRequestTime = 0
-//    }
-//
-//    var parkingLotRequestTime: Int = 0
-//    fun initParkingLotRequest() {
-//        parkingLotRequestTime = 0
-//    }
-//
-//    var checkDrowsy: Boolean = true
-//
-//    // 모든 휴게소 데이터
-//    private val _rests: MutableLiveData<ResponseState<List<restItem>>> =
-//        MutableLiveData(ResponseState.Uninitialized)
-//
-//    fun getNearRest(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
-//        _rests.postValue(ResponseState.Loading)
-//        try {
-//            relaxRepository?.getAllRest(boundingBox)?.collect {
-//                _rests.postValue(it)
-//            }
-//        } catch (error: Throwable) {
-//            _rests.postValue(ResponseState.Error(error))
-//        }
-//    }
-//
-//    private val _sortedRests: MutableLiveData<List<restItem>> = MutableLiveData()
-//    fun sortRests(nowLocation: Location, rests: List<restItem>) =
-//        lifecycleScope.launch(defaultDispatcher) {
-//            _sortedRests.postValue((rests.sortedBy {// 정렬
-//                nowLocation.calculateDistance(
-//                    it.latitude.toDouble(), it.longitude.toDouble()
-//                )
-//            }))
-//        }
-//
-//
-//    // 모든 쉼터 데이터
-//    private val _shelters: MutableLiveData<ResponseState<List<shelterItem>>> =
-//        MutableLiveData(ResponseState.Uninitialized)
-//
-//    fun getNearShelter(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
-//        _shelters.postValue(ResponseState.Loading)
-//        try {
-//            relaxRepository?.getAllShelter(boundingBox)?.collect {
-//                _shelters.postValue(it)
-//            }
-//        } catch (error: Throwable) {
-//            _shelters.postValue(ResponseState.Error(error))
-//        }
-//    }
-//
-//    private val _sortedShelters: MutableLiveData<List<shelterItem>> = MutableLiveData()
-//    fun sortShelters(nowLocation: Location, shelters: List<shelterItem>) =
-//        lifecycleScope.launch(defaultDispatcher) {
-//            _sortedShelters.postValue((shelters.sortedBy {// 정렬
-//                nowLocation.calculateDistance(
-//                    it.latitude.toDouble(), it.longitude.toDouble()
-//                )
-//            }))
-//        }
-//
-//    private val _parkingLots: MutableLiveData<ResponseState<List<parkingLotItem>>> =
-//        MutableLiveData(ResponseState.Uninitialized)
-//
-//    fun getALLNearParkingLot(
-//        boundingBox: BoundingBox,
-//        parkingchargeInfo: String = "무료",
-//        numOfRows: Int = DEFAULT_NUM_OF_ROWS,
-//        day: DAY,
-//        nowTime: String,
-//    ) = lifecycleScope.launch(defaultDispatcher) {
-//        _parkingLots.postValue(ResponseState.Loading)
-//        try {
-//            relaxRepository?.getAllParkingLot(
-//                boundingBox, parkingchargeInfo, numOfRows, day, nowTime
-//            )?.catch { error ->
-//                _parkingLots.postValue(ResponseState.Error(error))
-//            }?.collect {
-//                if (it is ResponseState.Success) {
-//                    combine(it.data) { responses ->
-//                        val combinedList =
-//                            responses.filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
-//                                .flatMap { it.data }
-//                        ResponseState.Success(combinedList)
-//                    }.cancellable().catch { error ->
-//                        _parkingLots.postValue(ResponseState.Error(error))
-//                    }.collectLatest { listItem ->
-//                        _parkingLots.postValue(listItem)
-//                    }
-//                } else if (it is ResponseState.Fail) {
-//                    _parkingLots.postValue(ResponseState.Fail(it.code, it.message))
-//                }
-//            }
-//        } catch (error: Throwable) {
-//            _parkingLots.postValue(ResponseState.Error(error))
-//        }
-//    }
-//
-//    private val _sortedParkingLots: MutableLiveData<List<parkingLotItem>> = MutableLiveData()
-//    fun sortParkingLots(nowLocation: Location, parkingLots: List<parkingLotItem>) =
-//        lifecycleScope.launch(defaultDispatcher) {
-//            _sortedParkingLots.postValue((parkingLots.sortedBy {// 정렬
-//                nowLocation.calculateDistance(
-//                    it.latitude.toDouble(), it.longitude.toDouble()
-//                )
-//            }))
-//        }
 
 
     // musicRepository ///////////////////////////////////////////////////////////////////////////////////////
@@ -1046,3 +675,434 @@ class AnalyzeService : LifecycleService() {
         }, PendingIntent.FLAG_IMMUTABLE
     )
 }
+
+
+//
+//private val mFusedLocationProviderClient by lazy {
+//    LocationHelper.getInstance(
+//        ApplicationClass.getApplicationContext().fusedLocationProviderClient,
+//        ApplicationClass.getApplicationContext().geocoder
+//    )
+//}
+//
+//// 최단 거리 정보 안내
+//private fun startGuide(guideMode: Boolean) {
+//    if (guideMode) {
+//        requestRelaxData()
+//    }
+//}
+//
+//private fun requestRelaxData() {
+//    initParkingLotRequest()
+//    repeatRequestWhenNull(parkingLotRequestTime, "ParkingLot")
+//    initShelterRequest()
+//    repeatRequestWhenNull(shelterRequestTime, "Shelter")
+//    initRestRequest()
+//    repeatRequestWhenNull(restRequestTime, "Rest")
+//}
+//
+//private fun repeatRequestWhenNull(count: Int, detectType: String) {
+//    val job = when (detectType) {
+//        "ParkingLot" -> jobGetParkingLot
+//        "Shelter" -> jobGetShelter
+//        "Rest" -> jobGetRest
+//        else -> throw IllegalArgumentException("Unsupported detectType: $detectType")
+//    }
+//
+//    job?.let {
+//        if (it.isActive && !it.isCompleted) {
+//            handleRequestCompletion(it, detectType)
+//        } else {
+//            handleRequestCancellation(it, detectType, count)
+//        }
+//    } ?: run {
+//        handleFirstRequest(detectType, count)
+//    }
+//}
+//
+//private fun handleRequestCompletion(job: Job, detectType: String) {
+//    lifecycleScope.launch(defaultDispatcher) {
+//        Log.d("whatisthis", "$detectType 정보 이미 요청됨**** ")
+//        job.join()
+//    }
+//}
+//
+//private fun handleRequestCancellation(job: Job, detectType: String, count: Int) {
+//    lifecycleScope.launch(defaultDispatcher) {
+//        job.cancelAndJoin()
+//        Log.d("whatisthis", "$detectType 정보 요청 종료후 재요청!!!!")
+//        mFusedLocationProviderClient.setLastLocationEventListener { location ->
+//            getJobForType(detectType, count, location)?.let {}
+//        }
+//    }
+//}
+//
+//private fun handleFirstRequest(detectType: String, count: Int) {
+//    Log.d("whatisthis", "$detectType 정보 첫요청1")
+//    mFusedLocationProviderClient.setLastLocationEventListener { location ->
+//        getJobForType(detectType, count, location)?.let {}
+//    }
+//}
+//
+//private fun getJobForType(detectType: String, count: Int, location: Location): Job? {
+//    return when (detectType) {
+//        "ParkingLot" -> getALLNearParkingLot(
+//            boundingBox = getBoundingBox(
+//                location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+//            ), day = getDayType(), nowTime = getCurrentTime()
+//        )
+//
+//        "Shelter" -> getNearShelter(
+//            boundingBox = getBoundingBox(
+//                location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+//            )
+//        )
+//
+//        "Rest" -> getNearRest(
+//            boundingBox = getBoundingBox(
+//                location.latitude, location.longitude, DEFAULT_RADIUSKM + (5.0 * count)
+//            )
+//        )
+//
+//        else -> null
+//    }
+//}
+//
+//private fun subscribeSortedParkingLots() {
+//    _sortedParkingLots.observe(this@AnalyzeService) {
+//        if (it != null) {
+//            Log.d("whatisthis", it[0].toString())
+//        }
+//    }
+//}
+//
+//private fun subscribeSortedShelterData() {
+//    _sortedShelters.observe(this@AnalyzeService) {
+//        if (it != null) {
+//            Log.d("whatisthis", it[0].toString())
+//        }
+//    }
+//}
+//
+//private fun subscribeSortedRests() {
+//    _sortedRests.observe(this@AnalyzeService) {
+//        if (it != null) {
+//            Log.d("whatisthis", it[0].toString())
+//        }
+//    }
+//}
+//
+//private fun subscribeParkingLotData() {
+//    _parkingLots.observe(this@AnalyzeService) {
+//        when (it) {
+//            is ResponseState.Uninitialized -> {}
+//            is ResponseState.Loading -> {
+//                Log.d("whatisthis", "주차장 데이터 로딩")
+//            }
+//
+//            is ResponseState.Success -> {
+//                if (it.data.isNotEmpty()) {
+//                    requestSortingData(it.data)
+//                } else {
+//                    Log.d("whatisthis", "근처에 주차장이 없음 반경을 늘려서 재요청")
+//                    if (parkingLotRequestTime < 3) {
+//                        repeatRequestWhenNull(
+//                            parkingLotRequestTime++, "Shelter"
+//                        )
+//                    }
+//                }
+//            }
+//
+//            is ResponseState.Fail -> {
+//                Log.d("whatisthis", it.message.toString() + it.code)
+//            }
+//
+//            is ResponseState.Error -> {
+//                Log.d("whatisthis", it.exception.toString())
+//            }
+//        }
+//    }
+//}
+//
+//private fun subscribeShleterData() {
+//    _shelters.observe(this@AnalyzeService) {
+//        when (it) {
+//            is ResponseState.Uninitialized -> {}
+//            is ResponseState.Loading -> {
+//                Log.d("whatisthis", "졸음 쉼터 데이터 로딩")
+//            }
+//
+//            is ResponseState.Success -> {
+//                if (it.data.isNotEmpty()) {
+//                    requestSortingData(it.data)
+//                } else {
+//                    Log.d("whatisthis", "근처에 쉼터가 없음 반경을 늘려서 재요청")
+//                    if (shelterRequestTime < 3) {
+//                        repeatRequestWhenNull(
+//                            shelterRequestTime++, "Shelter"
+//                        )
+//                    }
+//                }
+//            }
+//
+//            is ResponseState.Fail -> {
+//                Log.d("whatisthis", it.message.toString() + it.code)
+//            }
+//
+//            is ResponseState.Error -> {
+//                Log.d("whatisthis", it.exception.toString())
+//            }
+//        }
+//    }
+//
+//}
+//
+//private fun subscribeRestData() {
+//    _rests.observe(this@AnalyzeService) {
+//        when (it) {
+//            is ResponseState.Uninitialized -> {}
+//            is ResponseState.Loading -> {
+//                Log.d("whatisthis", "휴게소 데이터 로딩")
+//            }
+//
+//            is ResponseState.Success -> {
+//                if (it.data.isNotEmpty()) {
+//                    requestSortingData(it.data)
+//                } else {
+//                    Log.d("whatisthis", "근처에 휴게소가 없음 반경을 늘려서 재요청")
+//                    if (restRequestTime < 3) {
+//                        repeatRequestWhenNull(
+//                            restRequestTime++, "Shelter"
+//                        )
+//                    }
+//                }
+//            }
+//
+//            is ResponseState.Fail -> {
+//                Log.d("whatisthis", it.message.toString() + it.code)
+//            }
+//
+//            is ResponseState.Error -> {
+//                Log.d("whatisthis", it.exception.toString())
+//            }
+//        }
+//
+//
+//    }
+//}
+//
+//private inline fun <reified T> requestSortingData(data: List<T>) {
+//    mFusedLocationProviderClient.setLastLocationEventListener { nowLocation ->
+//        when (T::class) { // reified T를 사용해 함수 내에서 실제 T::class를 호출한다.
+//            parkingLotItem::class -> {
+//                val parkingLots = data as List<parkingLotItem>
+//                if (jobSortedParkingLot == null) {
+//                    Log.d("whatisthis", "주차장 정렬 정보 요청")
+//                    jobSortedParkingLot =
+//                        sortParkingLots(nowLocation, parkingLots)
+//                    subscribeJobList.add(jobSortedParkingLot!!)
+//                } else {
+//                    if (jobSortedParkingLot!!.isActive && !jobSortedParkingLot!!.isCompleted) {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                Log.d("whatisthis", "주차장 정렬 정보 이미 요청됨**** ")
+//                                jobSortedParkingLot!!.join()
+//                                subscribeJobList.remove(jobSortedParkingLot)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    } else {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                subscribeJobList.remove(jobSortedParkingLot!!)
+//                                jobSortedParkingLot!!.cancelAndJoin()
+//                                Log.d("whatisthis", "주차장 정렬 정보 요청 재요청")
+//                                jobSortedParkingLot =
+//                                    sortParkingLots(nowLocation, parkingLots)
+//                                subscribeJobList.add(jobSortedParkingLot!!)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    }
+//                }
+//            }
+//
+//            shelterItem::class -> {
+//                val shelters = data as List<shelterItem>
+//                if (jobSortedShelter == null) {
+//                    Log.d("whatisthis", "쉼터 정렬 정보 요청")
+//                    jobSortedShelter =
+//                        sortShelters(nowLocation, shelters)
+//                    subscribeJobList.add(jobSortedShelter!!)
+//                } else {
+//                    if (jobSortedShelter!!.isActive && !jobSortedShelter!!.isCompleted) {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                Log.d("whatisthis", "쉼터 정렬 정보 이미 요청됨**** ")
+//                                jobSortedShelter!!.join()
+//                                subscribeJobList.remove(jobSortedShelter)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    } else {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                subscribeJobList.remove(jobSortedShelter!!)
+//                                jobSortedShelter!!.cancelAndJoin()
+//                                Log.d("whatisthis", "쉼터 정렬 정보 요청 재요청")
+//                                jobSortedShelter =
+//                                    sortShelters(nowLocation, shelters)
+//                                subscribeJobList.add(jobSortedShelter!!)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    }
+//                }
+//            }
+//
+//            restItem::class -> {
+//                val rests = data as List<restItem>
+//                if (jobSortedRest == null) {
+//                    Log.d("whatisthis", "휴게소 정렬 정보 요청")
+//                    jobSortedRest =
+//                        sortRests(nowLocation, rests)
+//                    subscribeJobList.add(jobSortedRest!!)
+//                } else {
+//                    if (jobSortedRest!!.isActive && !jobSortedRest!!.isCompleted) {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                Log.d("whatisthis", "휴게소 정렬 정보 이미 요청됨**** ")
+//                                jobSortedRest!!.join()
+//                                subscribeJobList.remove(jobSortedRest)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    } else {
+//                        val subscribeJob =
+//                            lifecycleScope.launch(defaultDispatcher) {
+//                                subscribeJobList.remove(jobSortedRest!!)
+//                                jobSortedRest!!.cancelAndJoin()
+//                                Log.d("whatisthis", "휴게소 정렬 정보 요청 재요청")
+//                                jobSortedRest =
+//                                    sortRests(nowLocation, rests)
+//                                subscribeJobList.add(jobSortedRest!!)
+//                            }
+//                        subscribeJobList.add(subscribeJob)
+//                    }
+//                }
+//            }
+//
+//            else -> throw IllegalArgumentException("Unsupported type: ${T::class.simpleName}")
+//        }
+//    }
+//}
+//
+//
+//// relaxRepository ///////////////////////////////////////////////////////////////////////////////////////
+//var shelterRequestTime: Int = 0
+//fun initShelterRequest() {
+//    shelterRequestTime = 0
+//}
+//
+//var restRequestTime: Int = 0
+//fun initRestRequest() {
+//    restRequestTime = 0
+//}
+//
+//var parkingLotRequestTime: Int = 0
+//fun initParkingLotRequest() {
+//    parkingLotRequestTime = 0
+//}
+//
+//// 모든 휴게소 데이터
+//private val _rests: MutableLiveData<ResponseState<List<restItem>>> =
+//    MutableLiveData(ResponseState.Uninitialized)
+//
+//fun getNearRest(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
+//    _rests.postValue(ResponseState.Loading)
+//    try {
+//        relaxRepository?.getAllRest(boundingBox)?.collect {
+//            _rests.postValue(it)
+//        }
+//    } catch (error: Throwable) {
+//        _rests.postValue(ResponseState.Error(error))
+//    }
+//}
+//
+//private val _sortedRests: MutableLiveData<List<restItem>> = MutableLiveData()
+//fun sortRests(nowLocation: Location, rests: List<restItem>) =
+//    lifecycleScope.launch(defaultDispatcher) {
+//        _sortedRests.postValue((rests.sortedBy {// 정렬
+//            nowLocation.calculateDistance(
+//                it.latitude.toDouble(), it.longitude.toDouble()
+//            )
+//        }))
+//    }
+//
+//
+//// 모든 쉼터 데이터
+//private val _shelters: MutableLiveData<ResponseState<List<shelterItem>>> =
+//    MutableLiveData(ResponseState.Uninitialized)
+//
+//fun getNearShelter(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
+//    _shelters.postValue(ResponseState.Loading)
+//    try {
+//        relaxRepository?.getAllShelter(boundingBox)?.collect {
+//            _shelters.postValue(it)
+//        }
+//    } catch (error: Throwable) {
+//        _shelters.postValue(ResponseState.Error(error))
+//    }
+//}
+//
+//private val _sortedShelters: MutableLiveData<List<shelterItem>> = MutableLiveData()
+//fun sortShelters(nowLocation: Location, shelters: List<shelterItem>) =
+//    lifecycleScope.launch(defaultDispatcher) {
+//        _sortedShelters.postValue((shelters.sortedBy {// 정렬
+//            nowLocation.calculateDistance(
+//                it.latitude.toDouble(), it.longitude.toDouble()
+//            )
+//        }))
+//    }
+//
+//private val _parkingLots: MutableLiveData<ResponseState<List<parkingLotItem>>> =
+//    MutableLiveData(ResponseState.Uninitialized)
+//
+//fun getALLNearParkingLot(
+//    boundingBox: BoundingBox,
+//    parkingchargeInfo: String = "무료",
+//    numOfRows: Int = DEFAULT_NUM_OF_ROWS,
+//    day: DAY,
+//    nowTime: String,
+//) = lifecycleScope.launch(defaultDispatcher) {
+//    _parkingLots.postValue(ResponseState.Loading)
+//    try {
+//        relaxRepository?.getAllParkingLot(
+//            boundingBox, parkingchargeInfo, numOfRows, day, nowTime
+//        )?.catch { error ->
+//            _parkingLots.postValue(ResponseState.Error(error))
+//        }?.collect {
+//            if (it is ResponseState.Success) {
+//                combine(it.data) { responses ->
+//                    val combinedList =
+//                        responses.filterIsInstance<ResponseState.Success<List<parkingLotItem>>>()
+//                            .flatMap { it.data }
+//                    ResponseState.Success(combinedList)
+//                }.cancellable().catch { error ->
+//                    _parkingLots.postValue(ResponseState.Error(error))
+//                }.collectLatest { listItem ->
+//                    _parkingLots.postValue(listItem)
+//                }
+//            } else if (it is ResponseState.Fail) {
+//                _parkingLots.postValue(ResponseState.Fail(it.code, it.message))
+//            }
+//        }
+//    } catch (error: Throwable) {
+//        _parkingLots.postValue(ResponseState.Error(error))
+//    }
+//}
+//
+//private val _sortedParkingLots: MutableLiveData<List<parkingLotItem>> = MutableLiveData()
+//fun sortParkingLots(nowLocation: Location, parkingLots: List<parkingLotItem>) =
+//    lifecycleScope.launch(defaultDispatcher) {
+//        _sortedParkingLots.postValue((parkingLots.sortedBy {// 정렬
+//            nowLocation.calculateDistance(
+//                it.latitude.toDouble(), it.longitude.toDouble()
+//            )
+//        }))
+//    }

@@ -12,6 +12,7 @@ import android.util.Log
 import android.view.View
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.data.local.room.music.Music
@@ -27,7 +28,9 @@ import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.STANDARD_IN_ANGLE
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
+import com.paradise.drowsydetector.utils.TTS_SPEAKING
 import com.paradise.drowsydetector.utils.calRatio
+import com.paradise.drowsydetector.utils.calculateDistance
 import com.paradise.drowsydetector.utils.checkHeadAngleInNoStandard
 import com.paradise.drowsydetector.utils.checkHeadAngleInStandard
 import com.paradise.drowsydetector.utils.defaultDispatcher
@@ -37,13 +40,13 @@ import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.helper.CameraHelper
 import com.paradise.drowsydetector.utils.helper.LocationHelper
 import com.paradise.drowsydetector.utils.helper.MusicHelper
+import com.paradise.drowsydetector.utils.helper.TtsHelper
 import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
-import com.paradise.drowsydetector.viewmodel.StaticsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -59,7 +62,6 @@ class AnalyzeFragment :
     private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private val musicViewModel: MusicViewModel by activityViewModels()
-    private val staticsViewModel: StaticsViewModel by activityViewModels()
 
     private val mFusedLocationProviderClient by lazy {
         LocationHelper.getInstance(
@@ -87,7 +89,9 @@ class AnalyzeFragment :
     private var jobGetRest: Job? = null
 
     private var analyzeService: AnalyzeService? = null
+    private var ttsHelper: TtsHelper? = null
     private var isBounded = false
+
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Log.d("whatisthis", "onServiceConnected")
@@ -98,6 +102,7 @@ class AnalyzeFragment :
 
         override fun onServiceDisconnected(arg0: ComponentName) {
             Log.d("whatisthis", "onServiceDisconnected")
+            analyzeService = null
             isBounded = false
         }
     }
@@ -111,6 +116,10 @@ class AnalyzeFragment :
         }
         cameraHelper = CameraHelper.getInstance(requireContext(), viewLifecycleOwner)
         musicHelper = MusicHelper.getInstance(requireContext(), viewLifecycleOwner)
+        ttsHelper = TtsHelper.getInstance(requireContext())
+        ttsHelper?.initTTS()
+
+        subscribeSortResult()
         subscribeAllSetting()
         subscribeUserMusicList()
     }
@@ -143,6 +152,8 @@ class AnalyzeFragment :
         cameraHelper?.stopCameraHelper()
         // 재생 중인 음악을 멈춤
         musicHelper?.releaseMediaPlayer()
+        ttsHelper?.releaseTtsHelper()
+
         stopTimer()
         // subscribe 했던 job 전부 해제, 휴식 공간 요청 job 전부 해제
         CoroutineScope(defaultDispatcher).launch {
@@ -172,12 +183,14 @@ class AnalyzeFragment :
 
     override fun onDestroyViewInFragMent() { // 홈 버튼 누를 땐 동작 X
         Log.d("whatisthis", "onDestroyViewInFragMent()")
+        sortResult.removeObservers(viewLifecycleOwner)
         // 서비스를 종료한다.
-        Log.d("whatisthis", "check service connection : " + connection)
         requireContext().unbindService(connection) // bind 해제
         val intent = Intent(requireContext(), AnalyzeService::class.java)
         requireContext().stopService(intent)
         // musicHelper는 fragment를 종료할 때 해제한다.
+        ttsHelper?.clearContext()
+        ttsHelper = null
         cameraHelper?.clearContext()
         cameraHelper = null
         musicHelper?.clearContext()
@@ -194,7 +207,7 @@ class AnalyzeFragment :
      *
      * 이런 현상을 피하기 위해 콜백으로 설정해 한 번의 subscribe만 발생하도록 하였다.
      */
-    private fun subscribeAllSetting() {
+    private fun subscribeAllSetting() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             settingViewModel.allSettings.collect {
                 if (it.first.size > 0 && it.second.size > 0) {
@@ -211,13 +224,6 @@ class AnalyzeFragment :
                         val subjob3 = subscribeRestData()
                         subscribeJobList.add(subjob3)
 
-                        // 내 위치를 중심으로 가까운 순으로 정렬한 데이터 관찰
-//                        val subjob4 = subscribeSortedParkingLots()
-//                        subscribeJobList.add(subjob4)
-//                        val subjob5 = subscribeSortedShelterData()
-//                        subscribeJobList.add(subjob5)
-//                        val subjob6 = subscribeSortedRests()
-//                        subscribeJobList.add(subjob6)
                         val subjob4 = subscribeSortedAll()
                         subscribeJobList.add(subjob4)
                     }
@@ -230,7 +236,7 @@ class AnalyzeFragment :
                 }
             }
         }
-    }
+
 
     /**
      * Init music
@@ -240,11 +246,11 @@ class AnalyzeFragment :
      */
     private fun startMusic(defaultMode: Boolean) {
         if (musicHelper != null) musicHelper?.releaseMediaPlayer()
-
-        if (defaultMode) {
-            musicHelper?.setResMusic()
-        } else {
-            if (musicList.size > 0) musicHelper?.setMyMusic(musicList)
+        if (ttsHelper?.isSpeaking?.value != TTS_SPEAKING) { // 안내가 안나올 때
+            if (defaultMode) musicHelper?.setResMusic()
+            else {
+                if (musicList.size > 0) musicHelper?.setMyMusic(musicList)
+            }
         }
     }
 
@@ -253,14 +259,12 @@ class AnalyzeFragment :
      *
      * 사용자 음악을 사용할 경우, Room에 저장된 리스트를 관찰한다.
      */
-    private fun subscribeUserMusicList() {
+    private fun subscribeUserMusicList() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             musicViewModel.music.collect { musicList ->
                 if (musicList.isNotEmpty()) this.musicList.addAll(musicList)
             }
         }
-
-    }
 
 
     /**
@@ -289,8 +293,8 @@ class AnalyzeFragment :
                     val eyeState = eyeRatio / analyzeService?.standard!! // 눈 상태
                     checkHeadPoseInStandard(leftRightAngle, upDownAngle)
 
-                    // 비율이 제한을 벗어났을 때
-                    if (eyeState <= DROWSY_THREDHOLD) {
+                    // 비율이 제한을 벗어났을 때, 음성 안내가 안나올 때, 음악이 안나올 때
+                    if (eyeState <= DROWSY_THREDHOLD && (ttsHelper?.isSpeaking?.value != TTS_SPEAKING || !(musicHelper?.isPrepared?.value)!!)) {
                         // 눈 깜빡임 카운팅
                         analyzeService?.checkEyeWink(eyeState, resultDetector)
 
@@ -515,8 +519,49 @@ class AnalyzeFragment :
                 jobList.add(jobGetRest!!)
             }
 
-            else -> {
-                null
+            else -> {}
+        }
+    }
+
+    private val sortResult = MutableLiveData<String>()
+
+    private fun subscribeSortResult() {
+        sortResult.observe(viewLifecycleOwner) {
+            if (!(musicHelper?.isPrepared?.value)!!) {
+                ttsHelper?.speakOut(it)
+            }
+        }
+    }
+
+    private fun subscribeSortedAll() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
+        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
+    ) {
+        analyzeViewModel.sortedAll.collect { items ->
+            var result = ""
+            mFusedLocationProviderClient.setLastLocationEventListener { nowLocation ->
+                if (items.first.isNotEmpty()) {
+                    val nearestRest = items.first[0]
+                    val dist = (nowLocation.calculateDistance(
+                        nearestRest.latitude.toDouble(), nearestRest.longitude.toDouble()
+                    ) / 1000.0).toInt()
+                    result += "가장 가까운 휴게소는 근방 ${dist}km에 " + nearestRest.roadRouteNm + " " + nearestRest.roadRouteDrc + "입니다. "
+                }
+                if (items.second.isNotEmpty()) {
+                    val nearestShelter = items.second[0]
+                    val dist = (nowLocation.calculateDistance(
+                        nearestShelter.latitude.toDouble(), nearestShelter.longitude.toDouble()
+                    ) / 1000.0).toInt()
+                    result += ("가장 가까운 쉼터는 근방 ${dist}km에 " + nearestShelter.roadRouteDrc + "입니다. ")
+                }
+                if (items.third.isNotEmpty()) {
+                    val nearestParkingLot = items.third[0]
+                    val dist = (nowLocation.calculateDistance(
+                        nearestParkingLot.latitude.toDouble(),
+                        nearestParkingLot.longitude.toDouble()
+                    ) / 1000.0).toInt()
+                    result += ("가장 가까운 주차장은 근방 ${dist}km에 " + nearestParkingLot.lnmadr + "입니다. ")
+                }
+                sortResult.value = result
             }
         }
     }
@@ -541,6 +586,8 @@ class AnalyzeFragment :
                                 repeatRequestWhenNull(
                                     analyzeViewModel.parkingLotRequestTime++, "Shelter"
                                 )
+                            } else {
+                                requestSortingData(it.data)
                             }
                         }
                     }
@@ -556,26 +603,6 @@ class AnalyzeFragment :
             }
         }
     }
-
-//    private fun subscribeSortedParkingLots() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
-//        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
-//    ) {
-//        analyzeViewModel.sortedParkingLots.collect {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 주차장 " + it[0].toString())
-//        }
-//    }
-
-    private fun subscribeSortedAll() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
-        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
-    ) {
-        analyzeViewModel.sortedAll.collect {
-            if (it != null) Log.d(
-                "whatisthis",
-                it.first[0].toString() + "\n" + it.second[0].toString() + "\n" + it.third[0].toString()
-            )
-        }
-    }
-
 
     private fun subscribeShleterData() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
         dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
@@ -597,6 +624,8 @@ class AnalyzeFragment :
                                 repeatRequestWhenNull(
                                     analyzeViewModel.shelterRequestTime++, "Shelter"
                                 )
+                            } else {
+                                requestSortingData(it.data)
                             }
                         }
                     }
@@ -612,16 +641,6 @@ class AnalyzeFragment :
             }
         }
     }
-
-
-//    private fun subscribeSortedShelterData() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
-//        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
-//    ) {
-//        analyzeViewModel.sortedShelters.collect {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 쉼터 " + it[0].toString())
-//        }
-//    }
-
 
     private fun subscribeRestData() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
         dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
@@ -643,6 +662,8 @@ class AnalyzeFragment :
                                 repeatRequestWhenNull(
                                     analyzeViewModel.restRequestTime++, "Shelter"
                                 )
+                            } else {
+                                requestSortingData(it.data)
                             }
                         }
                     }
@@ -659,16 +680,6 @@ class AnalyzeFragment :
         }
     }
 
-
-//    private fun subscribeSortedRests() = viewLifecycleOwner.launchWithRepeatOnLifecycle(
-//        dispatcher = defaultDispatcher, state = Lifecycle.State.STARTED
-//    ) {
-//        analyzeViewModel.sortedRests.collect {
-//            if (it.size > 0) Log.d("whatisthis", "최단 거리 휴게소 " + it[0].toString())
-//        }
-//    }
-
-
     /**
      * Sort data
      *
@@ -677,6 +688,7 @@ class AnalyzeFragment :
      * 제너릭 T가 타입이 다 달라 이것을 구분하기 위해서는 함수 내부에서 제너릭 타입에 따른 분기 처리가 필요했다.
      *\
      * 제너릭 T에 대한 정보는 런타임 시 사라지기 때문에 이것을 유지하기 위해서 reified가 필요했고, reified를 사용하기 위해 inline 함수가 필요했다.
+     *
      *
      * @param T
      * @param data
@@ -719,8 +731,7 @@ class AnalyzeFragment :
                     val shelters = data as List<shelterItem>
                     if (jobSortedShelter == null) {
                         Log.d("whatisthis", "쉼터 정렬 정보 요청")
-                        jobSortedShelter =
-                            analyzeViewModel.sortShelters(nowLocation, shelters)
+                        jobSortedShelter = analyzeViewModel.sortShelters(nowLocation, shelters)
                         jobList.add(jobSortedShelter!!)
                     } else {
                         if (jobSortedShelter!!.isActive && !jobSortedShelter!!.isCompleted) {
@@ -750,8 +761,7 @@ class AnalyzeFragment :
                     val rests = data as List<restItem>
                     if (jobSortedRest == null) {
                         Log.d("whatisthis", "휴게소 정렬 정보 요청")
-                        jobSortedRest =
-                            analyzeViewModel.sortRests(nowLocation, rests)
+                        jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
                         jobList.add(jobSortedRest!!)
                     } else {
                         if (jobSortedRest!!.isActive && !jobSortedRest!!.isCompleted) {
@@ -768,8 +778,7 @@ class AnalyzeFragment :
                                     jobList.remove(jobSortedRest!!)
                                     jobSortedRest!!.cancelAndJoin()
                                     Log.d("whatisthis", "휴게소 정렬 정보 요청 재요청")
-                                    jobSortedRest =
-                                        analyzeViewModel.sortRests(nowLocation, rests)
+                                    jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
                                     jobList.add(jobSortedRest!!)
                                 }
                             subscribeJobList.add(subscribeJob)
@@ -781,7 +790,6 @@ class AnalyzeFragment :
             }
         }
     }
-
 
     private fun initTimer(msFuture: Long) {
         binding.apply {

@@ -72,6 +72,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             checkPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS)) {}
         }
 
+        checkPermissions(arrayOf(Manifest.permission.RECORD_AUDIO)) {}
+
         checkPermissions(arrayOf(Manifest.permission.SYSTEM_ALERT_WINDOW)) {}
 
         staticsViewModel.getAllRecord()

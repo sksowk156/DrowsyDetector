@@ -60,21 +60,21 @@ class CameraHelper(
         FaceMeshDetection.getClient(faceMeshOption)
     }
 
+    fun stopCameraHelper() {
+        cameraExecutor.shutdown()
+    }
+
+    fun releaseCameraHelper() {
+        stopCameraHelper()
+        faceDetector.close()
+        faceMesh.close()
+    }
+
     fun clearContext() {
         releaseCameraHelper()
         contextRef.clear()
         lifecycleOwner.clear()
         instance = null
-    }
-
-    fun stopCameraHelper(){
-        cameraExecutor.shutdown()
-    }
-
-    fun releaseCameraHelper() {
-        cameraExecutor.shutdown()
-        faceDetector.close()
-        faceMesh.close()
     }
 
     fun startAnalyze(
