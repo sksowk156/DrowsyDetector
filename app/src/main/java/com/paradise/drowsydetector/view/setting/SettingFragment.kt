@@ -44,7 +44,6 @@ class SettingFragment :
 
     private lateinit var musicAdapter: MusicAdapter
 
-    //    private var mediaPlayer: MediaPlayer? = null
     private val musicViewModel: MusicViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private var musicHelper: MusicHelper? = null

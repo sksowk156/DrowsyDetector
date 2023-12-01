@@ -19,15 +19,20 @@ import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.service.AnalyzeService
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
+import com.paradise.drowsydetector.utils.BASICMUSICMODE
+import com.paradise.drowsydetector.utils.CHECKUSESTTSERVICE
 import com.paradise.drowsydetector.utils.DEFAULT_RADIUSKM
 import com.paradise.drowsydetector.utils.DROWSY_THREDHOLD
+import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.NO_STANDARD
 import com.paradise.drowsydetector.utils.OUT_OF_ANGLE
 import com.paradise.drowsydetector.utils.OvalOverlayView
 import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.STANDARD_IN_ANGLE
+import com.paradise.drowsydetector.utils.STT_THREDHOLD
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
+import com.paradise.drowsydetector.utils.TTS_FINISHING
 import com.paradise.drowsydetector.utils.TTS_SPEAKING
 import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.calculateDistance
@@ -40,6 +45,8 @@ import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.helper.CameraHelper
 import com.paradise.drowsydetector.utils.helper.LocationHelper
 import com.paradise.drowsydetector.utils.helper.MusicHelper
+import com.paradise.drowsydetector.utils.helper.SttHelper
+import com.paradise.drowsydetector.utils.helper.SttTtsController
 import com.paradise.drowsydetector.utils.helper.TtsHelper
 import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
@@ -58,7 +65,8 @@ import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
 
 class AnalyzeFragment :
-    BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate) {
+    BaseViewbindingFragment<FragmentAnalyzeBinding>(FragmentAnalyzeBinding::inflate),
+    SttTtsController.sstService {
     private val analyzeViewModel: AnalyzeViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private val musicViewModel: MusicViewModel by activityViewModels()
@@ -70,15 +78,20 @@ class AnalyzeFragment :
     }
     private var cameraHelper: CameraHelper? = null
     private var musicHelper: MusicHelper? = null
+
+    //    private var ttsHelper: TtsHelper? = null
+//    private var sttHelper: SttHelper? = null
+    private var sttTtsController: SttTtsController? = null
+
+    private var analyzeService: AnalyzeService? = null
+    private var isServiceBounded = false
+
     private lateinit var overlay: OvalOverlayView
 
     private var isInAngleRange = false
     private var isInDrowsyState = false
     private var timeCheckDrowsy: Long? = null
-    private val standardRatioList = mutableListOf<Double>()
-    private var musicList = mutableListOf<Music>()
 
-    private var timerJob: Job? = null // 기본값 설정 타이머
     private var subscribeJobList = mutableListOf<Job>()
     private var jobSortedAll: Job? = null
     private var jobSortedParkingLot: Job? = null
@@ -88,22 +101,22 @@ class AnalyzeFragment :
     private var jobGetShelter: Job? = null
     private var jobGetRest: Job? = null
 
-    private var analyzeService: AnalyzeService? = null
-    private var ttsHelper: TtsHelper? = null
-    private var isBounded = false
+    private val standardRatioList = mutableListOf<Double>()
+    private var musicList = mutableListOf<Music>()
+    private var timerJob: Job? = null // 기본값 설정 타이머
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Log.d("whatisthis", "onServiceConnected")
             val binder = service as AnalyzeService.MyBinder
             analyzeService = binder.getService()
-            isBounded = true
+            isServiceBounded = true
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
             Log.d("whatisthis", "onServiceDisconnected")
             analyzeService = null
-            isBounded = false
+            isServiceBounded = false
         }
     }
 
@@ -116,12 +129,16 @@ class AnalyzeFragment :
         }
         cameraHelper = CameraHelper.getInstance(requireContext(), viewLifecycleOwner)
         musicHelper = MusicHelper.getInstance(requireContext(), viewLifecycleOwner)
-        ttsHelper = TtsHelper.getInstance(requireContext())
-        ttsHelper?.initTTS()
+//        ttsHelper = TtsHelper.getInstance(requireContext())
+//        ttsHelper?.initTTS()
+//        sttHelper = SttHelper.getInstance(requireContext())
+        sttTtsController = SttTtsController.getInstance(requireContext(), viewLifecycleOwner, this)
+        sttTtsController?.initSttTtsController()
 
         subscribeSortResult()
         subscribeAllSetting()
         subscribeUserMusicList()
+//        subscribeTtsHelperState()
     }
 
     override fun onStart() {
@@ -137,22 +154,13 @@ class AnalyzeFragment :
         musicViewModel.getAllMusic()
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Log.d("whatisthis", "onPause")
-    }
-
     override fun onStop() {
         Log.d("whatisthis", "onStop")
         // fragment의 previewView 동작을 멈추기 위함
         cameraHelper?.stopCameraHelper()
         // 재생 중인 음악을 멈춤
         musicHelper?.releaseMediaPlayer()
-        ttsHelper?.releaseTtsHelper()
+//        ttsHelper?.releaseTtsHelper()
 
         stopTimer()
         // subscribe 했던 job 전부 해제, 휴식 공간 요청 job 전부 해제
@@ -175,7 +183,7 @@ class AnalyzeFragment :
         if (isAppInBackground() && analyzeService?.standard != null) {
             analyzeService?.startForegroundInBackground()
             requireContext().unbindService(connection) // bind 해제
-            isBounded = false
+            isServiceBounded = false
         }
 
         super.onStop()
@@ -189,8 +197,11 @@ class AnalyzeFragment :
         val intent = Intent(requireContext(), AnalyzeService::class.java)
         requireContext().stopService(intent)
         // musicHelper는 fragment를 종료할 때 해제한다.
-        ttsHelper?.clearContext()
-        ttsHelper = null
+//        ttsHelper?.isSpeaking?.removeObservers(viewLifecycleOwner)
+//        ttsHelper?.clearContext()
+//        ttsHelper = null
+        sttTtsController?.clearContext()
+        sttTtsController = null
         cameraHelper?.clearContext()
         cameraHelper = null
         musicHelper?.clearContext()
@@ -214,6 +225,7 @@ class AnalyzeFragment :
                     val defaultMusic = it.first[1]
                     val onGuide = it.first[0]
                     val onRefresh = it.second[1]
+                    Log.d("whatisthis", it.toString())
 
                     if (onGuide) {
                         // 내 위치를 중심으로 근처에 있는 데이터 관찰
@@ -246,7 +258,7 @@ class AnalyzeFragment :
      */
     private fun startMusic(defaultMode: Boolean) {
         if (musicHelper != null) musicHelper?.releaseMediaPlayer()
-        if (ttsHelper?.isSpeaking?.value != TTS_SPEAKING) { // 안내가 안나올 때
+        if (sttTtsController?.checkTtsSttHelperReady()!!) { // 안내가 안나올 때
             if (defaultMode) musicHelper?.setResMusic()
             else {
                 if (musicList.size > 0) musicHelper?.setMyMusic(musicList)
@@ -266,6 +278,11 @@ class AnalyzeFragment :
             }
         }
 
+//    private fun subscribeTtsHelperState() {
+//        ttsHelper?.isSpeaking?.observe(viewLifecycleOwner) {
+//            if (it == TTS_FINISHING) ttsHelper?.stopTtsHelper()
+//        }
+//    }
 
     /**
      * Start camera
@@ -288,18 +305,16 @@ class AnalyzeFragment :
                 if (analyzeService?.standard == null) {
                     checkHeadPoseInNoStandard(eyeRatio, leftRightAngle, upDownAngle)
                 } else {
-//                    staticsViewModel.startRecording()
                     analyzeService?.startRecording()
                     val eyeState = eyeRatio / analyzeService?.standard!! // 눈 상태
                     checkHeadPoseInStandard(leftRightAngle, upDownAngle)
-
-                    // 비율이 제한을 벗어났을 때, 음성 안내가 안나올 때, 음악이 안나올 때
-                    if (eyeState <= DROWSY_THREDHOLD && (ttsHelper?.isSpeaking?.value != TTS_SPEAKING || !(musicHelper?.isPrepared?.value)!!)) {
+                    // 비율이 제한을 벗어났을 때
+                    if (eyeState <= DROWSY_THREDHOLD) {
                         // 눈 깜빡임 카운팅
                         analyzeService?.checkEyeWink(eyeState, resultDetector)
 
-                        // 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐)
-                        if (resultDetector.smilingProbability!! <= SMILE_THREDHOLD) {
+                        // 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐), 음성 안내가 안나올 때, 음악이 안나올 때
+                        if (resultDetector.smilingProbability!! <= SMILE_THREDHOLD && !(musicHelper?.isPrepared?.value)!! && sttTtsController?.checkTtsSttHelperReady()!!) {
                             if (!isInDrowsyState) {
                                 isInDrowsyState = true
                                 timeCheckDrowsy = Date().time
@@ -324,6 +339,8 @@ class AnalyzeFragment :
                                 }
                             }
                         }
+                    } else if (eyeState >= STT_THREDHOLD) {
+                        sttTtsController?.result?.value = CHECKUSESTTSERVICE
                     } else {
                         setEyeStateInOpen()
                     }
@@ -523,13 +540,12 @@ class AnalyzeFragment :
         }
     }
 
-    private val sortResult = MutableLiveData<String>()
+    private val sortResult = MutableLiveData<String>("")
 
     private fun subscribeSortResult() {
         sortResult.observe(viewLifecycleOwner) {
-            if (!(musicHelper?.isPrepared?.value)!!) {
-                ttsHelper?.speakOut(it)
-            }
+            musicHelper?.releaseMediaPlayer()
+            sttTtsController?.speakOutTtsHelper(it)
         }
     }
 
@@ -860,9 +876,45 @@ class AnalyzeFragment :
         return true
     }
 
-//    private fun sendCommandToService(action: String) {
-//        val intent = Intent(requireContext(), AnalyzeService::class.java)
-//        intent.putExtra("standard", staticsViewModel.standard)
-//        requireContext().startForegroundService(intent)
-//    }
+    override fun baseMusic() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingViewModel.setSettingMode(BASICMUSICMODE, true).join()
+            settingViewModel.getAllSetting()
+        }
+    }
+
+    override fun userMusic() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingViewModel.setSettingMode(BASICMUSICMODE, false).join()
+            settingViewModel.getAllSetting()
+        }
+    }
+
+    override fun guideOff() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingViewModel.setSettingMode(GUIDEMODE, false).join()
+            settingViewModel.getAllSetting()
+        }
+    }
+
+    override fun guideOn() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            settingViewModel.setSettingMode(GUIDEMODE, true).join()
+            settingViewModel.getAllSetting()
+        }
+    }
+
+    override fun relaxData() {
+        requestRelaxData()
+    }
+
+    override fun recentRelaxData() {
+        if (sortResult.value?.length!! > 0) {
+            sttTtsController?.speakOutTtsHelper(sortResult.value!!)
+        }
+    }
+
+    override fun cancleAnalyze() {
+        requireActivity().finish()
+    }
 }

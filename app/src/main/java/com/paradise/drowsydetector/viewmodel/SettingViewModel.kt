@@ -32,49 +32,45 @@ class SettingViewModel(
     private val _refreshTerm = MutableStateFlow<Int>(0)
     val refreshTerm: StateFlow<Int> = _refreshTerm.asStateFlow()
 
-    fun getSettingModeInt(key: String) {
-        viewModelScope.launch {
-            settingRepository.getInt(key).collect {
-                when (key) {
-                    MUSICVOLUME -> {
-                        _musicVolume.value = it
-                    }
+    fun getSettingModeInt(key: String) = viewModelScope.launch {
+        settingRepository.getInt(key).collect {
+            when (key) {
+                MUSICVOLUME -> {
+                    _musicVolume.value = it
+                }
 
-                    REFRESHTERM -> {
-                        _refreshTerm.value = it
-                    }
+                REFRESHTERM -> {
+                    _refreshTerm.value = it
                 }
             }
         }
     }
 
-    fun setSettingMode(key: String, value: Int) {
-        viewModelScope.launch {
-            settingRepository.setInt(key, value)
-        }
+
+    fun setSettingMode(key: String, value: Int) = viewModelScope.launch {
+        settingRepository.setInt(key, value)
     }
 
-    fun getSettingModeBool(key: String) {
-        viewModelScope.launch {
-            settingRepository.getBoolean(key).collect {
-                when (key) {
-                    GUIDEMODE -> {
-                        _guideMode.value = it
-                    }
 
-                    BASICMUSICMODE -> {
-                        _basicMusicMode.value = it
-                    }
+    fun getSettingModeBool(key: String) = viewModelScope.launch {
+        settingRepository.getBoolean(key).collect {
+            when (key) {
+                GUIDEMODE -> {
+                    _guideMode.value = it
+                }
+
+                BASICMUSICMODE -> {
+                    _basicMusicMode.value = it
                 }
             }
         }
     }
 
-    fun setSettingMode(key: String, value: Boolean) {
-        viewModelScope.launch {
-            settingRepository.setBoolean(key, value)
-        }
+
+    fun setSettingMode(key: String, value: Boolean) = viewModelScope.launch {
+        settingRepository.setBoolean(key, value)
     }
+
 
     private val _allSettings = MutableStateFlow<Pair<MutableList<Boolean>, MutableList<Int>>>(
         mutableListOf<Boolean>() to mutableListOf<Int>()
@@ -82,21 +78,20 @@ class SettingViewModel(
     val allSettings: StateFlow<Pair<MutableList<Boolean>, MutableList<Int>>> =
         _allSettings.asStateFlow()
 
-    fun getAllSetting() {
-        viewModelScope.launch {
-            with(settingRepository) {
-                this.getBoolean(GUIDEMODE)
-                    .zip(this.getBoolean(BASICMUSICMODE)) { a, b -> mutableListOf(a, b) }
-                    .zip(this.getInt(MUSICVOLUME)) { list, c -> list to mutableListOf(c) }
-                    .zip(this.getInt(REFRESHTERM)) { pair, d ->
-                        pair.second.add(d)
-                        pair.first to pair.second
-                    }.collect {
-                        _allSettings.value = it
-                    }
-            }
+    fun getAllSetting() = viewModelScope.launch {
+        with(settingRepository) {
+            this.getBoolean(GUIDEMODE)
+                .zip(this.getBoolean(BASICMUSICMODE)) { a, b -> mutableListOf(a, b) }
+                .zip(this.getInt(MUSICVOLUME)) { list, c -> list to mutableListOf(c) }
+                .zip(this.getInt(REFRESHTERM)) { pair, d ->
+                    pair.second.add(d)
+                    pair.first to pair.second
+                }.collect {
+                    _allSettings.value = it
+                }
         }
     }
+
 
     class SettingViewModelFactory(
         private val settingRepository: SettingRepository,

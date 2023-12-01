@@ -308,7 +308,6 @@ class AnalyzeService : LifecycleService() {
         _allSettings.observe(this@AnalyzeService) {
             if (it.first.size > 0 && it.second.size > 0) {
                 val defaultMusic = it.first[1]
-                val onGuide = it.first[0]
                 val onRefresh = it.second[1]
 
                 startCamera(

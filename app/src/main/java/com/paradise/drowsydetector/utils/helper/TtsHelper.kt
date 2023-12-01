@@ -39,11 +39,16 @@ class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.O
     private var _isInitialized = MutableLiveData<Boolean>(false)
     val isInitialized: LiveData<Boolean> get() = _isInitialized
 
-    private var _isSpeaking = MutableStateFlow<Int>(TTS_WAITING)
-    val isSpeaking: StateFlow<Int> get() = _isSpeaking
+    private var _isSpeaking = MutableLiveData<Int>(TTS_WAITING)
+    val isSpeaking: LiveData<Int> get() = _isSpeaking
 
-    fun releaseTtsHelper() {
+
+    fun stopTtsHelper() {
         tts?.stop()
+        _isSpeaking.postValue(TTS_WAITING)
+    }
+    fun releaseTtsHelper() {
+        stopTtsHelper()
         tts?.shutdown()
     }
 
@@ -62,7 +67,7 @@ class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.O
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 showToast("음성 서비스를 사용할 수 없습니다.")
                 _isInitialized.value = false
-                Log.e("TTS", "The Language not supported!")
+                Log.e("whatisthis", "The Language not supported!")
                 // 다운로드 화면으로 넘어가는 코드인데 일단 제외시켜두자
 //                val installIntent = Intent()
 //                installIntent.action = TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA
@@ -72,22 +77,22 @@ class TtsHelper(private var contextRef: WeakReference<Context>) : TextToSpeech.O
                 _isInitialized.value = true
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
-                        _isSpeaking.value = (TTS_SPEAKING)
+                        _isSpeaking.postValue(TTS_SPEAKING) // 여기서 livedata는 setValue는 동작하지 않는다.
                     }
 
                     override fun onDone(utteranceId: String?) {
-                        _isSpeaking.value = (TTS_FINISHING)
+                        _isSpeaking.postValue(TTS_FINISHING)
                     }
 
                     @Deprecated("Deprecated in Java")
                     override fun onError(utteranceId: String?) {
-                        _isSpeaking.value = (TTS_WAITING)
-                        Log.e("TTS", "에러 발생")
+                        _isSpeaking.postValue(TTS_WAITING)
+                        Log.e("whatisthis", "에러 발생 $utteranceId")
                     }
                 })
             }
         } else {
-            Log.e("TTS", "error")
+            Log.e("whatisthis", "error")
         }
     }
 
