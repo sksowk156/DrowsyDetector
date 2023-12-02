@@ -54,7 +54,7 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
     fun startSTT() {
         contextRef.get()?.let { context ->
             Log.d("whatisthis", "stt 시작")
-            sttResult.postValue("")
+            sttResult.value = ("")
             sttState.value = true
             // 음성인식을 위한 Intent 생성
             val intent =
@@ -80,7 +80,7 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
                     // 타이머가 끝나면, 음성 인식을 종료합니다.
                     Log.d("whatisthis", "stt 종료1")
                     releaseSttHelper()
-                    sttState.postValue(false)
+                    sttState.value = (false)
                 }
             }
             // 타이머를 시작합니다.
@@ -109,8 +109,8 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
         override fun onEndOfSpeech() {}
 
         override fun onError(error: Int) {
-            sttResult.postValue("onError")
-            sttState.postValue(false)
+            sttResult.value = ("onError")
+            sttState.value = (false)
             // 음성인식 에러 발생
             val message = when (error) {
                 SpeechRecognizer.ERROR_AUDIO -> "오디오 입력 에러"
@@ -135,8 +135,8 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
                 results?.getStringArrayList(key) // 번들 객체에서 음성인식 결과를 문자열 리스트로 가져옴. 음성인식 결과는 여러 개의 후보가 있을 수 있다.
             val rs = mResult?.toTypedArray() // 문자열 리스트를 문자열 배열로 변환합니다.
             var result = checkWord(rs?.get(0) ?: "")
-            sttResult.postValue(result) // 텍스트뷰에 음성인식 결과의 첫 번째 후보를 출력함.
-            sttState.postValue(false)
+            sttResult.value = (result) // 텍스트뷰에 음성인식 결과의 첫 번째 후보를 출력함.
+            sttState.value = (false)
             Log.d("whatisthis", result.toString())
             Log.d("whatisthis", "stt 종료2")
         }
@@ -148,11 +148,24 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
         override fun onEvent(eventType: Int, params: Bundle?) {}
     }
 
-    private fun checkWord(word: String) = if (word == "일본") "1번"
-    else if (word == "일번") "1번"
-    else if (word == "이번") "2번"
-    else if (word == "삼번") "3번"
-    else if (word == "사번") "4번"
-    else if (word == "오번") "5번"
+
+    /**
+     * Set of num
+     *
+     * 음성 인식 결과가 조금 틀릴 경우 결과를 조금 수정
+     *
+     * HashMap을 쓰지 않은 이유는 HashMap은 모든 번호(1번, 2번, 3번, 4번)을 하나의 HashMap에서 관리해야 하므로, 글자가 많아지면 구분하기 힘들어서
+     *
+     * HashSet로 1번, 2번, 3번, 4번 나눠서 관리했다.
+     */
+    val setOfNum1: HashSet<String> = hashSetOf("일본", "일번", "일분", "1분")
+    val setOfNum2: HashSet<String> = hashSetOf("이번", "이분", "2분")
+    val setOfNum3: HashSet<String> = hashSetOf("삼번", "상번", "삼분", "3분")
+    val setOfNum4: HashSet<String> = hashSetOf("4분", "사분")
+    private fun checkWord(word: String) = if (setOfNum1.contains(word)) "1번"
+    else if (setOfNum2.contains(word)) "2번"
+    else if (setOfNum3.contains(word)) "3번"
+    else if (setOfNum4.contains(word)) "4번"
     else word
+
 }

@@ -32,8 +32,6 @@ import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.STANDARD_IN_ANGLE
 import com.paradise.drowsydetector.utils.STT_THREDHOLD
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
-import com.paradise.drowsydetector.utils.TTS_FINISHING
-import com.paradise.drowsydetector.utils.TTS_SPEAKING
 import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.calculateDistance
 import com.paradise.drowsydetector.utils.checkHeadAngleInNoStandard
@@ -45,9 +43,8 @@ import com.paradise.drowsydetector.utils.getDayType
 import com.paradise.drowsydetector.utils.helper.CameraHelper
 import com.paradise.drowsydetector.utils.helper.LocationHelper
 import com.paradise.drowsydetector.utils.helper.MusicHelper
-import com.paradise.drowsydetector.utils.helper.SttHelper
 import com.paradise.drowsydetector.utils.helper.SttTtsController
-import com.paradise.drowsydetector.utils.helper.TtsHelper
+import com.paradise.drowsydetector.utils.helper.VolumeHelper
 import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
@@ -78,9 +75,7 @@ class AnalyzeFragment :
     }
     private var cameraHelper: CameraHelper? = null
     private var musicHelper: MusicHelper? = null
-
-    //    private var ttsHelper: TtsHelper? = null
-//    private var sttHelper: SttHelper? = null
+    private var volumeHelper: VolumeHelper? = null
     private var sttTtsController: SttTtsController? = null
 
     private var analyzeService: AnalyzeService? = null
@@ -129,17 +124,22 @@ class AnalyzeFragment :
         }
         cameraHelper = CameraHelper.getInstance(requireContext(), viewLifecycleOwner)
         musicHelper = MusicHelper.getInstance(requireContext(), viewLifecycleOwner)
-//        ttsHelper = TtsHelper.getInstance(requireContext())
-//        ttsHelper?.initTTS()
-//        sttHelper = SttHelper.getInstance(requireContext())
+        volumeHelper = VolumeHelper.getInstance(requireContext())
         sttTtsController = SttTtsController.getInstance(requireContext(), viewLifecycleOwner, this)
         sttTtsController?.initSttTtsController()
 
         subscribeSortResult()
         subscribeAllSetting()
         subscribeUserMusicList()
-//        subscribeTtsHelperState()
+        subscribeMusicVolume()
     }
+
+    fun subscribeMusicVolume() =
+        viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingViewModel.musicVolume.collect { myvolume ->
+                volumeHelper?.setVolume(myvolume)
+            }
+        }
 
     override fun onStart() {
         super.onStart()
@@ -196,10 +196,7 @@ class AnalyzeFragment :
         requireContext().unbindService(connection) // bind 해제
         val intent = Intent(requireContext(), AnalyzeService::class.java)
         requireContext().stopService(intent)
-        // musicHelper는 fragment를 종료할 때 해제한다.
-//        ttsHelper?.isSpeaking?.removeObservers(viewLifecycleOwner)
-//        ttsHelper?.clearContext()
-//        ttsHelper = null
+
         sttTtsController?.clearContext()
         sttTtsController = null
         cameraHelper?.clearContext()
@@ -221,6 +218,12 @@ class AnalyzeFragment :
     private fun subscribeAllSetting() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             settingViewModel.allSettings.collect {
+                for (i in subscribeJobList) {
+                    if (i.isCancelled) continue // 종료된거면 종료 X
+                    i.cancelAndJoin() // 진행이 끝났을 때 종료
+                }
+                subscribeJobList.clear()
+
                 if (it.first.size > 0 && it.second.size > 0) {
                     val defaultMusic = it.first[1]
                     val onGuide = it.first[0]
@@ -278,12 +281,6 @@ class AnalyzeFragment :
             }
         }
 
-//    private fun subscribeTtsHelperState() {
-//        ttsHelper?.isSpeaking?.observe(viewLifecycleOwner) {
-//            if (it == TTS_FINISHING) ttsHelper?.stopTtsHelper()
-//        }
-//    }
-
     /**
      * Start camera
      *
@@ -340,7 +337,7 @@ class AnalyzeFragment :
                             }
                         }
                     } else if (eyeState >= STT_THREDHOLD) {
-                        sttTtsController?.result?.value = CHECKUSESTTSERVICE
+                        sttTtsController?.request?.value = CHECKUSESTTSERVICE
                     } else {
                         setEyeStateInOpen()
                     }
@@ -877,31 +874,19 @@ class AnalyzeFragment :
     }
 
     override fun baseMusic() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingViewModel.setSettingMode(BASICMUSICMODE, true).join()
-            settingViewModel.getAllSetting()
-        }
+        settingViewModel.setSettingMode(BASICMUSICMODE, true)
     }
 
     override fun userMusic() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingViewModel.setSettingMode(BASICMUSICMODE, false).join()
-            settingViewModel.getAllSetting()
-        }
+        settingViewModel.setSettingMode(BASICMUSICMODE, false)
     }
 
     override fun guideOff() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingViewModel.setSettingMode(GUIDEMODE, false).join()
-            settingViewModel.getAllSetting()
-        }
+        settingViewModel.setSettingMode(GUIDEMODE, false)
     }
 
     override fun guideOn() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            settingViewModel.setSettingMode(GUIDEMODE, true).join()
-            settingViewModel.getAllSetting()
-        }
+        settingViewModel.setSettingMode(GUIDEMODE, true)
     }
 
     override fun relaxData() {
@@ -909,9 +894,7 @@ class AnalyzeFragment :
     }
 
     override fun recentRelaxData() {
-        if (sortResult.value?.length!! > 0) {
-            sttTtsController?.speakOutTtsHelper(sortResult.value!!)
-        }
+        sttTtsController?.speakOutTtsHelper(sortResult.value!!)
     }
 
     override fun cancleAnalyze() {

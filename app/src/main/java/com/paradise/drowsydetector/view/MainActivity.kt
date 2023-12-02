@@ -14,6 +14,7 @@ import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MAINBASE
+import com.paradise.drowsydetector.utils.MUSICVOLUME
 import com.paradise.drowsydetector.utils.checkPermissions
 import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
@@ -78,6 +79,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
         staticsViewModel.getAllRecord()
         settingViewModel.getSettingModeBool(GUIDEMODE)
+        settingViewModel.getSettingModeInt(MUSICVOLUME)
         settingViewModel.getSettingModeBool(BASICMUSICMODE)
         settingViewModel.getAllSetting()
         musicViewModel.getAllMusic()

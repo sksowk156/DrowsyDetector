@@ -1,14 +1,16 @@
 package com.paradise.drowsydetector.view.setting
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Environment
 import android.provider.OpenableColumns
 import android.util.Log
 import android.view.View
-import android.widget.ArrayAdapter
 import android.widget.RadioButton
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,7 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
@@ -24,15 +25,14 @@ import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentSettingBinding
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.GUIDEMODE
-import com.paradise.drowsydetector.utils.helper.MusicHelper
+import com.paradise.drowsydetector.utils.MUSICVOLUME
 import com.paradise.drowsydetector.utils.getPathFromFileUri
+import com.paradise.drowsydetector.utils.helper.MusicHelper
+import com.paradise.drowsydetector.utils.helper.VolumeHelper
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
 import com.paradise.drowsydetector.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.viewmodel.SettingViewModel
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import reactivecircus.flowbinding.android.widget.itemClickEvents
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -42,38 +42,53 @@ import java.io.InputStream
 class SettingFragment :
     BaseViewbindingFragment<FragmentSettingBinding>(FragmentSettingBinding::inflate) {
 
-    private lateinit var musicAdapter: MusicAdapter
-
     private val musicViewModel: MusicViewModel by activityViewModels()
     private val settingViewModel: SettingViewModel by activityViewModels()
     private var musicHelper: MusicHelper? = null
+    private var volumeHelper: VolumeHelper? = null
+    private var volume = 0
+    private lateinit var volumeChangeObserver: VolumeChangeObserver
+    private lateinit var musicAdapter: MusicAdapter
 
-    override fun onPause() {
-        super.onPause()
-        if (musicHelper != null) {
-            musicHelper?.releaseMediaPlayer()
-            musicHelper = null
-        }
-    }
-
-    override fun onDestroyViewInFragMent() {
-        if (musicHelper != null) {
-            musicHelper?.clearContext()
-            musicHelper = null
+    // 사이드 키 볼륨 조절 옵저버
+    inner class VolumeChangeObserver(context: Context?) : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            binding.sliderSettingSound.setValues(volumeHelper?.getCurrentVolume()?.toFloat())
         }
     }
 
     override fun onViewCreated() {
         with(binding) {
             toolbarSetting.setToolbarMenu("설정", true)
+            volumeHelper = VolumeHelper.getInstance(requireContext())
+            musicHelper = MusicHelper.getInstance(requireContext(), viewLifecycleOwner)
+            volumeHelper?.initAudio()
+            // 알림음 설정 상태
+            subscribeMusicStyle()
+            // 알림음 크기 설정 상태
+            subscribeMusicVolume()
+            // 안내 설정 상태
+            subscribeGuideState()
+            // 음악 리스트
+            subscribeMusicList()
 
-            val regionArray = resources.getStringArray(R.array.refresh_period)
-            val arrayAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, regionArray)
-            autoCompleteTextViewSetting.setAdapter(arrayAdapter)
-            autoCompleteTextViewSetting.itemClickEvents()
-                .onEach {
-                    showToast(regionArray[it.position])
-                }.launchIn(viewLifecycleOwner.lifecycleScope)
+            val maxVolume = volumeHelper?.getMaxVolume()
+            val currentVolume = volumeHelper?.getCurrentVolume()
+
+            // RangeSlider의 최소값과 최대값을 0과 최대 음량으로 설정
+            sliderSettingSound.valueFrom = 0f
+            sliderSettingSound.valueTo = maxVolume!!.toFloat()
+
+            // RangeSlider의 현재 값들을 현재 음량으로 설정
+            sliderSettingSound.setValues(currentVolume!!.toFloat())
+
+            // RangeSlider의 값이 변경될 때마다 AudioManager의 음량을 변경
+            sliderSettingSound.addOnChangeListener { slider, value, fromUser ->
+                // value는 Float 타입이므로 Int 타입으로 변환
+                volume = value.toInt()
+                // AudioManager의 음량을 변경
+                volumeHelper?.setVolume(volume)
+            }
 
             ivSettingAddmusic.setOnAvoidDuplicateClick {
                 // ACTION_GET_CONTENT - 문서나 사진 등의 파일을 선택하고 앱에 그 참조를 반환하기 위해 요청하는 액션
@@ -83,49 +98,85 @@ class SettingFragment :
             }
             initButton()
 
-            // 알림음 설정 상태
-            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-                settingViewModel.basicMusicMode.collect { mode ->
-                    if (mode != null) {
-                        if (mode) {
-                            radiogroupSetting.check(radiobtSettingBasicmusic.id)
-                            setRadioButtonBackground(radiobtSettingBasicmusic, true)
-                            setRadioButtonBackground(radiobtSettingUsermusic, false)
-                            layoutSettingMusiclistbackground.visibility = View.GONE
-                        } else {
-                            radiogroupSetting.check(radiobtSettingUsermusic.id)
-                            setRadioButtonBackground(radiobtSettingBasicmusic, false)
-                            setRadioButtonBackground(radiobtSettingUsermusic, true)
-                            layoutSettingMusiclistbackground.visibility = View.VISIBLE
-                        }
-                    }
-                }
-            }
-
-            // 안내 설정 상태
-            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-                settingViewModel.guideMode.collect { mode ->
-                    if (mode != null) {
-                        switchSettingGuide.isChecked = mode
-                    }
-                }
-            }
-
             // 안내 설정을 변경할 때마다 값을 갱신
             switchSettingGuide.setOnCheckedChangeListener { buttonView, isChecked ->
                 settingViewModel.setSettingMode(GUIDEMODE, isChecked)
             }
+        }
+    }
 
-            viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-                musicViewModel.music.collect { musicList ->
-                    if (musicList != null) {
-                        Log.d("whatisthis", musicList.toString())
-                        initRecycler(musicList.toMutableList())
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    override fun onResume() {
+        super.onResume()
+        volumeChangeObserver = VolumeChangeObserver(requireContext())
+        requireContext().registerReceiver(
+            volumeChangeObserver, IntentFilter("android.media.VOLUME_CHANGED_ACTION")
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+        musicHelper?.releaseMediaPlayer()
+        settingViewModel.setSettingMode(MUSICVOLUME, volume)
+        // BroadcastReceiver를 해제
+        requireContext().unregisterReceiver(volumeChangeObserver)
+    }
+
+    override fun onDestroyViewInFragMent() {
+        musicHelper?.clearContext()
+        volumeHelper?.clearContext()
+        musicHelper = null
+        volumeHelper = null
+        volume = 0
+    }
+
+    private fun subscribeMusicStyle() =
+        viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingViewModel.basicMusicMode.collect { mode ->
+                with(binding) {
+                    if (mode) {
+                        radiogroupSetting.check(radiobtSettingBasicmusic.id)
+                        setRadioButtonBackground(radiobtSettingBasicmusic, true)
+                        setRadioButtonBackground(radiobtSettingUsermusic, false)
+                        layoutSettingMusiclistbackground.visibility = View.GONE
+                    } else {
+                        radiogroupSetting.check(radiobtSettingUsermusic.id)
+                        setRadioButtonBackground(radiobtSettingBasicmusic, false)
+                        setRadioButtonBackground(radiobtSettingUsermusic, true)
+                        layoutSettingMusiclistbackground.visibility = View.VISIBLE
                     }
                 }
             }
         }
-    }
+
+    private fun subscribeMusicVolume() =
+        viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingViewModel.musicVolume.collect { myvolume ->
+                with(binding) {
+                    volume = myvolume
+                    sliderSettingSound.setValues(myvolume.toFloat())
+                    volumeHelper?.setVolume(myvolume)
+                }
+            }
+        }
+
+    private fun subscribeGuideState() =
+        viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+            settingViewModel.guideMode.collect { mode ->
+                with(binding) {
+                    switchSettingGuide.isChecked = mode
+                }
+            }
+        }
+
+    private fun subscribeMusicList() =
+        viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
+            musicViewModel.music.collect { musicList ->
+                if (musicList != null) {
+                    initRecycler(musicList.toMutableList())
+                }
+            }
+        }
 
     private fun initButton() {
         with(binding) {
@@ -161,30 +212,22 @@ class SettingFragment :
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
-                if (musicHelper != null) {
+                if (musicHelper?.isPrepared?.value!!) musicHelper?.releaseMediaPlayer()
+                else {
                     musicHelper?.releaseMediaPlayer()
-                    musicHelper = null
-                } else {
-                    musicHelper = MusicHelper.getInstance(requireContext(),viewLifecycleOwner)
-                        .startMusic(selectedMusic)
+                    musicHelper?.startMusic(selectedMusic)
                 }
             }, { selectedMusic ->
-                if (musicHelper != null) {
-                    musicHelper?.releaseMediaPlayer()
-                }
+                musicHelper?.releaseMediaPlayer()
                 showDialog(selectedMusic)
             }, { selectedMusic ->
-                if (musicHelper != null) {
-                    musicHelper?.releaseMediaPlayer()
-                }
+                musicHelper?.releaseMediaPlayer()
                 deleteMusic(selectedMusic)
             })
 
             rvSettingUsermusic.apply {
                 layoutManager = LinearLayoutManager(
-                    requireContext(),
-                    LinearLayoutManager.VERTICAL,
-                    false
+                    requireContext(), LinearLayoutManager.VERTICAL, false
                 )
                 adapter = musicAdapter
             }
@@ -214,8 +257,7 @@ class SettingFragment :
     ) { result ->
         // 사용자가 파일 탐색 화면에서 돌아왔을 때 호출되는 메소드
         if (result.resultCode == AppCompatActivity.RESULT_OK) { // 사용자가 파일 선택을 성공적으로 완료했을 때 내부 코드 실행
-            val data: Intent =
-                result.data!! // 콜백 메서드를 통해 전달 받은 ActivityResult 객체에서 Intent 객체 추출
+            val data: Intent = result.data!! // 콜백 메서드를 통해 전달 받은 ActivityResult 객체에서 Intent 객체 추출
 
             val audioUri = data.data // Intent 객체에서 선택한 오디오 파일의 위치를 가리키는 Uri 추출
 
@@ -225,9 +267,7 @@ class SettingFragment :
 
             // Uri를 사용해 파일 복사본 생성후 해당 파일 경로 반환
             val newFilePath: String? = getNewFilePathFromUri(
-                requireContext(),
-                contentResolver,
-                audioUri
+                requireContext(), contentResolver, audioUri
             )
 
             // 원본 파일의 Uri로부터 절대 경로 반환
@@ -237,9 +277,7 @@ class SettingFragment :
             // 복사본이 성공적으로 생성되면 해당 위치가 기록된 파일을 Room에 저장
             if (newFilePath != null) { // 파일이 정상적으로 생성되었을 때 내부 코드 실행
                 val newMusic = Music(
-                    title = title,
-                    newPath = newFilePath,
-                    originalPath = audioPath
+                    title = title, newPath = newFilePath, originalPath = audioPath
                 )
                 musicViewModel.insertMusic(newMusic)
             } else { // 파일이 정상적으로 생성되지 않았을 때 내부 코드 실행
@@ -336,5 +374,15 @@ class SettingFragment :
             cursor.close() // 커서 종료
         }
         return displayName // 받은 파일이름 반환
+    }
+
+    private fun refresh() {
+//            val regionArray = resources.getStringArray(R.array.refresh_period)
+//            val arrayAdapter = ArrayAdapter(requireContext(), R.layout.item_dropdown, regionArray)
+//            autoCompleteTextViewSetting.setAdapter(arrayAdapter)
+//            autoCompleteTextViewSetting.itemClickEvents()
+//                .onEach {
+//                    showToast(regionArray[it.position])
+//                }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 }

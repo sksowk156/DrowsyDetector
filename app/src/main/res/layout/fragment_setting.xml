@@ -103,9 +103,23 @@
         android:id="@+id/slider_setting_sound"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:stepSize="1"
+        app:haloColor="@color/primary1"
+        app:labelBehavior="withinBounds"
+        app:labelStyle="@style/MyTooltip"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_setting_2" />
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_2"
+        app:thumbColor="@color/primary1"
+        app:thumbElevation="8dp"
+        app:thumbRadius="15dp"
+        app:thumbStrokeColor="@color/white"
+        app:thumbStrokeWidth="2dp"
+        app:tickColor="@color/primary2"
+        app:tickVisible="true"
+        app:trackColorActive="@color/primary1"
+        app:trackColorInactive="@color/primary4"
+        app:trackHeight="8dp" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/tv_setting_3"
@@ -136,31 +150,31 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/tv_setting_5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="환기 안내 주기"
-        android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_setting_4" />
+    <!--    <com.google.android.material.textview.MaterialTextView-->
+    <!--        android:id="@+id/tv_setting_5"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:text="환기 안내 주기"-->
+    <!--        android:textSize="24sp"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/tv_setting_4" />-->
 
-    <com.google.android.material.textfield.TextInputLayout
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        app:boxBackgroundColor="@color/primary5"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_setting_5">
+    <!--    <com.google.android.material.textfield.TextInputLayout-->
+    <!--        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"-->
+    <!--        android:layout_width="wrap_content"-->
+    <!--        android:layout_height="wrap_content"-->
+    <!--        android:layout_marginTop="8dp"-->
+    <!--        app:boxBackgroundColor="@color/primary5"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintTop_toBottomOf="@id/tv_setting_5">-->
 
-        <AutoCompleteTextView
-            android:id="@+id/autoCompleteTextView_setting"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:inputType="none"
-            android:text="주기를 선택해 주세요" />
-    </com.google.android.material.textfield.TextInputLayout>
+    <!--        <AutoCompleteTextView-->
+    <!--            android:id="@+id/autoCompleteTextView_setting"-->
+    <!--            android:layout_width="match_parent"-->
+    <!--            android:layout_height="match_parent"-->
+    <!--            android:inputType="none"-->
+    <!--            android:text="주기를 선택해 주세요" />-->
+    <!--    </com.google.android.material.textfield.TextInputLayout>-->
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
