@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.data.local.room.music.MusicDao
 import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
-import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.AnalyzeResultDao
+import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
 
 @Database(
@@ -22,16 +22,18 @@ abstract class LocalDatabase : RoomDatabase() {
 
     companion object {
         @Volatile
-        private var instance: LocalDatabase? = null
+        private var database: LocalDatabase? = null
 
-        fun getInstance(context: Context): LocalDatabase = instance ?: synchronized(this) {
-            instance ?: buildDatabase(context).also { instance = it }
+        fun getDatabase(context: Context): LocalDatabase {
+            return database ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    LocalDatabase::class.java,
+                    "localdatabase.db"
+                ).build()
+                database = instance
+                instance
+            }
         }
-
-        private fun buildDatabase(context: Context): LocalDatabase =
-            Room.databaseBuilder(
-                context.applicationContext,
-                LocalDatabase::class.java, "localdatabase.db"
-            ).build()
     }
 }

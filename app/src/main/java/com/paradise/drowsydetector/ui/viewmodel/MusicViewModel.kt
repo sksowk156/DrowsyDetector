@@ -1,17 +1,18 @@
-package com.paradise.drowsydetector.viewmodel
+package com.paradise.drowsydetector.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.paradise.drowsydetector.data.local.room.music.Music
-import com.paradise.drowsydetector.repository.MusicRepository
+import com.paradise.drowsydetector.domain.repository.MusicRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MusicViewModel(
+@HiltViewModel
+class MusicViewModel @Inject constructor(
     private val musicRepository: MusicRepository,
 ) : ViewModel() {
 
@@ -48,16 +49,16 @@ class MusicViewModel(
         }
     }
 
-    class MusicViewModelFactory(
-        private val musicRepository: MusicRepository,
-    ) :
-        ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
-                MusicViewModel(musicRepository) as T
-            } else {
-                throw IllegalArgumentException()
-            }
-        }
-    }
+//    class MusicViewModelFactory(
+//        private val musicRepository: MusicRepository,
+//    ) :
+//        ViewModelProvider.Factory {
+//        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//            return if (modelClass.isAssignableFrom(MusicViewModel::class.java)) {
+//                MusicViewModel(musicRepository) as T
+//            } else {
+//                throw IllegalArgumentException()
+//            }
+//        }
+//    }
 }

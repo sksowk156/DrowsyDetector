@@ -1,20 +1,14 @@
-package com.paradise.drowsydetector.viewmodel
+package com.paradise.drowsydetector.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
-import com.google.mlkit.vision.face.Face
 import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
-import com.paradise.drowsydetector.repository.StaticsRepository
+import com.paradise.drowsydetector.domain.repository.StaticsRepository
 import com.paradise.drowsydetector.utils.defaultDispatcher
-import com.paradise.drowsydetector.utils.mainDispatcher
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -22,10 +16,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.zip
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class StaticsViewModel(
+@HiltViewModel
+class StaticsViewModel @Inject constructor(
     private val staticsRepository: StaticsRepository,
 ) : ViewModel() {
 

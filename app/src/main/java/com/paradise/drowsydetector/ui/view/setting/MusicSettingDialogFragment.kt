@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view.setting
+package com.paradise.drowsydetector.ui.view.setting
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog

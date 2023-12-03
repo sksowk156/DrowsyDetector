@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view.analyze
+package com.paradise.drowsydetector.ui.view.analyze
 
 import android.app.ActivityManager
 import android.app.Service
@@ -48,9 +48,9 @@ import com.paradise.drowsydetector.utils.helper.VolumeHelper
 import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
-import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
-import com.paradise.drowsydetector.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.viewmodel.SettingViewModel
+import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
+import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
+import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin

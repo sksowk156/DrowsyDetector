@@ -59,7 +59,7 @@
 
         <!-- screenOrientation="portrait" 로 핸드폰 회전을 막음 -->
         <activity
-            android:name=".view.MainActivity"
+            android:name=".ui.view.MainActivity"
             android:screenOrientation="portrait"
             android:launchMode="singleTask"
             android:exported="true">

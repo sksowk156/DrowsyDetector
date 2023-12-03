@@ -7,7 +7,7 @@
     android:background="@color/white"
     android:clickable="true"
     android:id="@+id/layout_analyze"
-    tools:context=".view.analyze.AnalyzeFragment">
+    tools:context=".ui.view.analyze.AnalyzeFragment">
 
     <include
         android:id="@+id/analyze_toolbar"

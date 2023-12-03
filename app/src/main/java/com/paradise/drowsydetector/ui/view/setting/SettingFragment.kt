@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view.setting
+package com.paradise.drowsydetector.ui.view.setting
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
@@ -31,8 +31,8 @@ import com.paradise.drowsydetector.utils.helper.MusicHelper
 import com.paradise.drowsydetector.utils.helper.VolumeHelper
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
-import com.paradise.drowsydetector.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.viewmodel.SettingViewModel
+import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
+import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

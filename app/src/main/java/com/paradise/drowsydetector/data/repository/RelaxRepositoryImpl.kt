@@ -1,12 +1,11 @@
-package com.paradise.drowsydetector.repository
+package com.paradise.drowsydetector.data.repository
 
-import android.util.Log
 import com.paradise.drowsydetector.data.remote.parkinglot.ParkingLotInterface
 import com.paradise.drowsydetector.data.remote.rest.RestInterface
-import com.paradise.drowsydetector.data.remote.shelter.DrowyShelterInterface
+import com.paradise.drowsydetector.data.remote.shelter.ShelterInterface
+import com.paradise.drowsydetector.domain.repository.RelaxRepository
 import com.paradise.drowsydetector.utils.BoundingBox
 import com.paradise.drowsydetector.utils.DAY
-import com.paradise.drowsydetector.utils.DEFAULT_NUM_OF_ROWS
 import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.ioDispatcher
@@ -19,31 +18,32 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import javax.inject.Inject
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
 
-class RelaxRepository(
-    private val drowyShelterInterface: DrowyShelterInterface,
+class RelaxRepositoryImpl @Inject constructor(
+    private val shelterInterface: ShelterInterface,
     private val parkingLotInterface: ParkingLotInterface,
     private val restInterface: RestInterface,
-) {
+) : RelaxRepository {
     //Singleton으로 객체 생성
     companion object {
         @Volatile
-        private var instance: RelaxRepository? = null
+        private var instance: RelaxRepositoryImpl? = null
         fun getInstance(
-            drowyShelterInterface: DrowyShelterInterface,
+            shelterInterface: ShelterInterface,
             parkingLotInterface: ParkingLotInterface,
             restInterface: RestInterface,
         ) = instance ?: synchronized(this) {
-            instance ?: RelaxRepository(
-                drowyShelterInterface, parkingLotInterface, restInterface
+            instance ?: RelaxRepositoryImpl(
+                shelterInterface, parkingLotInterface, restInterface
             ).also { instance = it }
         }
     }
 
-    suspend fun getAllRest(
+    override suspend fun getAllRest(
         boundingBox: BoundingBox,
     ): Flow<ResponseState<List<restItem>>> = flow {
         try {
@@ -51,18 +51,17 @@ class RelaxRepository(
             if (response.isSuccessful) {
                 response.body()?.let {
                     val nearRest = mutableListOf<restItem>()
-                    it.response.body.items.asFlow().flowOn(defaultDispatcher)
-                        .filter { item ->
-                            val lat = item.latitude.toDoubleOrNull()
-                            val lon = item.longitude.toDoubleOrNull()
-                            val inLatRange =
-                                lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
-                            val inLonRange =
-                                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
-                            inLatRange && inLonRange
-                        }.collect { item ->
-                            nearRest.add(item)
-                        }
+                    it.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
+                        val lat = item.latitude.toDoubleOrNull()
+                        val lon = item.longitude.toDoubleOrNull()
+                        val inLatRange =
+                            lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                        val inLonRange =
+                            lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                        inLatRange && inLonRange
+                    }.collect { item ->
+                        nearRest.add(item)
+                    }
                     emit(ResponseState.Success(nearRest))
                 }
             } else {
@@ -75,29 +74,30 @@ class RelaxRepository(
         } as Unit
     }.flowOn(ioDispatcher).cancellable()
 
-    suspend fun getAllShelter(
+    override suspend fun getAllShelter(
         boundingBox: BoundingBox,
     ): Flow<ResponseState<List<shelterItem>>> = flow {
         try {
-            val response = drowyShelterInterface.getAllShelter()
+            val response = shelterInterface.getAllShelter()
             if (response.isSuccessful) {
                 response.body()?.let {
                     val nearShelter = mutableListOf<shelterItem>()
-                    it.response.body.items.asFlow().flowOn(defaultDispatcher)
-                        .filter { item ->
-                            val lat = item.latitude.toDoubleOrNull()
-                            val lon = item.longitude.toDoubleOrNull()
-                            val inLatRange =
-                                lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
-                            val inLonRange =
-                                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
-                            inLatRange && inLonRange
-                        }.collect { item ->
-                            nearShelter.add(item)
-                        }
+                    it.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
+                        val lat = item.latitude.toDoubleOrNull()
+                        val lon = item.longitude.toDoubleOrNull()
+                        val inLatRange =
+                            lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
+                        val inLonRange =
+                            lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
+                        inLatRange && inLonRange
+                    }.collect { item ->
+                        nearShelter.add(item)
+                    }
                     emit(ResponseState.Success(nearShelter))
                 }
             } else {
+
+
                 emit(ResponseState.Fail(response.code(), response.message()))
             }
         } catch (e: Exception) {
@@ -105,7 +105,7 @@ class RelaxRepository(
         } as Unit
     }.flowOn(ioDispatcher).cancellable()
 
-    fun getParkingLots1(
+    override fun getParkingLots1(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
@@ -115,10 +115,10 @@ class RelaxRepository(
         getParkingLot1(it, boundingBox, parkingchargeInfo, day, nowTime)
     }
 
-    fun getAllParkingLot(
+    override fun getAllParkingLot(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
-        numOfRows: Int = DEFAULT_NUM_OF_ROWS, day: DAY, nowTime: String,
+        numOfRows: Int, day: DAY, nowTime: String,
     ) = flow {
         try {
             val response = parkingLotInterface.getAllParkingLot(
@@ -160,7 +160,7 @@ class RelaxRepository(
      * @param day
      * @param nowTime
      */
-    fun getParkingLot1(
+    override fun getParkingLot1(
         pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
     ) = flow {
         try {

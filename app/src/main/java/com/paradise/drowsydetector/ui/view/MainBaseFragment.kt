@@ -1,10 +1,10 @@
-package com.paradise.drowsydetector.view
+package com.paradise.drowsydetector.ui.view
 
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentMainBaseBinding
 import com.paradise.drowsydetector.utils.HOME
-import com.paradise.drowsydetector.view.home.HomeFragment
+import com.paradise.drowsydetector.ui.view.home.HomeFragment
 
 
 class MainBaseFragment : BaseViewbindingFragment<FragmentMainBaseBinding>(FragmentMainBaseBinding::inflate) {

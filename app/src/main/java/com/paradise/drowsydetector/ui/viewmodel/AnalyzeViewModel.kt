@@ -1,10 +1,9 @@
-package com.paradise.drowsydetector.viewmodel
+package com.paradise.drowsydetector.ui.viewmodel
 
 import android.location.Location
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.paradise.drowsydetector.repository.RelaxRepository
+import com.paradise.drowsydetector.domain.repository.RelaxRepository
 import com.paradise.drowsydetector.utils.BoundingBox
 import com.paradise.drowsydetector.utils.DAY
 import com.paradise.drowsydetector.utils.DEFAULT_NUM_OF_ROWS
@@ -12,6 +11,7 @@ import com.paradise.drowsydetector.utils.ResponseState
 import com.paradise.drowsydetector.utils.calculateDistance
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.ioDispatcher
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,11 +24,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 import com.paradise.drowsydetector.data.remote.parkinglot.Item as parkingLotItem
 import com.paradise.drowsydetector.data.remote.rest.Item as restItem
 import com.paradise.drowsydetector.data.remote.shelter.Item as shelterItem
 
-class AnalyzeViewModel(
+@HiltViewModel
+class AnalyzeViewModel @Inject constructor(
     private val relaxRepository: RelaxRepository,
 ) : ViewModel() {
 
@@ -325,14 +327,14 @@ class AnalyzeViewModel(
 //        }
 //    }
 
-    class AnalyzeViewModelFactory(private val relaxRepository: RelaxRepository) :
-        ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return if (modelClass.isAssignableFrom(AnalyzeViewModel::class.java)) {
-                AnalyzeViewModel(relaxRepository) as T
-            } else {
-                throw IllegalArgumentException()
-            }
-        }
-    }
+//    class AnalyzeViewModelFactory(private val relaxRepository: RelaxRepository) :
+//        ViewModelProvider.Factory {
+//        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//            return if (modelClass.isAssignableFrom(AnalyzeViewModel::class.java)) {
+//                AnalyzeViewModel(relaxRepository) as T
+//            } else {
+//                throw IllegalArgumentException()
+//            }
+//        }
+//    }
 }

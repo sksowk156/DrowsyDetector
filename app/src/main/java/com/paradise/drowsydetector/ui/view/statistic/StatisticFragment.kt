@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view.statistic
+package com.paradise.drowsydetector.ui.view.statistic
 
 import android.graphics.Color
 import android.util.Log
@@ -26,7 +26,7 @@ import com.paradise.drowsydetector.databinding.FragmentStatisticBinding
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
-import com.paradise.drowsydetector.viewmodel.StaticsViewModel
+import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
 import kotlinx.coroutines.launch
 
 class StatisticFragment :

@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view.setting
+package com.paradise.drowsydetector.ui.view.setting
 
 import android.view.LayoutInflater
 import android.view.ViewGroup

@@ -4,6 +4,6 @@
     android:id="@+id/mainbase_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".view.MainBaseFragment">
+    tools:context=".ui.view.MainBaseFragment">
 
 </FrameLayout>

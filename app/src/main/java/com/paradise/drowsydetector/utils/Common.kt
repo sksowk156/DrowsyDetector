@@ -37,6 +37,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Random
 
+
+const val BASE_URL = "http://api.data.go.kr/openapi/"
+
 // BaseFragment에서 사용하는 typealias
 typealias FragmentInflate<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
 

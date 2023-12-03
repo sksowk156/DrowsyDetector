@@ -1,22 +1,23 @@
-package com.paradise.drowsydetector.viewmodel
+package com.paradise.drowsydetector.ui.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.paradise.drowsydetector.repository.SettingRepository
+import com.paradise.drowsydetector.domain.repository.SettingRepository
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MUSICVOLUME
 import com.paradise.drowsydetector.utils.REFRESHTERM
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class SettingViewModel(
+@HiltViewModel
+class SettingViewModel @Inject constructor(
     private val settingRepository: SettingRepository,
 ) : ViewModel() {
 

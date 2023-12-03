@@ -38,12 +38,12 @@ import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.data.local.room.record.AnalyzeResult
 import com.paradise.drowsydetector.data.local.room.record.DrowsyCount
 import com.paradise.drowsydetector.data.local.room.record.WinkCount
-import com.paradise.drowsydetector.repository.MusicRepository
-import com.paradise.drowsydetector.repository.RelaxRepository
-import com.paradise.drowsydetector.repository.SettingRepository
-import com.paradise.drowsydetector.repository.StaticsRepository
+import com.paradise.drowsydetector.domain.repository.MusicRepository
+import com.paradise.drowsydetector.domain.repository.RelaxRepository
+import com.paradise.drowsydetector.domain.repository.SettingRepository
+import com.paradise.drowsydetector.domain.repository.StaticsRepository
+import com.paradise.drowsydetector.ui.view.MainActivity
 import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
-import com.paradise.drowsydetector.utils.ApplicationClass
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.DROWSY_THREDHOLD
 import com.paradise.drowsydetector.utils.GUIDEMODE
@@ -59,7 +59,7 @@ import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.helper.MusicHelper
 import com.paradise.drowsydetector.utils.mainDispatcher
-import com.paradise.drowsydetector.view.MainActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -68,9 +68,21 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import java.util.Date
+import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class AnalyzeService : LifecycleService() {
+    @Inject
+    lateinit var musicRepository: MusicRepository
+
+    @Inject
+    lateinit var settingRepository: SettingRepository
+
+    @Inject
+    lateinit var staticsRepository: StaticsRepository
+
+    @Inject
+    lateinit var relaxRepository: RelaxRepository
 
     private val binder = MyBinder(this@AnalyzeService)
 
@@ -109,10 +121,11 @@ class AnalyzeService : LifecycleService() {
         FaceMeshDetection.getClient(faceMeshOption)
     }
     private var cameraProvider: ProcessCameraProvider? = null
-    private var musicRepository: MusicRepository? = null
-    private var settingRepository: SettingRepository? = null
-    private var staticsRepository: StaticsRepository? = null
-    private var relaxRepository: RelaxRepository? = null
+
+//    private var musicRepositoryImpl: MusicRepositoryImpl? = null
+//    private var settingRepositoryImpl: SettingRepositoryImpl? = null
+//    private var staticsRepositoryImpl: StaticsRepositoryImpl? = null
+//    private var relaxRepositoryImpl: RelaxRepositoryImpl? = null
 
     var standard: Double? = null
     fun initStandard() {
@@ -138,10 +151,10 @@ class AnalyzeService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
-        musicRepository = ApplicationClass.getApplicationContext().musicRepository
-        settingRepository = ApplicationClass.getApplicationContext().settingRepository
-        staticsRepository = ApplicationClass.getApplicationContext().staticRepository
-        relaxRepository = ApplicationClass.getApplicationContext().relaxRepository
+//        musicRepositoryImpl = ApplicationClass.getApplicationContext().musicRepositoryImpl
+//        settingRepositoryImpl = ApplicationClass.getApplicationContext().settingRepositoryImpl
+//        staticsRepositoryImpl = ApplicationClass.getApplicationContext().staticRepository
+//        relaxRepositoryImpl = ApplicationClass.getApplicationContext().relaxRepositoryImpl
 
         musicHelper = MusicHelper.getInstance(this@AnalyzeService, this@AnalyzeService)
         initWindowManagerParams()
@@ -400,7 +413,7 @@ class AnalyzeService : LifecycleService() {
         cameraProviderFuture.addListener({
             cameraProvider = cameraProviderFuture.get()
 
-            val camera = cameraProvider?.let {
+            cameraProvider?.let {
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                 it.unbindAll()
                 it.bindToLifecycle(
@@ -487,7 +500,7 @@ class AnalyzeService : LifecycleService() {
     }
 
 
-    // musicRepository ///////////////////////////////////////////////////////////////////////////////////////
+    // musicRepositoryImpl ///////////////////////////////////////////////////////////////////////////////////////
     private val _music = MutableLiveData<List<Music>>(emptyList())
 
     /* R : 이벤트 전체 조회 메서드 */
@@ -499,7 +512,7 @@ class AnalyzeService : LifecycleService() {
         }
     }
 
-    // settingRepository ///////////////////////////////////////////////////////////////////////////////////////
+    // settingRepositoryImpl ///////////////////////////////////////////////////////////////////////////////////////
     private val _guideMode = MutableLiveData<Boolean>(true)
 
     private val _basicMusicMode = MutableLiveData<Boolean>(true)
@@ -571,7 +584,7 @@ class AnalyzeService : LifecycleService() {
         }
     }
 
-    // staticsRepository ///////////////////////////////////////////////////////////////////////////////////////
+    // staticsRepositoryImpl ///////////////////////////////////////////////////////////////////////////////////////
 
     private val _allAnalyzeRecord = MutableLiveData<List<AnalyzeResult>>(emptyList())
     fun insertRecord(analyzeResult: AnalyzeResult) {
@@ -992,7 +1005,7 @@ class AnalyzeService : LifecycleService() {
 //}
 //
 //
-//// relaxRepository ///////////////////////////////////////////////////////////////////////////////////////
+//// relaxRepositoryImpl ///////////////////////////////////////////////////////////////////////////////////////
 //var shelterRequestTime: Int = 0
 //fun initShelterRequest() {
 //    shelterRequestTime = 0
@@ -1015,7 +1028,7 @@ class AnalyzeService : LifecycleService() {
 //fun getNearRest(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
 //    _rests.postValue(ResponseState.Loading)
 //    try {
-//        relaxRepository?.getAllRest(boundingBox)?.collect {
+//        relaxRepositoryImpl?.getAllRest(boundingBox)?.collect {
 //            _rests.postValue(it)
 //        }
 //    } catch (error: Throwable) {
@@ -1041,7 +1054,7 @@ class AnalyzeService : LifecycleService() {
 //fun getNearShelter(boundingBox: BoundingBox) = lifecycleScope.launch(ioDispatcher) {
 //    _shelters.postValue(ResponseState.Loading)
 //    try {
-//        relaxRepository?.getAllShelter(boundingBox)?.collect {
+//        relaxRepositoryImpl?.getAllShelter(boundingBox)?.collect {
 //            _shelters.postValue(it)
 //        }
 //    } catch (error: Throwable) {
@@ -1071,7 +1084,7 @@ class AnalyzeService : LifecycleService() {
 //) = lifecycleScope.launch(defaultDispatcher) {
 //    _parkingLots.postValue(ResponseState.Loading)
 //    try {
-//        relaxRepository?.getAllParkingLot(
+//        relaxRepositoryImpl?.getAllParkingLot(
 //            boundingBox, parkingchargeInfo, numOfRows, day, nowTime
 //        )?.catch { error ->
 //            _parkingLots.postValue(ResponseState.Error(error))

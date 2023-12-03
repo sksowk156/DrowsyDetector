@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.view
+package com.paradise.drowsydetector.ui.view
 
 import android.Manifest
 import android.content.Intent
@@ -16,28 +16,35 @@ import com.paradise.drowsydetector.utils.GUIDEMODE
 import com.paradise.drowsydetector.utils.MAINBASE
 import com.paradise.drowsydetector.utils.MUSICVOLUME
 import com.paradise.drowsydetector.utils.checkPermissions
-import com.paradise.drowsydetector.viewmodel.AnalyzeViewModel
-import com.paradise.drowsydetector.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.viewmodel.SettingViewModel
-import com.paradise.drowsydetector.viewmodel.StaticsViewModel
+import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
+import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
+import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
+import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
-    val analyzeViewModel: AnalyzeViewModel by viewModels() {
-        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepository)
-    }
+    val analyzeViewModel: AnalyzeViewModel by viewModels()
+//    {
+//        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepositoryImpl)
+//    }
 
-    val staticsViewModel: StaticsViewModel by viewModels() {
-        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
-    }
+    val staticsViewModel: StaticsViewModel by viewModels()
+//    {
+//        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
+//    }
 
-    val musicViewModel: MusicViewModel by viewModels() {
-        MusicViewModel.MusicViewModelFactory(ApplicationClass.getApplicationContext().musicRepository)
-    }
+    val musicViewModel: MusicViewModel by viewModels()
+//    {
+//        MusicViewModel.MusicViewModelFactory(ApplicationClass.getApplicationContext().musicRepositoryImpl)
+//    }
 
-    val settingViewModel: SettingViewModel by viewModels() {
-        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepository)
-    }
+    val settingViewModel: SettingViewModel by viewModels()
+//    {
+//        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepositoryImpl)
+//    }
 
 
     override fun onNewIntent(intent: Intent?) {

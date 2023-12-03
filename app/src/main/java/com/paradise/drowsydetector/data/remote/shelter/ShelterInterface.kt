@@ -6,7 +6,7 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-interface DrowyShelterInterface {
+interface ShelterInterface {
     @GET("tn_pubr_public_drowsy_shelter_api?serviceKey=$API_KEY")
     suspend fun getAllShelter(
         @Query("pageNo") pageNo: Int = 1,
