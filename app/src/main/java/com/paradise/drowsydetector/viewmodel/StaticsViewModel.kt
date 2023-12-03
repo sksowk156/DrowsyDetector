@@ -29,62 +29,6 @@ class StaticsViewModel(
     private val staticsRepository: StaticsRepository,
 ) : ViewModel() {
 
-//    var standard: Double?= null
-//
-//    fun initStandard(){
-//        standard = null
-//    }
-
-//    var datajob: Job? = null // 눈 깜빡임 감지
-//    var eyeClosed : Boolean = false
-//    var currentAnayzeResult: AnalyzeResult? = null
-//
-//    fun startRecording() {
-//        if (datajob == null) {
-//            datajob = initJob()
-//            datajob!!.start()
-//        }
-//    }
-//
-//    private fun initJob() = viewModelScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
-//        while (this.isActive) {
-//            delay(1 * 60 * 1000)  // 30분 대기
-//            Log.d("whatisthis", currentWinkCount.toString()+ " " + currentDrowsyCount.toString())
-//            insertWinkCount(
-//                WinkCount(
-//                    recordId = currentAnayzeResult!!.id, value = currentWinkCount
-//                )
-//            )
-//            insertDrowsyCount(
-//                DrowsyCount(
-//                    recordId = currentAnayzeResult!!.id, value = currentDrowsyCount
-//                )
-//            )
-//            // 초기화
-//            initWinkCount()
-//            initDrowsyCount()
-//        }
-//    }
-//
-//    fun checkEyeWink(eyeState: Double, resultDetector: Face) {
-//        // 눈 깜빡임 카운팅
-//        if (eyeState <= 0.4) {
-//            val leftEyeOpen = resultDetector.leftEyeOpenProbability
-//            val righEyeOpen = resultDetector.rightEyeOpenProbability
-//
-//            if (datajob != null && datajob!!.isActive) {
-//                if (leftEyeOpen != null && righEyeOpen != null) {
-//                    if (leftEyeOpen < 0.3 && righEyeOpen < 0.3 && !eyeClosed) {
-//                        eyeClosed = true // frame이 높아서 한번에 많이 처리될 수 있기 때문
-//                        // 눈이 감겨 있음
-//                        currentWinkCount++
-//                        Log.d("whatisthis",currentWinkCount.toString())
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     private val _allAnalyzeRecord = MutableSharedFlow<List<AnalyzeResult>>()
     val allAnalyzeRecord: SharedFlow<List<AnalyzeResult>> get() = _allAnalyzeRecord.asSharedFlow()
     fun insertRecord(analyzeResult: AnalyzeResult) {
@@ -239,4 +183,60 @@ class StaticsViewModel(
             }
         }
     }
+
+    //    var standard: Double?= null
+//
+//    fun initStandard(){
+//        standard = null
+//    }
+
+//    var datajob: Job? = null // 눈 깜빡임 감지
+//    var eyeClosed : Boolean = false
+//    var currentAnayzeResult: AnalyzeResult? = null
+//
+//    fun startRecording() {
+//        if (datajob == null) {
+//            datajob = initJob()
+//            datajob!!.start()
+//        }
+//    }
+//
+//    private fun initJob() = viewModelScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
+//        while (this.isActive) {
+//            delay(1 * 60 * 1000)  // 30분 대기
+//            Log.d("whatisthis", currentWinkCount.toString()+ " " + currentDrowsyCount.toString())
+//            insertWinkCount(
+//                WinkCount(
+//                    recordId = currentAnayzeResult!!.id, value = currentWinkCount
+//                )
+//            )
+//            insertDrowsyCount(
+//                DrowsyCount(
+//                    recordId = currentAnayzeResult!!.id, value = currentDrowsyCount
+//                )
+//            )
+//            // 초기화
+//            initWinkCount()
+//            initDrowsyCount()
+//        }
+//    }
+//
+//    fun checkEyeWink(eyeState: Double, resultDetector: Face) {
+//        // 눈 깜빡임 카운팅
+//        if (eyeState <= 0.4) {
+//            val leftEyeOpen = resultDetector.leftEyeOpenProbability
+//            val righEyeOpen = resultDetector.rightEyeOpenProbability
+//
+//            if (datajob != null && datajob!!.isActive) {
+//                if (leftEyeOpen != null && righEyeOpen != null) {
+//                    if (leftEyeOpen < 0.3 && righEyeOpen < 0.3 && !eyeClosed) {
+//                        eyeClosed = true // frame이 높아서 한번에 많이 처리될 수 있기 때문
+//                        // 눈이 감겨 있음
+//                        currentWinkCount++
+//                        Log.d("whatisthis",currentWinkCount.toString())
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
