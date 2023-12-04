@@ -329,8 +329,6 @@ class AnalyzeFragment :
                                         startMusic()
                                         // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
                                         startGuide()
-                                        // 환기 요청
-                                        startRefresh()
                                     }
                                     binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
                                 }

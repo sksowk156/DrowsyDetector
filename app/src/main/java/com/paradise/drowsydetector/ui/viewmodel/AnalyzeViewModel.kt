@@ -168,10 +168,7 @@ class AnalyzeViewModel @Inject constructor(
                         _parkingLots.value = listItem
                     }
                 } else if (it is ResponseState.Fail) {
-                    _parkingLots.value = ResponseState.Fail(it.code, it.message)
-                }
-
-            }
+                    _parkingLots.value = ResponseState.Fail(it.code, it.message) } }
         } catch (error: Throwable) {
             _parkingLots.value = ResponseState.Error(error)
         }

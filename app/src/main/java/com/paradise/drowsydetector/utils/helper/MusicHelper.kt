@@ -180,11 +180,9 @@ class MusicHelper(
             if (startTime > 0) seekTo(startTime) // 시작 시간이 있다면 그 시간으로 시작 시간을 초기화 한다.
             start()
         }
-
         setOnCompletionListener {// 음악 완료 여부 리스너
             releaseMediaPlayer()
         }
-
         prepareAsync() // 리스너 등록이 끝나면 prepareAsync()를 호출해 비동기로 음악을 준비한다.
     }
 

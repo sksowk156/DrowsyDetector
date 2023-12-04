@@ -14,3 +14,4 @@
 .cxx
 local.properties
 /app/src/main/java/com/paradise/drowsydetector/utils/ApiKey.kt
+/core/common/src/main/java/com/paradise/common/network/ApiKey.kt

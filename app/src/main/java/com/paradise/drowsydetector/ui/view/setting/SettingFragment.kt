@@ -258,18 +258,14 @@ class SettingFragment :
         // 사용자가 파일 탐색 화면에서 돌아왔을 때 호출되는 메소드
         if (result.resultCode == AppCompatActivity.RESULT_OK) { // 사용자가 파일 선택을 성공적으로 완료했을 때 내부 코드 실행
             val data: Intent = result.data!! // 콜백 메서드를 통해 전달 받은 ActivityResult 객체에서 Intent 객체 추출
-
             val audioUri = data.data // Intent 객체에서 선택한 오디오 파일의 위치를 가리키는 Uri 추출
-
             // 앱과 안드로이드 시스템 간의 데이터 통신을 하기위해 ContentResolver 객체 생성
             // ContentResolver를 통해 앱은 ContentProvider를 사용해 다른 앱의 데이터에 접근하거나 데이터를 읽거나 쓸 수 있다
             val contentResolver = requireContext().contentResolver
-
             // Uri를 사용해 파일 복사본 생성후 해당 파일 경로 반환
             val newFilePath: String? = getNewFilePathFromUri(
                 requireContext(), contentResolver, audioUri
             )
-
             // 원본 파일의 Uri로부터 절대 경로 반환
             val audioPath = getPathFromFileUri(requireContext(), audioUri)
             // 원본 파일로부터 음원 제목 추출
@@ -300,7 +296,6 @@ class SettingFragment :
         val fileTempData: String = getFileName(contentResolver, uri!!)
         var inputStream: InputStream? = null
         var outputStream: FileOutputStream? = null
-
         val file = File(
             context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileTempData
         )
@@ -311,9 +306,8 @@ class SettingFragment :
                 return null // InputStream을 여는데 실패할 경우 null 반환
             }
             outputStream = FileOutputStream(file) // 이전에 만든 File 객체에 데이터를 쓰기 위해 OutputStream 생성
-            val buffer = ByteArray(1024 * 4) // 1 KB buffer 생성
+            val buffer = ByteArray(1024) // 1 KB buffer 생성
             var bytesRead: Int
-
             // 구간 복사를 시도했지만 안됐다.... 왜 안되는지 모르겠다....
             // 작은 파일들은 되지만 큰 파일의 경우 파일 생성까지는 되지만 mediaPlayer에서 동작하지 않는다. "Error (1,-1004)"가 발생하면서 동작하지 않았다.
             // 어쩔 수 없이 그냥 전체 파일을 복사해 저장하고, 시작 구간을 저장해서 재생할 때 시간을 조절하는 방식으로 구현했다.
@@ -321,29 +315,6 @@ class SettingFragment :
                 outputStream.write(buffer, 0, bytesRead) // 읽은 byte 데이터를 사용해 File 객체에 데이터 쓰기
             }
             file.absolutePath  // 그 후 복사가 완료된 파일 객체 반환
-//            // 구간 복사를 시도했지만 안됐다.... 왜 안되는지 모르겠다....
-//            // 작은 파일들은 되지만 큰 파일의 경우 파일 생성까지는 되지만 mediaPlayer에서 동작하지 않는다. "Error (1,-1004)"가 발생하면서 동작하지 않았다.
-//            // 어쩔 수 없이 그냥 전체 파일을 복사해 저장하고, 시작 구간을 저장해서 재생할 때 시간을 조절하는 방식으로 구현했다.
-//            val MAX_COPY_BYTES = 50000 // 복사할 최대 바이트 수
-//            val buffer = ByteArray(1024 * 4) // 1 KB buffer 생성
-//            var bytesRead: Int
-//            var totalBytesRead: Long = 0
-//            while (inputStream.read(buffer).also { bytesRead = it } != -1) {
-//                // 복사한 데이터가 MAX_COPY_BYTES를 초과하면 종료
-//                if (totalBytesRead + bytesRead > MAX_COPY_BYTES) {
-//                    val remainingBytes = MAX_COPY_BYTES - totalBytesRead.toInt()
-//                    outputStream.write(buffer, 0, remainingBytes) // 남은 만큼만 복사
-//                    break
-//                }
-//                outputStream.write(buffer, 0, bytesRead) // 읽은 byte 데이터를 사용해 File 객체에 데이터 쓰기
-//                totalBytesRead += bytesRead.toLong()
-//
-//                // 파일이 MAX_COPY_BYTES까지 읽혔으면 더 이상 복사하지 않고 종료
-//                if (totalBytesRead >= MAX_COPY_BYTES) {
-//                    break
-//                }
-//            }
-//            file.absolutePath  // 그 후 복사가 완료된 파일 객체 반환
         } catch (e: IOException) { // 입출력 문제 생기면 오류 출력
             e.printStackTrace()
             Log.d("whatisthis", e.toString())

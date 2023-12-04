@@ -122,25 +122,18 @@ class RelaxRepositoryImpl @Inject constructor(
     ) = flow {
         try {
             val response = parkingLotInterface.getAllParkingLot(
-                pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
-            )
-
+                pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료")
             if (response.isSuccessful) {
                 response.body()?.let {
                     val totalCount = it.response.body.totalCount.toInt()
                     var numOfCoroutineRequired = totalCount / numOfRows
                     if (totalCount % numOfRows != 0) numOfCoroutineRequired++
-                    emit(
-                        ResponseState.Success(
-                            getParkingLots1(
+                    emit(ResponseState.Success(getParkingLots1(
                                 boundingBox = boundingBox,
                                 parkingchargeInfo = parkingchargeInfo,
                                 numOfCoroutineRequired = numOfCoroutineRequired,
                                 day = day,
-                                nowTime = nowTime
-                            )
-                        )
-                    )
+                                nowTime = nowTime)))
                 }
             } else {
                 emit(ResponseState.Fail(response.code(), response.message()))

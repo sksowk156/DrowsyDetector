@@ -138,10 +138,10 @@ fun compareTime(nowTime: String, openTime: String?, closeTime: String?) =
 const val SMILE_THREDHOLD = 0.9
 
 // 졸음 인식 EAR 임계값
-const val DROWSY_THREDHOLD = 0.78
+const val DROWSY_THREDHOLD = 0.77
 
 // 세팅 인식 EAR 임계값
-const val STT_THREDHOLD = 1.3
+const val STT_THREDHOLD = 1.45
 
 // 졸음 인식 지속 시간 임계값
 const val TIME_THREDHOLD = 1500
