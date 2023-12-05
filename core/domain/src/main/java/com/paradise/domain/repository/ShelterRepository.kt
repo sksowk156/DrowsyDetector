@@ -1,13 +1,14 @@
 package com.paradise.domain.repository
 
-import com.paradise.domain.model.shelterItem
+import com.core.model.shelterItem
+import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 
 interface ShelterRepository {
     suspend fun getAllShelter(
-        pageNo: Int,
-        numOfRows: Int,
+        pageNo: Int = 1,
+        numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         type: String = "json",
-        ctprvnNm: String,
-        signguNm: String,
+        ctprvnNm: String? = null,
+        signguNm: String? = null,
     ): List<shelterItem>
 }

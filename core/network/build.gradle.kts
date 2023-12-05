@@ -1,4 +1,3 @@
-import Dependencies.Gone
 
 plugins {
     id("com.android.library")
@@ -46,7 +45,6 @@ dependencies {
     hilt()
     retrofit()
     coroutine()
-    implementation(Gone)
     lifecycleKTX()
 
     implementation(project(":core:common"))

@@ -1,6 +1,10 @@
+import Dependencies.Location
+import Dependencies.MpAndroidChart
+
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("androidx.navigation.safeargs.kotlin")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
 }
@@ -27,14 +31,16 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_18
         targetCompatibility = JavaVersion.VERSION_18
+    }
+    buildFeatures {
+        viewBinding = true
     }
     kotlinOptions {
         jvmTarget = "18"
@@ -43,7 +49,36 @@ android {
 }
 
 dependencies {
+
+    core_model()
+    core_domain()
+    core_common()
+    core_common_ui()
+    // navi
+    navigation()
+    // dagger hilt
     hilt()
+    // Preferences DataStore
+    dataStore()
+    // mlkit face detection
+    mlkit()
+    // GPS api
+    implementation(Dependencies.Location)
+    // Camera
+    camera()
+    // ktx
+    ktx()
+    // viewmodel_ktx
+    lifecycleKTX()
+    // retrofit
+    retrofit()
+    //Coroutine
+    coroutine()
+    // Room DB
+    room()
+    // RxBinding
+    rxBinding()
+
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

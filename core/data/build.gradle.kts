@@ -1,5 +1,3 @@
-import DaggerHilt.hilt
-
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
@@ -29,8 +27,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -47,7 +44,8 @@ dependencies {
     hilt()
     implementation(project(":core:domain"))
     implementation(project(":core:network"))
-
+    implementation(project(":core:database"))
+    implementation(project(":core:model"))
     implementation(project(":core:common"))
 
     implementation("androidx.core:core-ktx:1.12.0")

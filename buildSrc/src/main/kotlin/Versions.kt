@@ -1,4 +1,6 @@
 object Versions {
+    // Navigation
+    const val navigation = "2.5.3"
     // FlowBinding
     const val flowbinding = "1.2.0"
     // RxBinding

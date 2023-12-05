@@ -10,7 +10,7 @@ class ShelterDataProvider @Inject constructor(
         pageNo: Int,
         numOfRows: Int,
         type: String,
-        ctprvnNm: String,
-        signguNm: String,
+        ctprvnNm: String?="",
+        signguNm: String?="",
     ) = shelterService.getAllShelter(pageNo, numOfRows, type, ctprvnNm, signguNm)
 }

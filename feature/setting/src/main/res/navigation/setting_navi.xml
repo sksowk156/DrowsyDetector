@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/setting_navi"
+    app:startDestination="@id/settingFragment">
+
+    <fragment
+        android:id="@+id/settingFragment"
+        android:name="com.paradise.setting.SettingsFragment"
+        android:label="fragment_analyze"
+        tools:layout="@layout/fragment_settings">
+        <argument
+            android:name="argSettingValue"
+            app:argType="string"
+            android:defaultValue="0" />
+        <!--        <deepLink-->
+        <!--            app:uri="@string/home_deeplink_url" />-->
+    </fragment>
+</navigation>

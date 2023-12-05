@@ -27,8 +27,7 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
             )
         }
     }
@@ -44,8 +43,40 @@ android {
 
 
 dependencies {
+    core_model()
+    core_domain()
+    core_common()
+    core_data()
+    core_common_ui()
+
+    // dagger hilt
     hilt()
-//    mlkit()
+
+    // ExoPlayer
+    exoPlayer()
+
+    // mlkit face detection
+    mlkit()
+    // Camera
+    camera()
+    // GPS api
+    implementation(Dependencies.Location)
+
+    // retrofit
+    retrofit()
+    // Room DB
+    room()
+    // Preferences DataStore
+    dataStore()
+
+    //Coroutine
+    coroutine()
+    // ktx
+    ktx()
+    // viewmodel_ktx
+    lifecycleKTX()
+    // RxBinding
+    rxBinding()
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/analyze_navi"
+    app:startDestination="@id/analyzeFragment">
+
+    <fragment
+        android:id="@+id/analyzeFragment"
+        android:name="com.paradise.analyze.AnalyzesFragment"
+        android:label="fragment_analyze"
+        tools:layout="@layout/fragment_analyzes">
+        <argument
+            android:name="argAnalyzeValue"
+            app:argType="string"
+            android:defaultValue="0" />
+        <!--        <deepLink-->
+        <!--            app:uri="@string/home_deeplink_url" />-->
+    </fragment>
+
+</navigation>

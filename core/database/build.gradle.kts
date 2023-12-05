@@ -48,7 +48,7 @@ dependencies {
     lifecycleKTX()
 
     implementation(project(":core:common"))
-
+    implementation(project(":core:model"))
 
     
     implementation("androidx.core:core-ktx:1.12.0")

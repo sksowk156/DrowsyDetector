@@ -1,8 +1,8 @@
 package com.paradise.data.repositoryImpl
 
+import com.core.model.parkingLotItem
 import com.paradise.data.mapper.toDomainParkingLotItemCount
 import com.paradise.data.mapper.toDomainParkingLotItemList
-import com.paradise.domain.model.parkingLotItem
 import com.paradise.domain.repository.ParkingLotRepository
 import com.paradise.network.provider.ParkingLotDataProvider
 import javax.inject.Inject

@@ -1,7 +1,7 @@
 package com.paradise.domain.repository
 
+import com.core.model.parkingLotItem
 import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
-import com.paradise.domain.model.parkingLotItem
 
 interface ParkingLotRepository {
     suspend fun getAllParkingLot(
@@ -12,8 +12,8 @@ interface ParkingLotRepository {
     ): List<parkingLotItem>
 
     suspend fun getOneParkingLot(
-        pageNo: Int,
-        numOfRows: Int,
+        pageNo: Int = 1,
+        numOfRows: Int = 1,
         type: String = "json",
         parkingchrgeInfo: String,
     ): Int

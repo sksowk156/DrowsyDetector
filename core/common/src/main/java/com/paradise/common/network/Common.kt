@@ -9,15 +9,10 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.content.FileProvider
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.CoroutineDispatcher
+import com.core.model.parkingLotItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.io.File
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -92,19 +87,6 @@ fun getDayType(): DAY = when (LocalDate.now().dayOfWeek) {
 fun getCurrentTime(): String =
     SimpleDateFormat("HH", Locale.getDefault()).format(Calendar.getInstance().time)
 
-data class parkingLotItem(
-    val holidayCloseOpenHhmm: String,
-    val holidayOperOpenHhmm: String,
-    val latitude: String,
-    val lnmadr: String,
-    val longitude: String,
-    val parkingchrgeInfo: String,
-    val prkplceNm: String,
-    val satOperCloseHhmm: String,
-    val satOperOperOpenHhmm: String,
-    val weekdayOperColseHhmm: String,
-    val weekdayOperOpenHhmm: String,
-)
 fun isInTime(day: DAY, nowTime: String, item: parkingLotItem) = when (day) {
     DAY.WEEKDAY -> {
         compareTime(nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm)
@@ -163,7 +145,7 @@ const val MUSICVOLUME = "music_volume_datastore" // 음악의 볼륨(Int)
 const val REFRESHTERM = "refresh_term_datastore" // 환기 주기(Int)
 
 // 한번에 가져오는 주차장 정보 개수
-const val DEFAULT_NUM_OF_ROWS = 200
+const val DEFAULT_NUM_OF_ROWS = 250
 
 // 기본 음악 지속 시간
 const val DEFAULT_MUSIC_DURATION: Long = 3000

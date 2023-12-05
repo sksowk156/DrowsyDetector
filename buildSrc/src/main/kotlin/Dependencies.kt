@@ -1,4 +1,3 @@
-import DaggerHilt.hiltCompiler
 import Versions.activityKtx
 import Versions.camera
 import Versions.coroutine
@@ -13,6 +12,7 @@ import Versions.location
 import Versions.mlFaceDetection
 import Versions.mlFaceMesh
 import Versions.mpChart
+import Versions.navigation
 import Versions.retrofit
 import Versions.room
 import Versions.rxbinding
@@ -20,13 +20,12 @@ import Versions.tedPermission
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.kotlin.dsl.project
 
-object DaggerHilt {
-    const val hilt = "com.google.dagger:hilt-android:${daggerHilt}"
-    const val hiltAndroidCompiler = "com.google.dagger:hilt-android-compiler:${daggerHilt}"
-    const val hiltCompiler = "androidx.hilt:hilt-compiler:1.0.0"
-}
-
 object Dependencies {
+    // Navigation
+    const val navigationFragment = ("androidx.navigation:navigation-fragment-ktx:${navigation}")
+    const val navigationUi = ("androidx.navigation:navigation-ui-ktx:${navigation}")
+    const val navigationRuntime= "androidx.navigation:navigation-runtime-ktx:${navigation}"
+
     // dagger hilt
     const val hiltAndroid = "com.google.dagger:hilt-android:${daggerHilt}"
     const val hiltCompiler = "com.google.dagger:hilt-android-compiler:${daggerHilt}"
@@ -79,12 +78,12 @@ object Dependencies {
     const val Retrofit = ("com.squareup.retrofit2:retrofit:${retrofit}")
     const val RetrofitGson = ("com.squareup.retrofit2:converter-gson:${retrofit}")
 
+    //gson
+    const val Gson = ("com.google.code.gson:gson:${gson}")
+
     //Coroutine
     const val CoroutinesAndroid = ("org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutine}")
     const val CoroutinesCore = ("org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutine}")
-
-    //gson
-    const val Gone = ("com.google.code.gson:gson:${gson}")
 
     // Room DB
     const val RoomKtx = ("androidx.room:room-ktx:${room}")
@@ -134,6 +133,11 @@ object Dependencies {
         ("io.github.reactivecircus.flowbinding:flowbinding-viewpager2:${flowbinding}")
 }
 
+fun DependencyHandler.navigation() {
+    implementation(Dependencies.navigationUi)
+    implementation(Dependencies.navigationFragment)
+}
+
 fun DependencyHandler.room() {
     implementation(Dependencies.RoomKtx)
     implementation(Dependencies.RoomRuntime)
@@ -143,6 +147,7 @@ fun DependencyHandler.room() {
 fun DependencyHandler.retrofit() {
     implementation(Dependencies.Retrofit)
     implementation(Dependencies.RetrofitGson)
+    implementation(Dependencies.Gson)
 //    implementation(Dependencies.okHttp)
 //    implementation(Dependencies.okHttpLoggingInterceptor)
 }
@@ -179,6 +184,11 @@ fun DependencyHandler.coroutine() {
     implementation(Dependencies.CoroutinesAndroid)
 }
 
+fun DependencyHandler.ktx() {
+    implementation(Dependencies.FragmetKtx)
+    implementation(Dependencies.ActivityKtx)
+}
+
 fun DependencyHandler.lifecycleKTX() {
     implementation(Dependencies.LifecycleScopeViewModelKtx)
     implementation(Dependencies.LifecycleScopeRuntimeKtx)
@@ -208,6 +218,7 @@ fun DependencyHandler.hilt() {
     implementation(Dependencies.hiltAndroid)
     kapt(Dependencies.hiltCompiler)
 }
+
 fun DependencyHandler.feature_analyze() {
     implementation(project(":feature:analyze"))
 }
@@ -220,12 +231,20 @@ fun DependencyHandler.feature_setting() {
     implementation(project(":feature:setting"))
 }
 
+fun DependencyHandler.feature_statistic() {
+    implementation(project(":feature:statistic"))
+}
+
 fun DependencyHandler.core_common() {
     implementation(project(":core:common"))
 }
 
 fun DependencyHandler.core_data() {
     implementation(project(":core:data"))
+}
+
+fun DependencyHandler.core_common_ui() {
+    implementation(project(":core:common-ui"))
 }
 
 fun DependencyHandler.core_domain() {

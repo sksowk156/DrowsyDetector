@@ -1,14 +1,10 @@
-import Dependencies.ActivityKtx
-import Dependencies.FragmetKtx
-import Dependencies.Gone
 import Dependencies.Location
-import Dependencies.MLkitFaceDetection
-import Dependencies.MLkitFaceMesh
 import Dependencies.MpAndroidChart
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("androidx.navigation.safeargs.kotlin")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
 }
@@ -57,18 +53,20 @@ android {
 }
 
 dependencies {
-    implementation(project(":feature:analyze"))
-    implementation(project(":feature:home"))
-    implementation(project(":feature:setting"))
-    implementation(project(":core:common"))
-    implementation(project(":core:data"))
-    implementation(project(":core:domain"))
-    implementation(project(":core:model"))
-
     // LeakCanary
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 //    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
-
+    feature_analyze()
+    feature_home()
+    feature_setting()
+    feature_statistic()
+    core_model()
+    core_domain()
+    core_common()
+    core_data()
+    core_common_ui()
+    // navi
+    navigation()
     // dagger hilt
     hilt()
     // Preferences DataStore
@@ -78,25 +76,19 @@ dependencies {
     // TedPermission
     tedPermission()
     // mlkit face detection
-    implementation(MLkitFaceDetection)
-    // mlkit face mesh
-    implementation(MLkitFaceMesh)
+    mlkit()
     // GPS api
     implementation(Location)
     // Camera
     camera()
-    // activity_ktx
-    implementation(ActivityKtx)
-    // fragment_ktx, viewmodels()를 사용하기 위해
-    implementation(FragmetKtx)
+    // ktx
+    ktx()
     // viewmodel_ktx
     lifecycleKTX()
     // retrofit
     retrofit()
     //Coroutine
     coroutine()
-    //gson
-    implementation(Gone)
     // Room DB
     room()
     // MPAndroidChart

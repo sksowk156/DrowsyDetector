@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="admin_deep_link" translatable="false">DrowsyDector://com.paradise.drowsydetector.ui.view.home</string>
+
+    <!-- Home  -->
+    <string name="home_deeplink_url">lab://home</string>
+
+    <!-- Serialization  -->
+    <string name="serialization_gson_deeplink_url">lab://serialization/gson</string>
+
+    <!-- Component  -->
+    <string name="component_navigation_deeplink_first_screen_url">lab://component/navigation/deeplink/first</string>
+    <string name="component_navigation_deeplink_second_screen_url">lab://component/navigation/deeplink/second</string>
+</resources>
