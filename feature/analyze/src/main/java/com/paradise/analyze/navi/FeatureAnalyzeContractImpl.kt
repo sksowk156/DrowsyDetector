@@ -1,8 +1,9 @@
-package com.paradise.analyze
+package com.paradise.analyze.navi
 
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
-import com.paradise.common_ui.navigation.FeatureAnalyzeContract
+import com.paradise.analyze.R
+import com.paradise.common_ui.navicontract.FeatureAnalyzeContract
 
 class FeatureAnalyzeContractImpl : FeatureAnalyzeContract {
     override fun show(dataToPass: String, navController: NavController) {

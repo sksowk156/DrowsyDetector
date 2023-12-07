@@ -42,15 +42,14 @@ android {
 }
 
 dependencies {
+    core_model()
+    core_common()
+
     hilt()
     room()
     coroutine()
     lifecycleKTX()
 
-    implementation(project(":core:common"))
-    implementation(project(":core:model"))
-
-    
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")

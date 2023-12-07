@@ -1,7 +1,7 @@
 package com.paradise.domain.usecases
 
 import com.core.model.analyzeResultItem
-import com.paradise.common.UiState
+import com.paradise.common.result.UiState
 import com.paradise.common.network.ioDispatcher
 import com.paradise.domain.repository.AnalyzerResultRepository
 import kotlinx.coroutines.flow.cancellable

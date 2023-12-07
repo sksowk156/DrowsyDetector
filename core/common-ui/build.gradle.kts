@@ -38,18 +38,14 @@ android {
 }
 
 dependencies {
-    core_model()
-    core_domain()
     core_common()
-    core_data()
-    core_common_ui()
 
+    // navi
+    navigation()
     // dagger hilt
     hilt()
-
     // ExoPlayer
     exoPlayer()
-
     // mlkit face detection
     mlkit()
     // Camera
@@ -72,6 +68,8 @@ dependencies {
     lifecycleKTX()
     // RxBinding
     rxBinding()
+    // FlowBinding
+    flowBinding()
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

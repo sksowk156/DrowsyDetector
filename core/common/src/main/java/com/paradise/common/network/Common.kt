@@ -9,8 +9,10 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import com.core.model.parkingLotItem
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import java.io.File
@@ -19,13 +21,22 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.Random
+import javax.inject.Inject
 
 const val BASE_URL = "http://api.data.go.kr/openapi/"
+
+val defaultDispatcher = Dispatchers.Default
+val ioDispatcher = Dispatchers.IO
+val mainDispatcher = Dispatchers.Main
+
+val defaultScope = CoroutineScope(defaultDispatcher)
+val ioScope = CoroutineScope(ioDispatcher)
+val mainScope = CoroutineScope(mainDispatcher)
 
 // BaseFragment에서 사용하는 typealias
 typealias FragmentInflate<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
 
-// Notification
+// Service Notification
 const val NOTIFICATION_CHANNEL_ID = "tracking_channel"
 const val NOTIFICATION_CHANNEL_NAME = "Tracking"
 const val NOTIFICATION_ID = 199 // 0 하면 안됨!!!
@@ -54,13 +65,6 @@ const val CLICK_INTERVAL_TIME = 300L
 // Rx Event 텍스트 완성 시간
 const val INPUT_COMPLETE_TIME = 1000L
 
-val defaultDispatcher = Dispatchers.Default
-val ioDispatcher = Dispatchers.IO
-val mainDispatcher = Dispatchers.Main
-
-val defaultScope = CoroutineScope(defaultDispatcher)
-val ioScope = CoroutineScope(ioDispatcher)
-val mainScope = CoroutineScope(mainDispatcher)
 
 const val MAINBASE = "homebase"
 const val ANALYZE = "analye"
@@ -292,3 +296,4 @@ data class BoundingBox(
     val maxLatitude: Double,
     val maxLongitude: Double,
 )
+

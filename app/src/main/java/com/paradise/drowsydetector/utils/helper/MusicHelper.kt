@@ -3,7 +3,6 @@ package com.paradise.drowsydetector.utils.helper
 import android.content.Context
 import android.media.MediaPlayer
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.data.local.room.music.Music
@@ -13,7 +12,6 @@ import com.paradise.drowsydetector.utils.getRandomElement
 import com.paradise.drowsydetector.utils.getUriFromFilePath
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -37,8 +35,9 @@ class MusicHelper(
 ) {
     private var mediaPlayer: MediaPlayer? = null
     private var job: Job? = null
-    private val _isPrepared : MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _isPrepared: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isPrepared: StateFlow<Boolean> get() = _isPrepared
+
     /**
      * Companion
      * 싱글톤
@@ -98,7 +97,7 @@ class MusicHelper(
     /**
      * Start res music
      *
-     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
+     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelperImpl.Builder()에 저장한다.
      */
     fun setStandardMusic() {
         startMusic(R.raw.setstandard)
@@ -107,7 +106,7 @@ class MusicHelper(
     /**
      * Start res music
      *
-     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelper.Builder()에 저장한다.
+     * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelperImpl.Builder()에 저장한다.
      */
     fun setResMusic() {
         val randomMusic = listOf<Int>(
@@ -127,15 +126,17 @@ class MusicHelper(
      * 음악을 실행하는 메서드
      * @param resId, raw package에 있는 음악 파일을 재생
      */
-    fun startMusic(resId: Int) = contextRef.get()?.let { context ->
-        val rawDescriptor = context.resources.openRawResourceFd(resId)
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(
-                rawDescriptor.fileDescriptor, rawDescriptor.startOffset, rawDescriptor.length
-            )
-            setMusic(duration = DEFAULT_MUSIC_DURATION)
+    fun startMusic(resId: Int) {
+        contextRef.get()?.let { context ->
+            val rawDescriptor = context.resources.openRawResourceFd(resId)
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(
+                    rawDescriptor.fileDescriptor, rawDescriptor.startOffset, rawDescriptor.length
+                )
+                setMusic(duration = DEFAULT_MUSIC_DURATION)
+            }
+            rawDescriptor.close()
         }
-        rawDescriptor.close()
     }
 
     /**
@@ -143,13 +144,15 @@ class MusicHelper(
      *
      * @param music, Room에 저장된 외부 저장소의 음악 파일 경로로 음악 재생
      */
-    fun startMusic(music: Music) = contextRef.get()?.let { context ->
-        mediaPlayer = MediaPlayer().apply {
-            setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
-            setMusic(music.startTime.toInt(), music.durationTime)
+    fun startMusic(music: Music) {
+        contextRef.get()?.let { context ->
+            mediaPlayer = MediaPlayer().apply {
+                setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
+                setMusic(music.startTime.toInt(), music.durationTime)
+            }
         }
-        this@MusicHelper
     }
+
 
     /**
      * Set music

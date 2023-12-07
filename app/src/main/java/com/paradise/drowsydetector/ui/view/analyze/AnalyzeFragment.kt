@@ -298,48 +298,47 @@ class AnalyzeFragment :
                 val leftRightAngle = resultDetector.headEulerAngleY
 
                 val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
-
-                if (analyzeService?.standard == null) {
-                    checkHeadPoseInNoStandard(eyeRatio, leftRightAngle, upDownAngle)
-                } else {
-                    analyzeService?.startRecording()
-                    val eyeState = eyeRatio / analyzeService?.standard!! // 눈 상태
-                    checkHeadPoseInStandard(leftRightAngle, upDownAngle)
-                    // 비율이 제한을 벗어났을 때
-                    if (eyeState <= DROWSY_THREDHOLD) {
-                        // 눈 깜빡임 카운팅
-                        analyzeService?.checkEyeWink(eyeState, resultDetector)
-
-                        // 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐), 음성 안내가 안나올 때, 음악이 안나올 때
-                        if (resultDetector.smilingProbability!! <= SMILE_THREDHOLD && !(musicHelper?.isPrepared?.value)!! && sttTtsController?.checkTtsSttHelperReady()!!) {
-                            if (!isInDrowsyState) {
-                                isInDrowsyState = true
-                                timeCheckDrowsy = Date().time
-                            }
-
-                            if (timeCheckDrowsy != null) {
-                                val maintainTime = Date().time - timeCheckDrowsy!!
-
-                                // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
-                                if (maintainTime > TIME_THREDHOLD) {
-                                    if (analyzeViewModel.checkDrowsy) { // 한번만 동작하게
-                                        analyzeViewModel.checkDrowsy = false
-                                        analyzeService?.countUpDrowsyCount()
-                                        // 경고음
-                                        startMusic()
-                                        // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
-                                        startGuide()
-                                    }
-                                    binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
-                                }
-                            }
-                        }
-                    } else if (eyeState >= STT_THREDHOLD) {
-                        sttTtsController?.request?.value = CHECKUSESTTSERVICE
-                    } else {
-                        setEyeStateInOpen()
-                    }
-                }
+//                if (analyzeService?.standard == null) {
+//                    checkHeadPoseInNoStandard(eyeRatio, leftRightAngle, upDownAngle)
+//                } else {
+//                    analyzeService?.startRecording()
+//                    val eyeState = eyeRatio / analyzeService?.standard!! // 눈 상태
+//                    checkHeadPoseInStandard(leftRightAngle, upDownAngle)
+//                    // 비율이 제한을 벗어났을 때
+//                    if (eyeState <= DROWSY_THREDHOLD) {
+//                        // 눈 깜빡임 카운팅
+//                        analyzeService?.checkEyeWink(eyeState, resultDetector)
+//
+//                        // 웃지 않을 때 (웃을 때 눈 웃음 때문에 눈 작아짐), 음성 안내가 안나올 때, 음악이 안나올 때
+//                        if (resultDetector.smilingProbability!! <= SMILE_THREDHOLD && !(musicHelper?.isPrepared?.value)!! && sttTtsController?.checkTtsSttHelperReady()!!) {
+//                            if (!isInDrowsyState) {
+//                                isInDrowsyState = true
+//                                timeCheckDrowsy = Date().time
+//                            }
+//
+//                            if (timeCheckDrowsy != null) {
+//                                val maintainTime = Date().time - timeCheckDrowsy!!
+//
+//                                // 졸음 감지!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                                if (maintainTime > TIME_THREDHOLD) {
+//                                    if (analyzeViewModel.checkDrowsy) { // 한번만 동작하게
+//                                        analyzeViewModel.checkDrowsy = false
+//                                        analyzeService?.countUpDrowsyCount()
+//                                        // 경고음
+//                                        startMusic()
+//                                        // 최단 거리에 있는 졸음 쉼터, 휴게소, 무료 주차장 안내
+//                                        startGuide()
+//                                    }
+//                                    binding.analyzeTextDrowsycheck.visibility = View.VISIBLE
+//                                }
+//                            }
+//                        }
+//                    } else if (eyeState >= STT_THREDHOLD) {
+//                        sttTtsController?.request?.value = CHECKUSESTTSERVICE
+//                    } else {
+//                        setEyeStateInOpen()
+//                    }
+//                }
             }
         }
     }

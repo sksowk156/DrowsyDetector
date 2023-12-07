@@ -42,13 +42,12 @@ android {
 }
 
 dependencies {
+    core_common()
+
     hilt()
     retrofit()
     coroutine()
     lifecycleKTX()
-
-    implementation(project(":core:common"))
-
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

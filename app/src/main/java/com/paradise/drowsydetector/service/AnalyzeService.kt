@@ -691,7 +691,7 @@ class AnalyzeService : LifecycleService() {
 
 //
 //private val mFusedLocationProviderClient by lazy {
-//    LocationHelper.getInstance(
+//    LocationHelperImpl.getInstance(
 //        ApplicationClass.getApplicationContext().fusedLocationProviderClient,
 //        ApplicationClass.getApplicationContext().geocoder
 //    )

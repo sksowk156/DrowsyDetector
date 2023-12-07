@@ -24,7 +24,7 @@ object Dependencies {
     // Navigation
     const val navigationFragment = ("androidx.navigation:navigation-fragment-ktx:${navigation}")
     const val navigationUi = ("androidx.navigation:navigation-ui-ktx:${navigation}")
-    const val navigationRuntime= "androidx.navigation:navigation-runtime-ktx:${navigation}"
+    const val navigationRuntime = "androidx.navigation:navigation-runtime-ktx:${navigation}"
 
     // dagger hilt
     const val hiltAndroid = "com.google.dagger:hilt-android:${daggerHilt}"
@@ -166,6 +166,19 @@ fun DependencyHandler.rxBinding() {
     implementation(Dependencies.RxBindingviewpager2)
 }
 
+fun DependencyHandler.flowBinding() {
+    implementation(Dependencies.FlowBinding)
+    implementation(Dependencies.FlowBindinglifecycle)
+    implementation(Dependencies.FlowBindingnavigation)
+    implementation(Dependencies.FlowBindingrecyclerview)
+    implementation(Dependencies.FlowBindingpreference)
+    implementation(Dependencies.FlowBindingviewpager2)
+    implementation(Dependencies.FlowBindingappcompat)
+    implementation(Dependencies.FlowBindingcore)
+    implementation(Dependencies.FlowBindingactivity)
+    implementation(Dependencies.FlowBindingmaterial)
+}
+
 fun DependencyHandler.camera() {
     implementation(Dependencies.CameraXCore)
     implementation(Dependencies.CameraXCamera2)
@@ -254,3 +267,4 @@ fun DependencyHandler.core_domain() {
 fun DependencyHandler.core_model() {
     implementation(project(":core:model"))
 }
+

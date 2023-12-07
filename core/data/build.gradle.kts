@@ -41,12 +41,15 @@ android {
 }
 
 dependencies {
-    hilt()
-    implementation(project(":core:domain"))
+    core_domain()
     implementation(project(":core:network"))
     implementation(project(":core:database"))
-    implementation(project(":core:model"))
-    implementation(project(":core:common"))
+    implementation(project(":core:datastore"))
+
+    core_model()
+    core_common()
+
+    hilt()
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

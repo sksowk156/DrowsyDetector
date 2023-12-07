@@ -1,8 +1,9 @@
-package com.paradise.statistic
+package com.paradise.statistic.navi
 
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
-import com.paradise.common_ui.navigation.FeatureStatisticContract
+import com.paradise.common_ui.navicontract.FeatureStatisticContract
+import com.paradise.statistic.R
 
 class FeatureStatisticContractImpl : FeatureStatisticContract {
     override fun show(dataToPass: String, navController: NavController) {

@@ -1,19 +1,18 @@
 package com.paradise.home
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.paradise.common_ui.navigation.BaseFragment
-import com.paradise.common_ui.navigation.FeatureAnalyzeContract
-import com.paradise.common_ui.navigation.FeatureSettingContract
-import com.paradise.common_ui.navigation.FeatureStatisticContract
+import com.paradise.common.helper.MusicHelper
+import com.paradise.common.helper.ToastHelper
+import com.paradise.common_ui.base.BaseFragment
+import com.paradise.common_ui.navicontract.FeatureAnalyzeContract
+import com.paradise.common_ui.navicontract.FeatureSettingContract
+import com.paradise.common_ui.navicontract.FeatureStatisticContract
 import com.paradise.home.databinding.FragmentHomesBinding
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.WithFragmentBindings
 import javax.inject.Inject
 
+@WithFragmentBindings
 @AndroidEntryPoint
 class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::inflate) {
     @Inject
@@ -25,13 +24,13 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
     @Inject
     lateinit var featureAnalyzeContractImpl: FeatureAnalyzeContract
 
+    @Inject
+    lateinit var musicHelper: MusicHelper
+
+    @Inject
+    lateinit var toastHelper: ToastHelper
     override fun onViewCreated() {
-
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        with(binding){
+        with(binding) {
             text.setOnClickListener {
                 featureStatisticContractImpl.show("abc", findNavController())
             }
@@ -43,8 +42,8 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
 
             }
         }
-
-
+        musicHelper.initMusicHelper()
+        toastHelper.showToast(musicHelper.isPrepared.value.toString())
     }
 
 }

@@ -1,7 +1,7 @@
 package com.paradise.domain.usecases
 
 import com.core.model.shelterItem
-import com.paradise.common.UiState
+import com.paradise.common.result.UiState
 import com.paradise.common.network.BoundingBox
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher

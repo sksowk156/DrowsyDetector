@@ -1,8 +1,9 @@
-package com.paradise.home
+package com.paradise.home.navi
 
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
-import com.paradise.common_ui.navigation.FeatureHomeContract
+import com.paradise.common_ui.navicontract.FeatureHomeContract
+import com.paradise.home.R
 
 class FeatureHomeContractImpl : FeatureHomeContract {
     override fun show(dataToPass: String, navController: NavController) {

@@ -1,4 +1,4 @@
-package com.paradise.common_ui.navigation
+package com.paradise.common_ui.base
 
 import android.os.Bundle
 import android.util.Log
@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.viewbinding.ViewBinding
 import com.jakewharton.rxbinding4.appcompat.navigationClicks
 import com.jakewharton.rxbinding4.view.clicks
@@ -18,17 +17,13 @@ import com.paradise.common.network.CLICK_INTERVAL_TIME
 import com.paradise.common.network.FragmentInflate
 import com.paradise.common.network.INPUT_COMPLETE_TIME
 import com.paradise.common.network.RXERROR
-import com.paradise.common.network.mainDispatcher
+import com.paradise.common_ui.R
+import com.paradise.common_ui.databinding.ToolbarCommonBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
-
 abstract class BaseFragment<VB : ViewBinding>(
     private val inflate: FragmentInflate<VB>,
 ) : Fragment() {
@@ -118,20 +113,15 @@ abstract class BaseFragment<VB : ViewBinding>(
      * @author 진혁
      */
     open fun View.setOnAvoidDuplicateClick(actionInMainThread: () -> Unit) {
-        compositeDisposable
-            .add(
-                this.clicks()
-                    .observeOn(Schedulers.io()) // 이후 chain의 메서드들은 쓰레드 io 영역에서 처리
-                    .throttleFirst(CLICK_INTERVAL_TIME, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread()) // 이후 chain의 메서드들은 쓰레드 main 영역에서 처리
-                    .subscribe(
-                        {
-                            actionInMainThread()
-                        }, {
-                            Log.e(RXERROR, it.toString())
-                        }
-                    )
-            )
+        compositeDisposable.add(this.clicks()
+            .observeOn(Schedulers.io()) // 이후 chain의 메서드들은 쓰레드 io 영역에서 처리
+            .throttleFirst(CLICK_INTERVAL_TIME, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread()) // 이후 chain의 메서드들은 쓰레드 main 영역에서 처리
+            .subscribe({
+                actionInMainThread()
+            }, {
+                Log.e(RXERROR, it.toString())
+            }))
     }
 
     /**
@@ -145,20 +135,13 @@ abstract class BaseFragment<VB : ViewBinding>(
      * @author 진혁
      */
     fun TextView.setOnFinishInput(actionInMainThread: (completedText: String) -> Unit) {
-        compositeDisposable
-            .add(
-                this.textChanges()
-                    .observeOn(Schedulers.io())
-                    .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            actionInMainThread(it.toString())
-                        }, {
-                            Log.e(RXERROR, it.toString())
-                        }
-                    )
-            )
+        compositeDisposable.add(this.textChanges().observeOn(Schedulers.io())
+            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                actionInMainThread(it.toString())
+            }, {
+                Log.e(RXERROR, it.toString())
+            }))
     }
 
     /**
@@ -172,67 +155,52 @@ abstract class BaseFragment<VB : ViewBinding>(
      * @param backBT  back 키 유무
      * @author 진혁
      */
-//    fun LayoutToolbarBinding.setToolbarMenu(
-//        title: String, // 툴바 제목
-//        backBT: Boolean = false, // true 안해주면, 기본 false
-//    ): Toolbar {
-//        this.apply {
-//            this.tvToolbarTitle.text = title // 툴바 제목은 무조건
-//            if (backBT) {
-//                this.toolbar.setNavigationIcon(R.drawable.icon_backarrow)
-//            } // backBT이 있을 경우
-//            this.toolbar.setNavigationOnClickListener {
+    fun ToolbarCommonBinding.setToolbarMenu(
+        title: String, // 툴바 제목
+        backBT: Boolean = false, // true 안해주면, 기본 false
+    ): Toolbar {
+        this.apply {
+            this.tvToolbarTitle.text = title // 툴바 제목은 무조건
+            if (backBT) {
+                this.toolbar.setNavigationIcon(R.drawable.icon_backarrow)
+            } // backBT이 있을 경우
+            this.toolbar.setNavigationOnClickListener {
 //                backPress()
-//            }
-//            return this.toolbar
-//        }
-//    }
-
-    fun Toolbar.setNavigationOnClickListener(actionInMainThread: () -> Unit) {
-        compositeDisposable
-            .add(
-                this.navigationClicks()
-                    .observeOn(Schedulers.io())
-                    .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            actionInMainThread()
-                        }, {
-                            Log.e(RXERROR, it.toString())
-                        }
-                    )
-            )
+            }
+            return this.toolbar
+        }
     }
 
-//    fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
-//        this.inflateMenu(R.menu.menu_reset)
-//        val menuItem = this.menu.findItem(R.id.reset_menu_standardreset)
-//        menuItem.setOnMenuItemClickListenerRx {
-//            editListener()
-//            showToast("?")
-//        }
-//    }
+    fun Toolbar.setNavigationOnClickListener(actionInMainThread: () -> Unit) {
+        compositeDisposable.add(this.navigationClicks().observeOn(Schedulers.io())
+            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                actionInMainThread()
+            }, {
+                Log.e(RXERROR, it.toString())
+            }))
+    }
+
+    fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
+        this.inflateMenu(R.menu.menu_reset_toolbar)
+        val menuItem = this.menu.findItem(R.id.reset_menu_standardreset)
+        menuItem.setOnMenuItemClickListenerRx {
+            editListener()
+        }
+    }
 
     private fun MenuItem.setOnMenuItemClickListenerRx(actionInMainThread: () -> Unit) {
 //        this.clicks { it.isEnabled } // 'isChecked'는 현재 displaying a check mark 인지 확인하는 것이므로, 여기선 'isEnabled'로 사용가능한지 확인하는 것이 맞다
 //            .onEach {
 //                actionInMainThread()
 //            }.launchIn(mainScope)
-        compositeDisposable
-            .add(
-                this.clicks { it.isEnabled }
-                    .observeOn(Schedulers.io())
-                    .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        {
-                            actionInMainThread()
-                        }, {
-                            Log.e(RXERROR, it.toString())
-                        }
-                    )
-            )
+        compositeDisposable.add(this.clicks { it.isEnabled }.observeOn(Schedulers.io())
+            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                actionInMainThread()
+            }, {
+                Log.e(RXERROR, it.toString())
+            }))
     }
 
 //    fun backPress() {

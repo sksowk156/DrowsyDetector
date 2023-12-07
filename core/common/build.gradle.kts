@@ -31,6 +31,9 @@ android {
             )
         }
     }
+    buildFeatures {
+        viewBinding = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_18
         targetCompatibility = JavaVersion.VERSION_18
@@ -44,17 +47,11 @@ android {
 
 dependencies {
     core_model()
-    core_domain()
-    core_common()
-    core_data()
-    core_common_ui()
 
     // dagger hilt
     hilt()
-
     // ExoPlayer
     exoPlayer()
-
     // mlkit face detection
     mlkit()
     // Camera
@@ -68,7 +65,8 @@ dependencies {
     room()
     // Preferences DataStore
     dataStore()
-
+    // TED
+    tedPermission()
     //Coroutine
     coroutine()
     // ktx

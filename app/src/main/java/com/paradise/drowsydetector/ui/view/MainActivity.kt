@@ -1,26 +1,17 @@
 package com.paradise.drowsydetector.ui.view
 
-import android.Manifest
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.viewModels
-import androidx.navigation.fragment.NavHostFragment
+import com.paradise.common.helper.ToastHelper
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
-import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
-import com.paradise.drowsydetector.utils.ApplicationClass
-import com.paradise.drowsydetector.utils.BASICMUSICMODE
-import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
-import com.paradise.drowsydetector.utils.GUIDEMODE
-import com.paradise.drowsydetector.utils.MAINBASE
-import com.paradise.drowsydetector.utils.MUSICVOLUME
-import com.paradise.drowsydetector.utils.checkPermissions
 import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
 import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
 import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
 import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
+import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -47,6 +38,8 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 //        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepositoryImpl)
 //    }
 
+//    @Inject
+//    lateinit var toastHelper: ToastHelper
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -56,16 +49,18 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
     private fun navigateToTrackingFragmentIfNeeded(intent: Intent?) {
         if (intent?.action == ACTION_SHOW_ANALYZING_FRAGMENT) {
 //            supportFragmentManager.beginTransaction()
-//                .add(binding.homeFramelayout.id, HomeBaseFragment(), "homebase")
+//                .add(binding.homeFramelayout.id, MainBaseFragment(), "homebase")
 //                .addToBackStack(null)
 //                .commit()
         }
     }
 
     override fun onCreate() {
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.main_framelayout) as NavHostFragment
-        val navController = navHostFragment.navController
+//        toastHelper.showToast("성공")
+//        val navHostFragment =
+//            supportFragmentManager.findFragmentById(R.id.main_framelayout) as NavHostFragment
+//        val navController = navHostFragment.navController
+
 //        checkPermissions(
 //            arrayOf(
 //                Manifest.permission.CAMERA,
@@ -94,7 +89,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 //        settingViewModel.getSettingModeBool(BASICMUSICMODE)
 //        settingViewModel.getAllSetting()
 //        musicViewModel.getAllMusic()
-
+//
 //        navigateToTrackingFragmentIfNeeded(intent)
     }
 
@@ -115,6 +110,6 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(CUURRENTFRAGMENTTAG, MAINBASE)
+//        outState.putString(CUURRENTFRAGMENTTAG, MAINBASE)
     }
 }

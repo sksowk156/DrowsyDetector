@@ -31,11 +31,13 @@ object DataModule {
     }
 
     @Provides
+    @Singleton
     fun provideShelterRepository(shelterDataProvider: ShelterDataProvider): ShelterRepository {
         return ShelterRepositoryImpl(shelterDataProvider)
     }
 
     @Provides
+    @Singleton
     fun provideRestRepository(restDataProvider: RestDataProvider): RestRepository {
         return RestRepositoryImpl(restDataProvider)
     }

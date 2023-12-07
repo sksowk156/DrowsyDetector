@@ -230,6 +230,7 @@ fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshP
     } else { // 카메라가 아래에 있을 경우
         heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
     }
+    Log.d( "whatisthis0","${(heightAvg / widthLower)} ${(calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0/(calDist(rightLower, leftLower))}")
 
     // 종횡비 계산
     return (heightAvg / widthLower)

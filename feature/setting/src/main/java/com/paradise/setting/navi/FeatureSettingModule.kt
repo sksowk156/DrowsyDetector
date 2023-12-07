@@ -1,12 +1,10 @@
-package com.paradise.setting
+package com.paradise.setting.navi
 
-import com.paradise.common_ui.navigation.FeatureSettingContract
+import com.paradise.common_ui.navicontract.FeatureSettingContract
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.FragmentComponent
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Singleton
 
 @Module
 @InstallIn(FragmentComponent::class)

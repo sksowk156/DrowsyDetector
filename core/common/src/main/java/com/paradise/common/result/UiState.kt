@@ -1,4 +1,4 @@
-package com.paradise.common
+package com.paradise.common.result
 
 sealed class UiState<out T> { // out 키워드가 있으면 ResponseStatae<T의 자식클래스> 또한 ResponseState<T>의 자식클래스로 인식한다. -> Covariant
     object Uninitialized : UiState<Nothing>()

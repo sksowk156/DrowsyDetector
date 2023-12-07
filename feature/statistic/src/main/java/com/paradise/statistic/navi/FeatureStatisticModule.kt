@@ -1,12 +1,10 @@
-package com.paradise.statistic
+package com.paradise.statistic.navi
 
-import com.paradise.common_ui.navigation.FeatureStatisticContract
+import com.paradise.common_ui.navicontract.FeatureStatisticContract
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.FragmentComponent
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Singleton
 
 @Module
 @InstallIn(FragmentComponent::class)
