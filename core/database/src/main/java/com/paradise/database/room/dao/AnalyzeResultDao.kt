@@ -8,6 +8,7 @@ import androidx.room.Query
 import com.paradise.database.room.model.AnalyzeResult
 import com.paradise.database.room.model.DrowsyCount
 import com.paradise.database.room.model.WinkCount
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AnalyzeResultDao {
@@ -15,13 +16,13 @@ interface AnalyzeResultDao {
     suspend fun insertRecord(AnalyzeResult: AnalyzeResult)
 
     @Query("SELECT * FROM drowsy_table WHERE id = :id")
-    fun getRecord(id: Int): AnalyzeResult
+    fun getRecord(id: Int): Flow<AnalyzeResult>
 
     @Query("SELECT * FROM drowsy_table WHERE time = :time")
-    fun getRecord(time: String): AnalyzeResult
+    fun getRecord(time: String): Flow<AnalyzeResult>
 
     @Query("SELECT * FROM drowsy_table")
-    fun getAllRecord(): List<AnalyzeResult>
+    fun getAllRecord(): Flow<List<AnalyzeResult>>
 
     @Delete
     suspend fun deleteRecord(AnalyzeResult: AnalyzeResult)
@@ -33,10 +34,10 @@ interface AnalyzeResultDao {
     suspend fun insertDrowsyCount(values: DrowsyCount)
 
     @Query("SELECT * FROM drowsyCount WHERE recordId = :recordId")
-    fun getDrowsyCount(recordId: Int): List<DrowsyCount>
+    fun getDrowsyCount(recordId: Int): Flow<List<DrowsyCount>>
 
     @Query("SELECT * FROM drowsyCount")
-    fun getAllDrowsyCount(): List<DrowsyCount>
+    fun getAllDrowsyCount(): Flow<List<DrowsyCount>>
 
     @Query("DELETE FROM drowsyCount")
     suspend fun deleteAllDrowsyCount()
@@ -45,10 +46,10 @@ interface AnalyzeResultDao {
     suspend fun insertWinkCount(values: WinkCount)
 
     @Query("SELECT * FROM winkCount WHERE recordId = :recordId")
-    fun getWinkCount(recordId: Int): List<WinkCount>
+    fun getWinkCount(recordId: Int): Flow<List<WinkCount>>
 
     @Query("SELECT * FROM winkCount")
-    fun getAllWinkCount(): List<WinkCount>
+    fun getAllWinkCount(): Flow<List<WinkCount>>
 
     @Query("DELETE FROM winkCount")
     suspend fun deleteAllWinkCount()

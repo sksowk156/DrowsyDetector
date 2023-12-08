@@ -41,7 +41,6 @@ android {
 }
 
 dependencies {
-    core_domain()
     implementation(project(":core:network"))
     implementation(project(":core:database"))
     implementation(project(":core:datastore"))

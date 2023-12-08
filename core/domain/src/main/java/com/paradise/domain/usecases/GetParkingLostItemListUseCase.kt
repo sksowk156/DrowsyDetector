@@ -1,18 +1,12 @@
 package com.paradise.domain.usecases
 
 import com.core.model.parkingLotItem
-import com.paradise.common.result.UiState
 import com.paradise.common.network.BoundingBox
 import com.paradise.common.network.DAY
 import com.paradise.common.network.defaultDispatcher
-import com.paradise.common.network.ioDispatcher
-import com.paradise.common.network.isInTime
-import com.paradise.domain.repository.ParkingLotRepository
+import com.paradise.data.repository.ParkingLotRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.cancellable
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
@@ -22,16 +16,13 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfRows: Int, day: DAY, nowTime: String,
-    ) = flow<UiState<List<Flow<UiState<List<parkingLotItem>>>>>> {
-        emit(UiState.Loading)
-        val response = parkingLotRepository.getOneParkingLot(
+    ) = flow<List<Flow<List<parkingLotItem>>>> {
+        parkingLotRepository.getOneParkingLot(
             pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
-        )
-        val totalCount = response
-        var numOfCoroutineRequired = totalCount / numOfRows
-        if (totalCount % numOfRows != 0) numOfCoroutineRequired++
-        emit(
-            UiState.Success(
+        ).collect { totalCount ->
+            var numOfCoroutineRequired = totalCount / numOfRows
+            if (totalCount % numOfRows != 0) numOfCoroutineRequired++
+            emit(
                 getParkingLots1(
                     boundingBox = boundingBox,
                     parkingchargeInfo = parkingchargeInfo,
@@ -40,41 +31,24 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
                     nowTime = nowTime
                 )
             )
-        )
-    }.catch {
-        emit(UiState.Error(it))
+        }
     }.flowOn(defaultDispatcher).cancellable()
 
-    fun getParkingLots1(
+    suspend fun getParkingLots1(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
         day: DAY,
         nowTime: String,
     ) = (1..numOfCoroutineRequired).map {
-        getParkingLot1(it, boundingBox, parkingchargeInfo, day, nowTime)
-    }
-
-    fun getParkingLot1(
-        pageNo: Int, boundingBox: BoundingBox, parkingchargeInfo: String, day: DAY, nowTime: String,
-    ) = flow<UiState<List<parkingLotItem>>> {
-        val response = parkingLotRepository.getAllParkingLot(
-            pageNo = pageNo, parkingchrgeInfo = "무료"
+        parkingLotRepository.getAllParkingLot(
+            pageNo = it,
+            numOfRows = DEFAULT_BUFFER_SIZE,
+            boundingBox = boundingBox,
+            parkingchargeInfo = parkingchargeInfo,
+            day = day,
+            nowTime = nowTime,
+            parkingchrgeInfo = "무료"
         )
-        val freeParkingLot = mutableListOf<parkingLotItem>()
-        response.asFlow().flowOn(defaultDispatcher).filter { item ->
-            val lat = item.latitude.toDoubleOrNull()
-            val lon = item.longitude.toDoubleOrNull()
-            val inLatRange = lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
-            val inLonRange =
-                lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
-            val inTime = isInTime(day = day, nowTime = nowTime, item = item)
-            inLatRange && inLonRange && inTime
-        }.collect { item ->
-            freeParkingLot.add(item)
-        }
-        emit(UiState.Success(freeParkingLot))
-    }.catch {
-        emit(UiState.Error(it))
-    }.flowOn(ioDispatcher).cancellable()
+    }
 }

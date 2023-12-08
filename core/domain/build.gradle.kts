@@ -45,6 +45,7 @@ android {
 dependencies {
     core_model()
     core_common()
+    core_data()
 
     hilt()
     coroutine()

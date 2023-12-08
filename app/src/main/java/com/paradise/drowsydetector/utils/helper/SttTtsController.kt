@@ -79,6 +79,8 @@ class SttTtsController(
     var request = MutableLiveData<String>()
     fun speakOutTtsHelper(word: String) {
         lifecycleOwner.get()?.let { lifecycleOwner ->
+            Log.d("whatisthis","${checkTtsSttHelperReady()} ${(sttHelper?.sttState?.value)}")
+            resetSttHelper(lifecycleOwner)
             if (checkTtsSttHelperReady()) {
                 resetTtsHelper(lifecycleOwner)
                 if (word.isNotEmpty()) {

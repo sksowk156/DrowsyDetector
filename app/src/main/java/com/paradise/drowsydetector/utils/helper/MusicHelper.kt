@@ -2,6 +2,7 @@ package com.paradise.drowsydetector.utils.helper
 
 import android.content.Context
 import android.media.MediaPlayer
+import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.paradise.drowsydetector.R
@@ -87,11 +88,11 @@ class MusicHelper(
                     it.release()
                 }
             }
+            job?.cancel() // 음악이 duration 전에 끝날 경우 job을 cancle한다.
+            job = null
             it.setOnCompletionListener(null) // 리스너 해제
             it.setOnPreparedListener(null)
         }
-        job?.cancel() // 음악이 duration 전에 끝날 경우 job을 cancle한다.
-        job = null
     }
 
     /**
@@ -165,10 +166,10 @@ class MusicHelper(
         startTime: Int = 0,
         duration: Long,
     ) = this.apply {
-        // mediaPlayer가 null이 아닐 때만 job이 생김
-        setListener(startTime)
         job = setDuration(duration) // 음악이 재생하는 도중에 정지할 경우 직접 cancle 해줘야하므로 객체를 받아둔다.
         if (job == null) releaseMediaPlayer()
+        // mediaPlayer가 null이 아닐 때만 job이 생김
+        setListener(startTime)
     }
 
     /**

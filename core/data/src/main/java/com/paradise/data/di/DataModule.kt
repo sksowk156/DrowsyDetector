@@ -1,5 +1,10 @@
 package com.paradise.data.di
 
+import com.paradise.data.repository.AnalyzerResultRepository
+import com.paradise.data.repository.MusicRepository
+import com.paradise.data.repository.ParkingLotRepository
+import com.paradise.data.repository.RestRepository
+import com.paradise.data.repository.ShelterRepository
 import com.paradise.data.repositoryImpl.AnalyzerResultRepositoryImpl
 import com.paradise.data.repositoryImpl.MusicRepositoryImpl
 import com.paradise.data.repositoryImpl.ParkingLotRepositoryImpl
@@ -7,11 +12,6 @@ import com.paradise.data.repositoryImpl.RestRepositoryImpl
 import com.paradise.data.repositoryImpl.ShelterRepositoryImpl
 import com.paradise.database.provider.AnalyzeResultDataProvider
 import com.paradise.database.provider.MusicDataProvider
-import com.paradise.domain.repository.AnalyzerResultRepository
-import com.paradise.domain.repository.MusicRepository
-import com.paradise.domain.repository.ParkingLotRepository
-import com.paradise.domain.repository.RestRepository
-import com.paradise.domain.repository.ShelterRepository
 import com.paradise.network.provider.ParkingLotDataProvider
 import com.paradise.network.provider.RestDataProvider
 import com.paradise.network.provider.ShelterDataProvider

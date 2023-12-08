@@ -18,22 +18,27 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 object NetworkModule {
+
     @Provides
     @Singleton
-    fun provideShelterInterface(): ShelterService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
+    fun provideGson(): GsonConverterFactory = GsonConverterFactory.create()
+
+    @Provides
+    @Singleton
+    fun provideShelterInterface(gsonConverterFactory: GsonConverterFactory): ShelterService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
             .build().create(ShelterService::class.java)
 
     @Provides
     @Singleton
-    fun provideRestInterface(): RestService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
+    fun provideRestInterface(gsonConverterFactory: GsonConverterFactory): RestService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
             .build().create(RestService::class.java)
 
     @Provides
     @Singleton
-    fun provideParkingLotInterface(): ParkingLotService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
+    fun provideParkingLotInterface(gsonConverterFactory: GsonConverterFactory): ParkingLotService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
             .build().create(ParkingLotService::class.java)
 
     @Provides

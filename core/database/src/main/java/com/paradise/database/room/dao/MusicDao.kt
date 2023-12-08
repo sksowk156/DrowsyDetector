@@ -14,7 +14,7 @@ interface MusicDao {
     suspend fun insertMusic(music: Music)
 
     @Query("SELECT * FROM music_table")
-    fun getAllMusic(): List<Music>
+    fun getAllMusic(): Flow<List<Music>>
 
     @Update
     suspend fun updateMusic(music: Music)

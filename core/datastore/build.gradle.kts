@@ -1,6 +1,8 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
 }
 
 android {
@@ -35,6 +37,11 @@ android {
 dependencies {
     core_model()
     core_common()
+
+    hilt()
+    dataStore()
+    coroutine()
+    lifecycleKTX()
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

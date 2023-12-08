@@ -43,6 +43,7 @@ android {
 
 dependencies {
     core_common()
+    core_model()
 
     hilt()
     retrofit()

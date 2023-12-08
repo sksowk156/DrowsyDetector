@@ -6,11 +6,15 @@ import com.core.model.winkResultItem
 import com.paradise.data.mapper.toDataAnalyzeResult
 import com.paradise.data.mapper.toDataDrowsyCount
 import com.paradise.data.mapper.toDataWinkCount
-import com.paradise.data.mapper.toDomainAnalyzeResultItem
-import com.paradise.data.mapper.toDomainDrowsyItem
-import com.paradise.data.mapper.toDomainWinkItem
+import com.paradise.data.repository.AnalyzerResultRepository
+import com.paradise.database.mapper.toAnalyzeResultItem
+import com.paradise.database.mapper.toDrowsyItem
+import com.paradise.database.mapper.toWinkItem
 import com.paradise.database.provider.AnalyzeResultDataProvider
-import com.paradise.domain.repository.AnalyzerResultRepository
+import com.paradise.database.room.model.AnalyzeResult
+import com.paradise.database.room.model.DrowsyCount
+import com.paradise.database.room.model.WinkCount
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResultDataProvider: AnalyzeResultDataProvider) :
@@ -28,27 +32,26 @@ class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResult
     }
 
     override fun getAllRecord() =
-        analyzeResultDataProvider.getAllRecord().map { it.toDomainAnalyzeResultItem() }
+        analyzeResultDataProvider.getAllRecord().map { it.map(AnalyzeResult::toAnalyzeResultItem) }
 
     override fun getRecord(Id: Int) =
-        analyzeResultDataProvider.getRecord(Id).toDomainAnalyzeResultItem()
+        analyzeResultDataProvider.getRecord(Id).map { it.toAnalyzeResultItem() }
 
     override fun getRecord(time: String) =
-        analyzeResultDataProvider.getRecord(time).toDomainAnalyzeResultItem()
+        analyzeResultDataProvider.getRecord(time).map { it.toAnalyzeResultItem() }
 
     override fun getAllDrowsyCount() =
-        analyzeResultDataProvider.getAllDrowsyCount().map { it.toDomainDrowsyItem() }
+        analyzeResultDataProvider.getAllDrowsyCount().map { it.map(DrowsyCount::toDrowsyItem) }
 
     override fun getDrowsyCount(recordId: Int) =
-        analyzeResultDataProvider.getDrowsyCount(recordId).map { it.toDomainDrowsyItem() }
-
+        analyzeResultDataProvider.getDrowsyCount(recordId).map { it.map(DrowsyCount::toDrowsyItem) }
 
     override fun getAllWinkCount() =
-        analyzeResultDataProvider.getAllWinkCount().map { it.toDomainWinkItem() }
+        analyzeResultDataProvider.getAllWinkCount().map { it.map(WinkCount::toWinkItem) }
 
 
     override fun getWinkCount(recordId: Int) =
-        analyzeResultDataProvider.getWinkCount(recordId).map { it.toDomainWinkItem() }
+        analyzeResultDataProvider.getWinkCount(recordId).map { it.map(WinkCount::toWinkItem) }
 
 
     override suspend fun deleteAllRecords() {

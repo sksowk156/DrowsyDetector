@@ -80,7 +80,6 @@ class SttHelper(private var contextRef: WeakReference<Context>) {
                     // 타이머가 끝나면, 음성 인식을 종료합니다.
                     Log.d("whatisthis", "stt 종료1")
                     releaseSttHelper()
-                    sttState.value = (false)
                 }
             }
             // 타이머를 시작합니다.

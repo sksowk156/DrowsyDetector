@@ -138,10 +138,10 @@ fun compareTime(nowTime: String, openTime: String?, closeTime: String?) =
 const val SMILE_THREDHOLD = 0.9
 
 // 졸음 인식 EAR 임계값
-const val DROWSY_THREDHOLD = 0.77
+const val DROWSY_THREDHOLD = 0.76
 
 // 세팅 인식 EAR 임계값
-const val STT_THREDHOLD = 1.45
+const val STT_THREDHOLD = 1.4
 
 // 졸음 인식 지속 시간 임계값
 const val TIME_THREDHOLD = 1500
@@ -211,10 +211,22 @@ fun Location.calculateDistance(lat1: Double, lon1: Double) =
 
 
 fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
-    val upDownSec =
+    var upDownSec =
         (1 / cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
     var leftRightSec =
         (1 / cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
+
+
+//    var rightWidth = calDist(landmark.get(33).position, landmark.get(133).position) // 오른쪽 가로 길이
+//
+//    var rightHeight = calDist(landmark.get(159).position, landmark.get(145).position)  // 오른쪽 세로 길이 -> 세로 길이는 항상 보정
+//
+//    var leftWidth = calDist(landmark.get(263).position, landmark.get(362).position) // 왼쪽 가로 길이
+//
+//    var leftHeight = calDist(landmark.get(386).position, landmark.get(374).position)  // 왼쪽 세로 길이 -> 세로 길이는 항상 보정
+//    val widthAvg = (rightWidth + leftWidth) / 2.0
+//    val heightAvg0 = (rightHeight + leftHeight) / 2.0
+
 
     val rightUpper = landmark.get(159).position
     val rightLower = landmark.get(145).position
@@ -224,13 +236,21 @@ fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshP
 
     var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
     var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
-
+//    var temp = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
+    if (leftRightAngle < -30 || leftRightAngle > 30) {
+        widthLower *= 0.98
+        upDownSec *= 1.02
+    }
     if (upDownAngle < 0) { // 카메라가 위에 있을 경우
         heightAvg *= (upDownSec * 1.1) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
     } else { // 카메라가 아래에 있을 경우
         heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
     }
-    Log.d( "whatisthis0","${(heightAvg / widthLower)} ${(calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0/(calDist(rightLower, leftLower))}")
+
+//    Log.d(
+//        "whatisthis0",
+//        "${(heightAvg / widthLower)} "+ "${temp /(calDist(rightLower, leftLower))} " + "${heightAvg0 * upDownSec / widthAvg * leftRightSec} " + "${heightAvg0 / widthAvg}"
+//    )
 
     // 종횡비 계산
     return (heightAvg / widthLower)

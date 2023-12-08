@@ -104,7 +104,7 @@ class MusicSettingDialogFragment(
                 }
             }
 
-            override fun onPlaybackStateChanged(state: Int) { // 플레이어의 재생 상태가 변경될 때 호출됩니다.
+            override fun onPlaybackStateChanged(state: Int) { // 플레이어의 재생 상태가 변경될 때 호출
                 super.onPlaybackStateChanged(state)
 //                Player.STATE_IDLE: 플레이어가 아무것도 하지 않는 상태
 //                Player.STATE_BUFFERING: 버퍼링 중인 상태

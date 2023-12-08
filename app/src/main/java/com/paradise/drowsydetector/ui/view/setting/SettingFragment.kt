@@ -105,6 +105,11 @@ class SettingFragment :
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        musicHelper = MusicHelper.getInstance(requireContext(), viewLifecycleOwner)
+    }
+
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
@@ -212,10 +217,13 @@ class SettingFragment :
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
-                if (musicHelper?.isPrepared?.value!!) musicHelper?.releaseMediaPlayer()
-                else {
+                if (musicHelper?.isPrepared?.value == true){
+                    musicHelper?.releaseMediaPlayer()
+                    Log.d("whatisthis","?!")
+                } else {
                     musicHelper?.releaseMediaPlayer()
                     musicHelper?.startMusic(selectedMusic)
+                    Log.d("whatisthis","?!22")
                 }
             }, { selectedMusic ->
                 musicHelper?.releaseMediaPlayer()

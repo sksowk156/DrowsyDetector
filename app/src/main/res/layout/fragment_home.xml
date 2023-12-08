@@ -44,6 +44,8 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/primary2"
                 android:text="@string/home_statisticbt"
+                app:cornerRadius="25dp"
+                android:textStyle="bold"
                 android:textSize="36sp" />
 
             <com.google.android.material.button.MaterialButton
@@ -52,6 +54,8 @@
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/primary4"
                 android:text="@string/home_settingbt"
+                app:cornerRadius="25dp"
+                android:textStyle="bold"
                 android:textSize="36sp" />
         </LinearLayout>
 
@@ -59,10 +63,12 @@
             android:id="@+id/bt_home_toanalyze"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            app:cornerRadius="35dp"
             android:layout_weight="1"
+            android:textStyle="bold"
             android:backgroundTint="@color/primary1"
             android:text="@string/home_analyzebt"
-            android:textSize="36sp" />
+            android:textSize="40sp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

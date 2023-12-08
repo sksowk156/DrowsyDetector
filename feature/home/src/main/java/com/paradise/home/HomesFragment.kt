@@ -1,8 +1,6 @@
 package com.paradise.home
 
 import androidx.navigation.fragment.findNavController
-import com.paradise.common.helper.MusicHelper
-import com.paradise.common.helper.ToastHelper
 import com.paradise.common_ui.base.BaseFragment
 import com.paradise.common_ui.navicontract.FeatureAnalyzeContract
 import com.paradise.common_ui.navicontract.FeatureSettingContract
@@ -24,11 +22,11 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
     @Inject
     lateinit var featureAnalyzeContractImpl: FeatureAnalyzeContract
 
-    @Inject
-    lateinit var musicHelper: MusicHelper
-
-    @Inject
-    lateinit var toastHelper: ToastHelper
+//    @Inject
+//    lateinit var musicHelper: MusicHelper
+//
+//    @Inject
+//    lateinit var toastHelper: ToastHelper
     override fun onViewCreated() {
         with(binding) {
             text.setOnClickListener {
@@ -42,8 +40,8 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
 
             }
         }
-        musicHelper.initMusicHelper()
-        toastHelper.showToast(musicHelper.isPrepared.value.toString())
+//        musicHelper.initMusicHelper()
+//        toastHelper.showToast(musicHelper.isPrepared.value.toString())
     }
 
 }
