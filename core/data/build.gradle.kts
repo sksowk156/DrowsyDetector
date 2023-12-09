@@ -48,6 +48,7 @@ dependencies {
     core_model()
     core_common()
 
+
     hilt()
 
     implementation("androidx.core:core-ktx:1.12.0")

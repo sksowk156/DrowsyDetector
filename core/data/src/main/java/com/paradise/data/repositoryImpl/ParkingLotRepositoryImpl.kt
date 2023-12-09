@@ -1,7 +1,7 @@
 package com.paradise.data.repositoryImpl
 
+import com.core.model.BoundingBox
 import com.core.model.parkingLotItem
-import com.paradise.common.network.BoundingBox
 import com.paradise.common.network.DAY
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher

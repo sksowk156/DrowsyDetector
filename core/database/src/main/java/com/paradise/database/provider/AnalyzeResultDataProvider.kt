@@ -6,9 +6,7 @@ import com.paradise.database.room.model.DrowsyCount
 import com.paradise.database.room.model.WinkCount
 import javax.inject.Inject
 
-class AnalyzeResultDataProvider @Inject constructor(
-    private val analyzeResultDao: AnalyzeResultDao,
-) {
+class AnalyzeResultDataProvider(private val analyzeResultDao: AnalyzeResultDao) {
     suspend fun insertRecord(AnalyzeResult: AnalyzeResult) {
         analyzeResultDao.insertRecord(AnalyzeResult)
     }

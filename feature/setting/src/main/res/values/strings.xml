@@ -1,4 +1,6 @@
 <resources>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="settingdialog_title">알림음 구간 설정</string>
+    <string name="settingdialog_message">시작점으로부터 3초간 재생됩니다.</string>
+    <string name="save">저장</string>
+    <string name="close">닫기</string>
 </resources>

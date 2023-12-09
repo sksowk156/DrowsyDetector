@@ -1,5 +1,6 @@
 package com.paradise.statistic.navi
 
+import android.util.Log
 import androidx.core.os.bundleOf
 import androidx.navigation.NavController
 import com.paradise.common_ui.navicontract.FeatureStatisticContract

@@ -1,14 +1,170 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/white"
+    android:clickable="true"
     tools:context=".SettingsFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <include
+        android:id="@+id/toolbar_settings"
+        layout="@layout/toolbar_common"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</FrameLayout>
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:text="졸음 알림음 선택"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar_settings" />
+
+    <RadioGroup
+        android:id="@+id/radiogroup_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="14dp"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_1">
+
+        <RadioButton
+            android:id="@+id/radiobt_setting_basicmusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_background"
+            android:button="@color/white"
+            android:checked="true"
+            android:clickable="true"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="기본"
+            android:textColor="@color/primary1"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/radiobt_setting_usermusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/button_background"
+            android:button="@color/white"
+            android:checked="true"
+            android:clickable="true"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:text="사용자 설정"
+            android:textColor="@color/primary1"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:id="@+id/layout_setting_musiclistbackground"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/setting_musiclistbackground"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radiogroup_setting">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_setting_usermusic"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/iv_setting_addmusic"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_gravity="center"
+            android:src="@drawable/icon_add" />
+    </LinearLayout>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:text="알림음 크기"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_setting_musiclistbackground" />
+
+    <com.google.android.material.slider.RangeSlider
+        android:id="@+id/slider_setting_sound"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginTop="8dp"
+        android:stepSize="1"
+        app:haloColor="@color/primary1"
+        app:labelBehavior="withinBounds"
+        app:labelStyle="@style/MyTooltip"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_2"
+        app:thumbColor="@color/primary1"
+        app:thumbElevation="8dp"
+        app:thumbRadius="15dp"
+        app:thumbStrokeColor="@color/white"
+        app:thumbStrokeWidth="2dp"
+        app:tickColor="@color/primary2"
+        app:tickVisible="true"
+        app:trackColorActive="@color/primary1"
+        app:trackColorInactive="@color/primary4"
+        app:trackHeight="8dp" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:text="휴식 장소 안내"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/slider_setting_sound" />
+
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_setting_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="(졸음 감지시 음성 서비스)"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="@id/tv_setting_3"
+        app:layout_constraintTop_toBottomOf="@id/tv_setting_3" />
+
+    <Switch
+        android:id="@+id/switch_setting_guide"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="14dp"
+        android:thumb="@drawable/switch_thumb"
+        android:track="@drawable/switch_track"
+        app:layout_constraintBottom_toBottomOf="@id/tv_setting_4"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="UseSwitchCompatOrMaterialXml" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

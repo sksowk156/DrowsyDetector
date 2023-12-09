@@ -4,14 +4,17 @@ import com.paradise.data.repository.AnalyzerResultRepository
 import com.paradise.data.repository.MusicRepository
 import com.paradise.data.repository.ParkingLotRepository
 import com.paradise.data.repository.RestRepository
+import com.paradise.data.repository.SettingRepository
 import com.paradise.data.repository.ShelterRepository
 import com.paradise.data.repositoryImpl.AnalyzerResultRepositoryImpl
 import com.paradise.data.repositoryImpl.MusicRepositoryImpl
 import com.paradise.data.repositoryImpl.ParkingLotRepositoryImpl
 import com.paradise.data.repositoryImpl.RestRepositoryImpl
+import com.paradise.data.repositoryImpl.SettingRepositoryImpl
 import com.paradise.data.repositoryImpl.ShelterRepositoryImpl
 import com.paradise.database.provider.AnalyzeResultDataProvider
 import com.paradise.database.provider.MusicDataProvider
+import com.paradise.datastore.provider.DataStoreProvider
 import com.paradise.network.provider.ParkingLotDataProvider
 import com.paradise.network.provider.RestDataProvider
 import com.paradise.network.provider.ShelterDataProvider
@@ -54,5 +57,11 @@ object DataModule {
     fun provideStaticsRepository(analyzeResultDataProvider: AnalyzeResultDataProvider): AnalyzerResultRepository =
         AnalyzerResultRepositoryImpl(
             analyzeResultDataProvider = analyzeResultDataProvider
+        )
+
+    @Provides
+    fun provideSettingRepository(dataStoreProvider: DataStoreProvider): SettingRepository =
+        SettingRepositoryImpl(
+            dataStoreProvider = dataStoreProvider
         )
 }

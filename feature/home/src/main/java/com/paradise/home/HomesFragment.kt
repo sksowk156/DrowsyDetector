@@ -1,6 +1,8 @@
 package com.paradise.home
 
+import android.Manifest
 import androidx.navigation.fragment.findNavController
+import com.paradise.common.helper.method.checkPermissions
 import com.paradise.common_ui.base.BaseFragment
 import com.paradise.common_ui.navicontract.FeatureAnalyzeContract
 import com.paradise.common_ui.navicontract.FeatureSettingContract
@@ -22,26 +24,20 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
     @Inject
     lateinit var featureAnalyzeContractImpl: FeatureAnalyzeContract
 
-//    @Inject
-//    lateinit var musicHelper: MusicHelper
-//
-//    @Inject
-//    lateinit var toastHelper: ToastHelper
     override fun onViewCreated() {
-        with(binding) {
-            text.setOnClickListener {
-                featureStatisticContractImpl.show("abc", findNavController())
-            }
-            text2.setOnClickListener {
-                featureSettingContractImpl.show("def", findNavController())
-            }
-            text3.setOnClickListener {
+        binding.btHomesToanalyze.setOnAvoidDuplicateClick {
+            checkPermissions(arrayOf(Manifest.permission.CAMERA)) {
                 featureAnalyzeContractImpl.show("def", findNavController())
-
             }
         }
-//        musicHelper.initMusicHelper()
-//        toastHelper.showToast(musicHelper.isPrepared.value.toString())
+
+        binding.btHomesTosetting.setOnAvoidDuplicateClick {
+            featureSettingContractImpl.show("def", findNavController())
+        }
+
+        binding.btHomesTostatistic.setOnAvoidDuplicateClick {
+            featureStatisticContractImpl.show("abc", findNavController())
+        }
     }
 
 }

@@ -50,6 +50,7 @@ android {
 
 dependencies {
     core_model()
+    core_data()
     core_domain()
     core_common()
     core_common_ui()

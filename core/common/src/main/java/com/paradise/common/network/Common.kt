@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import com.core.model.BoundingBox
 import com.core.model.parkingLotItem
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -231,69 +232,4 @@ fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle 
 fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
     leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
 
-
-/**
- * Get random element
- *
- * 리스트에서 랜덤으로 원소를 뽑아준다.
- * @param T
- * @return
- */
-fun <T> List<T>.getRandomElement(): T? {
-    if (this.isEmpty()) return null
-    val randomIndex = Random().nextInt(this.size)
-    return get(randomIndex)
-}
-
-const val DEFAULT_RADIUSKM = 10.0
-
-/**
- * Get bounding box
- *
- * 입력받은 lat과 lon을 기준으로 동,서,남,북 radiusInKm까지의 위, 경도 범위를 반환해줌
- * @param latitude, 현재 위도
- * @param longitude, 현재 경도
- * @param radiusInKm, 탐색할 범위
- * @return 위, 경도 최소, 최대범위
- */
-
-fun getBoundingBox(latitude: Double, longitude: Double, radiusInKm: Double): BoundingBox {
-    val earthRadius = 6371.0 // Earth radius in kilometers
-
-    val latRadians = Math.toRadians(latitude)
-    val lonRadians = Math.toRadians(longitude)
-
-    val deltaLat = radiusInKm / earthRadius
-    val deltaLon = Math.asin(Math.sin(deltaLat) / Math.cos(latRadians))
-
-    val minLat = latRadians - deltaLat
-    val minLon = lonRadians - deltaLon
-
-    val maxLat = latRadians + deltaLat
-    val maxLon = lonRadians + deltaLon
-
-    val minLatDegrees = Math.toDegrees(minLat)
-    val minLonDegrees = Math.toDegrees(minLon)
-    val maxLatDegrees = Math.toDegrees(maxLat)
-    val maxLonDegrees = Math.toDegrees(maxLon)
-
-    return BoundingBox(minLatDegrees, minLonDegrees, maxLatDegrees, maxLonDegrees)
-}
-
-/**
- * Bounding box
- *
- * getBoundingBox의 결과 값
- * @property minLatitude
- * @property minLongitude
- * @property maxLatitude
- * @property maxLongitude
- * @constructor Create empty Bounding box
- */
-data class BoundingBox(
-    val minLatitude: Double,
-    val minLongitude: Double,
-    val maxLatitude: Double,
-    val maxLongitude: Double,
-)
 

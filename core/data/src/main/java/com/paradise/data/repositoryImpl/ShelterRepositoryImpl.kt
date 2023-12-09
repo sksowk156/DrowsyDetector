@@ -1,7 +1,7 @@
 package com.paradise.data.repositoryImpl
 
+import com.core.model.BoundingBox
 import com.core.model.shelterItem
-import com.paradise.common.network.BoundingBox
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher
 import com.paradise.data.repository.ShelterRepository
@@ -28,7 +28,7 @@ class ShelterRepositoryImpl @Inject constructor(private val shelterDataProvider:
 //        shelterDataProvider.getAllShelter(pageNo, numOfRows, type, ctprvnNm, signguNm)
 //            .map { it.toShelterItemList() }
     override suspend fun getAllShelter(
-        boundingBox: BoundingBox,
+    boundingBox: BoundingBox,
     ): Flow<List<shelterItem>> = flow<List<shelterItem>> {
         val nearShelter = mutableListOf<shelterItem>()
         shelterDataProvider.getAllShelter().map { result ->

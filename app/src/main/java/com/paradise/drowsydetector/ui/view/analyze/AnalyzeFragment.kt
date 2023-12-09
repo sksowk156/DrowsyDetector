@@ -10,6 +10,7 @@ import android.location.Location
 import android.os.IBinder
 import android.util.Log
 import android.view.View
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
@@ -537,7 +538,7 @@ class AnalyzeFragment :
     private fun subscribeSortResult() {
         sortResult.observe(viewLifecycleOwner) {
             musicHelper?.releaseMediaPlayer()
-            Log.d("whatisthis","okay")
+            Log.d("whatisthis", "okay")
             sttTtsController?.speakOutTtsHelper(it)
         }
     }
@@ -704,100 +705,78 @@ class AnalyzeFragment :
      */
     private inline fun <reified T> requestSortingData(data: List<T>) {
         mFusedLocationProviderClient.setLastLocationEventListener { nowLocation ->
-            when (T::class) { // reified T를 사용해 함수 내에서 실제 T::class를 호출한다.
+            when (T::class) {
                 parkingLotItem::class -> {
-                    val parkingLots = data as List<parkingLotItem>
-                    if (jobSortedParkingLot == null) {
-                        Log.d("whatisthis", "주차장 정렬 정보 요청")
-                        jobSortedParkingLot =
-                            analyzeViewModel.sortParkingLots(nowLocation, parkingLots)
-                        jobList.add(jobSortedParkingLot!!)
-                    } else {
-                        if (jobSortedParkingLot!!.isActive && !jobSortedParkingLot!!.isCompleted) {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    Log.d("whatisthis", "주차장 정렬 정보 이미 요청됨**** ")
-                                    jobSortedParkingLot!!.join()
-                                    jobList.remove(jobSortedParkingLot)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        } else {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    jobList.remove(jobSortedParkingLot!!)
-                                    jobSortedParkingLot!!.cancelAndJoin()
-                                    Log.d("whatisthis", "주차장 정렬 정보 요청 재요청")
-                                    jobSortedParkingLot =
-                                        analyzeViewModel.sortParkingLots(nowLocation, parkingLots)
-                                    jobList.add(jobSortedParkingLot!!)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        }
+                    jobSortedParkingLot = handleDataSorting(jobSortedParkingLot) {
+                        analyzeViewModel.sortParkingLots(
+                            nowLocation, data as List<parkingLotItem>
+                        )
                     }
                 }
 
                 shelterItem::class -> {
-                    val shelters = data as List<shelterItem>
-                    if (jobSortedShelter == null) {
-                        Log.d("whatisthis", "쉼터 정렬 정보 요청")
-                        jobSortedShelter = analyzeViewModel.sortShelters(nowLocation, shelters)
-                        jobList.add(jobSortedShelter!!)
-                    } else {
-                        if (jobSortedShelter!!.isActive && !jobSortedShelter!!.isCompleted) {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    Log.d("whatisthis", "쉼터 정렬 정보 이미 요청됨**** ")
-                                    jobSortedShelter!!.join()
-                                    jobList.remove(jobSortedShelter)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        } else {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    jobList.remove(jobSortedShelter!!)
-                                    jobSortedShelter!!.cancelAndJoin()
-                                    Log.d("whatisthis", "쉼터 정렬 정보 요청 재요청")
-                                    jobSortedShelter =
-                                        analyzeViewModel.sortShelters(nowLocation, shelters)
-                                    jobList.add(jobSortedShelter!!)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        }
+                    jobSortedShelter = handleDataSorting(jobSortedShelter) {
+                        analyzeViewModel.sortShelters(
+                            nowLocation, data as List<shelterItem>
+                        )
                     }
                 }
 
                 restItem::class -> {
-                    val rests = data as List<restItem>
-                    if (jobSortedRest == null) {
-                        Log.d("whatisthis", "휴게소 정렬 정보 요청")
-                        jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
-                        jobList.add(jobSortedRest!!)
-                    } else {
-                        if (jobSortedRest!!.isActive && !jobSortedRest!!.isCompleted) {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    Log.d("whatisthis", "휴게소 정렬 정보 이미 요청됨**** ")
-                                    jobSortedRest!!.join()
-                                    jobList.remove(jobSortedRest)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        } else {
-                            val subscribeJob =
-                                viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                                    jobList.remove(jobSortedRest!!)
-                                    jobSortedRest!!.cancelAndJoin()
-                                    Log.d("whatisthis", "휴게소 정렬 정보 요청 재요청")
-                                    jobSortedRest = analyzeViewModel.sortRests(nowLocation, rests)
-                                    jobList.add(jobSortedRest!!)
-                                }
-                            subscribeJobList.add(subscribeJob)
-                        }
+                    jobSortedRest = handleDataSorting(jobSortedRest) {
+                        analyzeViewModel.sortRests(nowLocation, data as List<restItem>)
                     }
                 }
 
-                else -> throw IllegalArgumentException("Unsupported type: ${T::class.simpleName}")
+                else -> return@setLastLocationEventListener
+            }
+//            if (job == null) {
+//                job = temp()
+//                jobList.add(job)
+//            } else {
+//                if (job.isActive && !job.isCompleted) {
+//                    val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+//                        job!!.join()
+//                        jobList.remove(job)
+//                    }
+//                    subscribeJobList.add(subscribeJob)
+//                } else {
+//                    val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+//                        job!!.cancelAndJoin()
+//                        jobList.remove(job)
+//                        job = temp()
+//                        jobList.add(job!!)
+//                    }
+//                    subscribeJobList.add(subscribeJob)
+//                }
+//            }
+        }
+    }
+
+    private fun handleDataSorting(job: Job?, sorting: () -> Job): Job? {
+        var temp: Job? = null
+        if (job == null) {
+            temp = sorting()
+            jobList.add(temp)
+        } else {
+            if (job.isActive && !job.isCompleted) {
+                val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                    job.join()
+                    temp = job
+                    jobList.remove(job)
+                }
+                subscribeJobList.add(subscribeJob)
+            } else {
+                val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
+                    job.cancelAndJoin()
+                    jobList.remove(job)
+                    temp = sorting()
+                    jobList.add(temp!!)
+                }
+                subscribeJobList.add(subscribeJob)
             }
         }
+        return temp
     }
 
     private fun initTimer(msFuture: Long) {
@@ -890,7 +869,7 @@ class AnalyzeFragment :
     }
 
     override fun recentRelaxData() {
-        if(sortResult.value != null) {
+        if (sortResult.value != null) {
             sttTtsController?.speakOutTtsHelper(sortResult.value!!)
         }
     }

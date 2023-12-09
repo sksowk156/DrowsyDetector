@@ -1,7 +1,5 @@
 package com.paradise.network.provider
 
-import com.paradise.common.network.BoundingBox
-import com.paradise.common.network.DAY
 import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 import com.paradise.network.retrofit.parkinglot.ParkingLotService
 import com.paradise.network.retrofit.parkinglot.model.ParkingLotModel

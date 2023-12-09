@@ -1,13 +1,7 @@
 package com.paradise.common.helper.method
 
-import android.annotation.SuppressLint
-import android.app.Application
-import android.content.Context
-import android.widget.Toast
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.normal.TedPermission
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 /**
  * Check permission

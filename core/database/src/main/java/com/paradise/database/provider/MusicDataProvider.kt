@@ -4,9 +4,7 @@ import com.paradise.database.room.dao.MusicDao
 import com.paradise.database.room.model.Music
 import javax.inject.Inject
 
-class MusicDataProvider @Inject constructor(
-    private val musicDao: MusicDao,
-) {
+class MusicDataProvider(private val musicDao: MusicDao) {
     suspend fun insertMusic(music: Music) {
         musicDao.insertMusic(music)
     }

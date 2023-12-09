@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Job
 import java.util.concurrent.TimeUnit
+
 abstract class BaseFragment<VB : ViewBinding>(
     private val inflate: FragmentInflate<VB>,
 ) : Fragment() {
@@ -37,7 +38,7 @@ abstract class BaseFragment<VB : ViewBinding>(
 
     protected abstract fun onViewCreated() // 반드시 재정의
 
-    private val compositeDisposable = CompositeDisposable()
+    private lateinit var compositeDisposable : CompositeDisposable
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,6 +57,7 @@ abstract class BaseFragment<VB : ViewBinding>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        compositeDisposable = CompositeDisposable()
         if (_binding != null) onViewCreated()
     }
 
@@ -113,15 +115,16 @@ abstract class BaseFragment<VB : ViewBinding>(
      * @author 진혁
      */
     open fun View.setOnAvoidDuplicateClick(actionInMainThread: () -> Unit) {
-        compositeDisposable.add(this.clicks()
-            .observeOn(Schedulers.io()) // 이후 chain의 메서드들은 쓰레드 io 영역에서 처리
-            .throttleFirst(CLICK_INTERVAL_TIME, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread()) // 이후 chain의 메서드들은 쓰레드 main 영역에서 처리
-            .subscribe({
-                actionInMainThread()
-            }, {
-                Log.e(RXERROR, it.toString())
-            }))
+        compositeDisposable.add(
+            this.clicks().observeOn(Schedulers.io()) // 이후 chain의 메서드들은 쓰레드 io 영역에서 처리
+                .throttleFirst(CLICK_INTERVAL_TIME, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread()) // 이후 chain의 메서드들은 쓰레드 main 영역에서 처리
+                .subscribe({
+                    actionInMainThread()
+                }, {
+                    Log.e(RXERROR, it.toString())
+                })
+        )
     }
 
     /**
@@ -135,13 +138,15 @@ abstract class BaseFragment<VB : ViewBinding>(
      * @author 진혁
      */
     fun TextView.setOnFinishInput(actionInMainThread: (completedText: String) -> Unit) {
-        compositeDisposable.add(this.textChanges().observeOn(Schedulers.io())
-            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread()).subscribe({
-                actionInMainThread(it.toString())
-            }, {
-                Log.e(RXERROR, it.toString())
-            }))
+        compositeDisposable.add(
+            this.textChanges().observeOn(Schedulers.io())
+                .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                    actionInMainThread(it.toString())
+                }, {
+                    Log.e(RXERROR, it.toString())
+                })
+        )
     }
 
     /**
@@ -166,19 +171,22 @@ abstract class BaseFragment<VB : ViewBinding>(
             } // backBT이 있을 경우
             this.toolbar.setNavigationOnClickListener {
 //                backPress()
+
             }
             return this.toolbar
         }
     }
 
     fun Toolbar.setNavigationOnClickListener(actionInMainThread: () -> Unit) {
-        compositeDisposable.add(this.navigationClicks().observeOn(Schedulers.io())
-            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread()).subscribe({
-                actionInMainThread()
-            }, {
-                Log.e(RXERROR, it.toString())
-            }))
+        compositeDisposable.add(
+            this.navigationClicks().observeOn(Schedulers.io())
+                .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                    actionInMainThread()
+                }, {
+                    Log.e(RXERROR, it.toString())
+                })
+        )
     }
 
     fun Toolbar.inflateResetMenu(editListener: (() -> Unit)) {
@@ -194,13 +202,15 @@ abstract class BaseFragment<VB : ViewBinding>(
 //            .onEach {
 //                actionInMainThread()
 //            }.launchIn(mainScope)
-        compositeDisposable.add(this.clicks { it.isEnabled }.observeOn(Schedulers.io())
-            .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread()).subscribe({
-                actionInMainThread()
-            }, {
-                Log.e(RXERROR, it.toString())
-            }))
+        compositeDisposable.add(
+            this.clicks { it.isEnabled }.observeOn(Schedulers.io())
+                .debounce(INPUT_COMPLETE_TIME, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread()).subscribe({
+                    actionInMainThread()
+                }, {
+                    Log.e(RXERROR, it.toString())
+                })
+        )
     }
 
 //    fun backPress() {
