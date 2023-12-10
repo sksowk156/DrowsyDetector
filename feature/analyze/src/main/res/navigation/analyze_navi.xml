@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/analyzeFragment"
-        android:name="com.paradise.analyze.AnalyzesFragment"
+        android:name="com.paradise.analyze.AnalyzeFragment"
         android:label="fragment_analyze"
-        tools:layout="@layout/fragment_analyzes">
+        tools:layout="@layout/fragment_analyze">
         <argument
             android:name="argAnalyzeValue"
             app:argType="string"

@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.viewbinding.ViewBinding
 import com.jakewharton.rxbinding4.appcompat.navigationClicks
 import com.jakewharton.rxbinding4.view.clicks
@@ -17,12 +19,18 @@ import com.paradise.common.network.CLICK_INTERVAL_TIME
 import com.paradise.common.network.FragmentInflate
 import com.paradise.common.network.INPUT_COMPLETE_TIME
 import com.paradise.common.network.RXERROR
+import com.paradise.common.network.mainDispatcher
 import com.paradise.common_ui.R
 import com.paradise.common_ui.databinding.ToolbarCommonBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import reactivecircus.flowbinding.activity.backPresses
 import java.util.concurrent.TimeUnit
 
 abstract class BaseFragment<VB : ViewBinding>(
@@ -51,7 +59,7 @@ abstract class BaseFragment<VB : ViewBinding>(
         } else {
             savedInstanceStateNotNull(savedInstanceState)
         }
-//        initBackPressCallback()
+        initBackPressCallback()
         return binding.root
     }
 
@@ -82,28 +90,30 @@ abstract class BaseFragment<VB : ViewBinding>(
      * 부모 fragment의 stack이 비었다면 그것은 Activity에 붙어 있는 가장 첫번째 fragment이므로 앱을 종료한다.
      * @author 진혁
      */
-//    var inBackPress = false
-//    private fun initBackPressCallback() {
-//        // FlowBinding의 backPresses 확장함수를 활용하는 방법
-//        requireActivity().onBackPressedDispatcher.backPresses(viewLifecycleOwner)
-//            .onEach {
-//                inBackPress = true
-//                viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
-//                    val jobListCopy = mutableListOf<Job>()
-//                    jobListCopy.addAll(jobList) // 복사
-//                    for (i in jobListCopy) {
-//                        if (i.isCancelled) continue // 종료된거면 종료 X
-//                        i.cancelAndJoin() // 진행이 끝났을 때 종료
-//                    }
-//                    jobListCopy.clear()
+    var inBackPress = false
+    private fun initBackPressCallback() {
+        // FlowBinding의 backPresses 확장함수를 활용하는 방법
+        requireActivity().onBackPressedDispatcher.backPresses(viewLifecycleOwner)
+            .onEach {
+                inBackPress = true
+                viewLifecycleOwner.lifecycleScope.launch(mainDispatcher) {
+                    val jobListCopy = mutableListOf<Job>()
+                    jobListCopy.addAll(jobList) // 복사
+                    for (i in jobListCopy) {
+                        if (i.isCancelled) continue // 종료된거면 종료 X
+                        i.cancelAndJoin() // 진행이 끝났을 때 종료
+                    }
+                    jobListCopy.clear()
+
+                    findNavController().popBackStack()
 //                    if (parentFragmentManager.backStackEntryCount > 0) {
 //                        parentFragmentManager.popBackStackImmediate(null, 0)
 //                    } else {
 //                        requireActivity().finish()
 //                    }
-//                }
-//            }.launchIn(viewLifecycleOwner.lifecycleScope)
-//    }
+                }
+            }.launchIn(viewLifecycleOwner.lifecycleScope)
+    }
 
     /**
      * On avoid duplicate click, view에 대한 중복 클릭 방지 이벤트 처리 메서드
@@ -170,8 +180,7 @@ abstract class BaseFragment<VB : ViewBinding>(
                 this.toolbar.setNavigationIcon(R.drawable.icon_backarrow)
             } // backBT이 있을 경우
             this.toolbar.setNavigationOnClickListener {
-//                backPress()
-
+                backPress()
             }
             return this.toolbar
         }
@@ -213,7 +222,7 @@ abstract class BaseFragment<VB : ViewBinding>(
         )
     }
 
-//    fun backPress() {
-//        requireActivity().onBackPressedDispatcher.onBackPressed()
-//    }
+    fun backPress() {
+        requireActivity().onBackPressedDispatcher.onBackPressed()
+    }
 }

@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.common.PointF3D
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -21,6 +22,8 @@ import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
 import com.paradise.common.helper.CameraHelper
+import com.paradise.common.network.LEFT_RIGHT_ANGLE_THREDHOLD
+import com.paradise.common.network.UP_DOWN_ANGLE_THREDHOLD
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
@@ -29,15 +32,13 @@ class CameraHelperImpl @Inject constructor(
     private val fragment: Fragment,
 ) : CameraHelper {
 
-    private var contextRef: Context? = null
-    private var lifecycleOwner: LifecycleOwner? = null
+    private lateinit var cameraExecutor: ExecutorService
+    private lateinit var contextRef: Context
+    private lateinit var lifecycleOwner: LifecycleOwner
     override fun initCameraHelper() {
         contextRef = fragment.requireContext()
         lifecycleOwner = fragment.viewLifecycleOwner
     }
-
-
-    private lateinit var cameraExecutor: ExecutorService
 
     private val faceDetectorOption by lazy {
         FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
@@ -55,7 +56,6 @@ class CameraHelperImpl @Inject constructor(
     private val faceMesh by lazy {
         FaceMeshDetection.getClient(faceMeshOption)
     }
-
 
     override fun stopCameraHelper() {
         cameraExecutor.shutdown()
@@ -164,7 +164,50 @@ class CameraHelperImpl @Inject constructor(
                 }, ContextCompat.getMainExecutor(context))
             }
         }
-
-
     }
+
+    override fun calRatio(
+        upDownAngle: Float,
+        leftRightAngle: Float,
+        landmark: List<FaceMeshPoint>,
+    ): Double {
+        val upDownSec =
+            (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
+        var leftRightSec =
+            (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
+
+        val rightUpper = landmark.get(159).position
+        val rightLower = landmark.get(145).position
+
+        val leftUpper = landmark.get(386).position
+        val leftLower = landmark.get(374).position
+
+        var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
+        var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
+
+        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
+            heightAvg *= (upDownSec * 1.1) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        } else { // 카메라가 아래에 있을 경우
+            heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        }
+
+        // 종횡비 계산
+        return (heightAvg / widthLower)
+    }
+
+    override fun calDist(point1: PointF3D, point2: PointF3D): Double {
+        val dx = point1.x - point2.x
+        val dy = point1.y - point2.y
+        return Math.sqrt((dx * dx + dy * dy).toDouble())
+    }
+
+    override fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
+        upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
+
+    override fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
+
+    override fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
+        leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
+
+
 }

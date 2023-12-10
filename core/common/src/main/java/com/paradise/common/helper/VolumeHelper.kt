@@ -5,7 +5,6 @@ import android.media.AudioManager
 
 interface VolumeHelper {
     fun initVolumeHelper()
-
     fun releaseVolumeHelper()
     fun initAudio()
 

@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
     kotlinOptions {
         jvmTarget = "18"
@@ -55,6 +56,7 @@ dependencies {
     core_domain()
     core_common()
     core_common_ui()
+    implementation("com.google.guava:guava:32.1.2-android")
     // navi
     navigation()
     // dagger hilt

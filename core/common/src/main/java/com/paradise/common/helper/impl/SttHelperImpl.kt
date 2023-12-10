@@ -16,10 +16,6 @@ import javax.inject.Inject
 class SttHelperImpl @Inject constructor(
     private val fragment: Fragment,
 ) : SttHelper {
-    private var contextRef: Context? = null
-    override fun initSttHelper() {
-        contextRef = fragment.requireContext()
-    }
 
     // 음성인식을 위한 필드
     private var mRecognizer: SpeechRecognizer? = null
@@ -28,6 +24,12 @@ class SttHelperImpl @Inject constructor(
     override var sttState = MutableLiveData<Boolean>(false)
     private val duration = 4
 
+    private lateinit var contextRef: Context
+    override fun initSttHelper() {
+        contextRef = fragment.requireContext()
+        sttResult.value = ""
+        sttState.value = false
+    }
 
     // 음성인식을 종료하는 메소드
     override fun releaseSttHelper() {

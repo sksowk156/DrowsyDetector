@@ -6,11 +6,7 @@ import com.paradise.common.network.DAY
 import kotlinx.coroutines.flow.Flow
 
 interface ParkingLotRepository {
-    suspend fun getOneParkingLot(
-        pageNo: Int,
-        numOfRows: Int,
-        parkingchrgeInfo: String,
-    ): Flow<Int>
+    suspend fun getOneParkingLot(): Flow<Int>
 
     suspend fun getAllParkingLot(
         pageNo: Int,

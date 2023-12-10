@@ -21,25 +21,23 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGson(): GsonConverterFactory = GsonConverterFactory.create()
+    fun provideRetrofit(): Retrofit =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
+            .build()
+    @Provides
+    @Singleton
+    fun provideShelterInterface(retrofit: Retrofit): ShelterService =
+        retrofit.create(ShelterService::class.java)
 
     @Provides
     @Singleton
-    fun provideShelterInterface(gsonConverterFactory: GsonConverterFactory): ShelterService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
-            .build().create(ShelterService::class.java)
+    fun provideRestInterface(retrofit: Retrofit): RestService =
+        retrofit.create(RestService::class.java)
 
     @Provides
     @Singleton
-    fun provideRestInterface(gsonConverterFactory: GsonConverterFactory): RestService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
-            .build().create(RestService::class.java)
-
-    @Provides
-    @Singleton
-    fun provideParkingLotInterface(gsonConverterFactory: GsonConverterFactory): ParkingLotService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
-            .build().create(ParkingLotService::class.java)
+    fun provideParkingLotInterface(retrofit: Retrofit): ParkingLotService =
+        retrofit.create(ParkingLotService::class.java)
 
     @Provides
     @Singleton

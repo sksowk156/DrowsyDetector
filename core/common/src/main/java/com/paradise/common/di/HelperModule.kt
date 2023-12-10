@@ -1,11 +1,9 @@
 package com.paradise.common.di
 
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleOwner
 import com.paradise.common.helper.CameraHelper
 import com.paradise.common.helper.MusicHelper
 import com.paradise.common.helper.SttHelper
-import com.paradise.common.helper.SttService
 import com.paradise.common.helper.SttTtsController
 import com.paradise.common.helper.TtsHelper
 import com.paradise.common.helper.VolumeHelper
@@ -19,10 +17,11 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.FragmentComponent
+import dagger.hilt.android.components.ServiceComponent
 import dagger.hilt.android.scopes.FragmentScoped
 
-@InstallIn(FragmentComponent::class)
 @Module
+@InstallIn(FragmentComponent::class, ServiceComponent::class)
 object HelperModule {
     @FragmentScoped
     @Provides
@@ -31,6 +30,10 @@ object HelperModule {
     @FragmentScoped
     @Provides
     fun provideMusicHelper(fragment: Fragment): MusicHelper = MusicHelperImpl(fragment)
+
+    @FragmentScoped
+    @Provides
+    fun provideVolumeHelper(fragment: Fragment): VolumeHelper = VolumeHelperImpl(fragment)
 
     @FragmentScoped
     @Provides
@@ -43,10 +46,9 @@ object HelperModule {
     @FragmentScoped
     @Provides
     fun provideSttTtsController(
+        sttHelper: SttHelper,
+        ttsHelper: TtsHelper,
         fragment: Fragment,
-    ): SttTtsController = SttTtsControllerImpl(fragment)
+    ): SttTtsController = SttTtsControllerImpl(sttHelper, ttsHelper, fragment)
 
-    @FragmentScoped
-    @Provides
-    fun provideVolumeHelper(fragment: Fragment): VolumeHelper = VolumeHelperImpl(fragment)
 }

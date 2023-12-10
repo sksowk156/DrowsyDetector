@@ -1,5 +1,6 @@
 package com.paradise.domain.usecases
 
+import android.util.Log
 import com.core.model.BoundingBox
 import com.core.model.parkingLotItem
 import com.paradise.common.network.DAY
@@ -17,9 +18,7 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         parkingchargeInfo: String,
         numOfRows: Int, day: DAY, nowTime: String,
     ) = flow<List<Flow<List<parkingLotItem>>>> {
-        parkingLotRepository.getOneParkingLot(
-            pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
-        ).collect { totalCount ->
+        parkingLotRepository.getOneParkingLot().collect { totalCount ->
             var numOfCoroutineRequired = totalCount / numOfRows
             if (totalCount % numOfRows != 0) numOfCoroutineRequired++
             emit(
@@ -34,14 +33,14 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         }
     }.flowOn(defaultDispatcher).cancellable()
 
-    suspend fun getParkingLots1(
+    private suspend fun getParkingLots1(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
         day: DAY,
         nowTime: String,
     ) = (1..numOfCoroutineRequired).map {
-        parkingLotRepository.getAllParkingLot(
+         parkingLotRepository.getAllParkingLot(
             pageNo = it,
             numOfRows = DEFAULT_BUFFER_SIZE,
             boundingBox = boundingBox,

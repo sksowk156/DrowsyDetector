@@ -1,6 +1,6 @@
 package com.paradise.common.helper
 
-interface SttService {
+interface SttTtsService {
     fun baseMusic()
     fun userMusic()
     fun guideOff()

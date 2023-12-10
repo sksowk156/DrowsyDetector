@@ -22,16 +22,16 @@ import javax.inject.Inject
 class MusicHelperImpl @Inject constructor(
     private val fragment: Fragment,
 ) : MusicHelper {
-    private var contextRef: Context? = null
-    private var lifecycleOwner: LifecycleOwner? = null
-    override fun initMusicHelper() {
-        contextRef = fragment.requireContext()
-        lifecycleOwner = fragment.viewLifecycleOwner
-    }
 
     private var mediaPlayer: MediaPlayer? = null
     private var job: Job? = null
     private val _isPrepared: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private lateinit var contextRef: Context
+    private lateinit var lifecycleOwner: LifecycleOwner
+    override fun initMusicHelper() {
+        contextRef = fragment.requireContext()
+        lifecycleOwner = fragment.viewLifecycleOwner
+    }
 
     override val isPrepared: StateFlow<Boolean> get() = _isPrepared
 
@@ -112,7 +112,7 @@ class MusicHelperImpl @Inject constructor(
         contextRef?.let { context ->
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
-                setMusic(music.startTime.toInt(), music.durationTime)
+                setMusic(music.startTime!!.toInt(), music.durationTime!!)
             }
         }
     }

@@ -56,57 +56,57 @@ dependencies {
     // LeakCanary
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 //    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
+    core_model()
+//    core_domain()
+    core_common()
+//    core_data()
+    core_common_ui()
     feature_analyze()
     feature_home()
     feature_setting()
     feature_statistic()
-    core_model()
-    core_domain()
-    core_common()
-    core_data()
-    core_common_ui()
     // navi
     navigation()
     // dagger hilt
     hilt()
-    // Preferences DataStore
-    dataStore()
-    // ExoPlayer
-    exoPlayer()
-    // TedPermission
+//    // Preferences DataStore
+//    dataStore()
+//    // ExoPlayer
+//    exoPlayer()
+//    // TedPermission
     tedPermission()
     // mlkit face detection
-    mlkit()
-    // GPS api
-    implementation(Location)
-    // Camera
-    camera()
-    // ktx
-    ktx()
-    // viewmodel_ktx
-    lifecycleKTX()
-    // retrofit
-    retrofit()
-    //Coroutine
-    coroutine()
-    // Room DB
-    room()
-    // MPAndroidChart
-    implementation(MpAndroidChart)
-    // RxBinding
-    rxBinding()
-    // FlowBinding
-    val flowbinding_version = "1.2.0"
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-android:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-material:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-activity:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-appcompat:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-core:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-lifecycle:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-navigation:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-preference:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-recyclerview:${flowbinding_version}")
-    implementation("io.github.reactivecircus.flowbinding:flowbinding-viewpager2:${flowbinding_version}")
+//    mlkit()
+//    // GPS api
+//    implementation(Location)
+//    // Camera
+//    camera()
+//    // ktx
+//    ktx()
+//    // viewmodel_ktx
+//    lifecycleKTX()
+//    // retrofit
+//    retrofit()
+//    //Coroutine
+//    coroutine()
+//    // Room DB
+//    room()
+//    // MPAndroidChart
+//    implementation(MpAndroidChart)
+//    // RxBinding
+//    rxBinding()
+//    // FlowBinding
+//    val flowbinding_version = "1.2.0"
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-android:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-material:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-activity:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-appcompat:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-core:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-lifecycle:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-navigation:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-preference:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-recyclerview:${flowbinding_version}")
+//    implementation("io.github.reactivecircus.flowbinding:flowbinding-viewpager2:${flowbinding_version}")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

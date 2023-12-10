@@ -74,10 +74,14 @@
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
+            <intent-filter>
+                <action android:name="com.example.app.ACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 
         <service
-            android:name=".service.AnalyzeService"
+            android:name="com.paradise.analyze.AnalyzeService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="camera"

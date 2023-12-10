@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface MusicHelper {
     fun initMusicHelper()
-
     val isPrepared: StateFlow<Boolean>
     fun releaseMediaPlayer()
     fun setStandardMusic()

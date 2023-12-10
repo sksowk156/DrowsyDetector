@@ -60,6 +60,7 @@ object DataModule {
         )
 
     @Provides
+    @Singleton
     fun provideSettingRepository(dataStoreProvider: DataStoreProvider): SettingRepository =
         SettingRepositoryImpl(
             dataStoreProvider = dataStoreProvider

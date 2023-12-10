@@ -27,7 +27,7 @@ import com.paradise.common.network.GUIDEMODE
 import com.paradise.common.network.MUSICVOLUME
 import com.paradise.common.network.getPathFromFileUri
 import com.paradise.common.utils.launchWithRepeatOnLifecycle
-import com.paradise.common_ui.R.*
+import com.paradise.common_ui.R
 import com.paradise.common_ui.base.BaseFragment
 import com.paradise.setting.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -53,6 +53,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     @Inject
     lateinit var toastHelper: ToastHelper
 
+
     private var volume = 0
     private lateinit var volumeChangeObserver: VolumeChangeObserver
     private lateinit var musicAdapter: MusicAdapter
@@ -67,8 +68,8 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     override fun onViewCreated() {
         with(binding) {
             toolbarSettings.setToolbarMenu("설정", true)
-            volumeHelper.initVolumeHelper()
             musicHelper.initMusicHelper()
+            volumeHelper.initVolumeHelper()
             volumeHelper.initAudio()
             // 알림음 설정 상태
             subscribeMusicStyle()
@@ -128,8 +129,8 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     override fun onPause() {
         super.onPause()
-        musicHelper.releaseMediaPlayer()
         settingViewModel.setSettingMode(MUSICVOLUME, volume)
+        musicHelper.releaseMediaPlayer()
         // BroadcastReceiver를 해제
         requireContext().unregisterReceiver(volumeChangeObserver)
     }
@@ -180,9 +181,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     private fun subscribeMusicList() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
             settingViewModel.music.collect { musicList ->
-                if (musicList != null) {
-                    initRecycler(musicList.toMutableList())
-                }
+                initRecycler(musicList.toMutableList())
             }
         }
 
@@ -205,10 +204,10 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
         with(radioButton) {
             if (isSelected) {
                 setBackgroundResource(R.drawable.button_background2)
-                setTextColor(ContextCompat.getColor(requireContext(), color.white))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
             } else {
                 setBackgroundResource(R.drawable.button_background)
-                setTextColor(ContextCompat.getColor(requireContext(), color.primary1))
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.primary1))
             }
         }
     }
@@ -232,9 +231,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
             rvSettingUsermusic.apply {
                 layoutManager = LinearLayoutManager(
-                    requireContext(),
-                    androidx.recyclerview.widget.LinearLayoutManager.VERTICAL,
-                    false
+                    requireContext(), LinearLayoutManager.VERTICAL, false
                 )
                 adapter = musicAdapter
             }
@@ -254,7 +251,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
             val result = deleteFile.delete()
             if (result) toastHelper.showToast("파일 삭제")
         }
-        settingViewModel.deleteMusic(selectedMusic.id)
+        settingViewModel.deleteMusic(selectedMusic.id!!)
     }
 
 

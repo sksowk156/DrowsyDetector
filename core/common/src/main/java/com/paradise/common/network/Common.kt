@@ -150,7 +150,7 @@ const val MUSICVOLUME = "music_volume_datastore" // 음악의 볼륨(Int)
 const val REFRESHTERM = "refresh_term_datastore" // 환기 주기(Int)
 
 // 한번에 가져오는 주차장 정보 개수
-const val DEFAULT_NUM_OF_ROWS = 250
+const val DEFAULT_NUM_OF_ROWS = 200
 
 // 기본 음악 지속 시간
 const val DEFAULT_MUSIC_DURATION: Long = 3000
@@ -191,45 +191,5 @@ fun Location.calculateDistance(lat1: Double, lon1: Double) =
         latitude = lat1
         longitude = lon1
     })
-
-
-//fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
-//    val upDownSec =
-//        (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
-//    var leftRightSec =
-//        (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
-//
-//    val rightUpper = landmark.get(159).position
-//    val rightLower = landmark.get(145).position
-//
-//    val leftUpper = landmark.get(386).position
-//    val leftLower = landmark.get(374).position
-//
-//    var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
-//    var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
-//
-//    if (upDownAngle < 0) { // 카메라가 위에 있을 경우
-//        heightAvg *= (upDownSec * 1.1) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-//    } else { // 카메라가 아래에 있을 경우
-//        heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-//    }
-//
-//    // 종횡비 계산
-//    return (heightAvg / widthLower)
-//}
-
-//fun calDist(point1: PointF3D, point2: PointF3D): Double {
-//    val dx = point1.x - point2.x
-//    val dy = point1.y - point2.y
-//    return Math.sqrt((dx * dx + dy * dy).toDouble())
-//}
-
-fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
-    upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
-
-fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
-
-fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
-    leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
 
 

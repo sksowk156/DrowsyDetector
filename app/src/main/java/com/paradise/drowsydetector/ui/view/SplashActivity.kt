@@ -5,8 +5,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.view.View
 import androidx.lifecycle.lifecycleScope
+import com.paradise.common_ui.base.BaseActivity
 import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivitySplashBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

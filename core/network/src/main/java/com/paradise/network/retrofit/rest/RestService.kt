@@ -3,6 +3,7 @@ package com.paradise.network.retrofit.rest
 import com.paradise.common.network.ApiKey
 import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 import com.paradise.network.retrofit.rest.model.RestModel
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -12,5 +13,5 @@ interface RestService {
         @Query("pageNo") pageNo: Int = 1,
         @Query("numOfRows") numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         @Query("type") type: String = "json",
-    ): RestModel
+    ): Response<RestModel>
 }

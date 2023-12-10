@@ -3,6 +3,7 @@ package com.paradise.network.retrofit.parkinglot
 import com.paradise.common.network.ApiKey
 import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 import com.paradise.network.retrofit.parkinglot.model.ParkingLotModel
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -12,6 +13,6 @@ interface ParkingLotService {
         @Query("pageNo") pageNo: Int = 1,
         @Query("numOfRows") numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         @Query("type") type: String = "json",
-        @Query("parkingchrgeInfo") parkingchrgeInfo : String
-    ): ParkingLotModel
+        @Query("parkingchrgeInfo") parkingchrgeInfo: String? = "",
+    ): Response<ParkingLotModel>
 }

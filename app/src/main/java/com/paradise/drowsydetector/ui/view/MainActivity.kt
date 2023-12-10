@@ -3,38 +3,33 @@ package com.paradise.drowsydetector.ui.view
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.viewModels
 import com.paradise.common.helper.ToastHelper
+import com.paradise.common.helper.method.checkPermissions
+import com.paradise.common_ui.base.BaseActivity
 import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
-import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
-import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
-import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
-import com.paradise.drowsydetector.utils.checkPermissions
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
-    val analyzeViewModel: AnalyzeViewModel by viewModels()
+//    val analyzeViewModel: AnalyzeViewModel by viewModels()
 //    {
 //        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepositoryImpl)
 //    }
 
-    val staticsViewModel: StaticsViewModel by viewModels()
+//    val staticsViewModel: StaticsViewModel by viewModels()
 //    {
 //        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
 //    }
 
-    val musicViewModel: MusicViewModel by viewModels()
+//    val musicViewModel: MusicViewModel by viewModels()
 //    {
 //        MusicViewModel.MusicViewModelFactory(ApplicationClass.getApplicationContext().musicRepositoryImpl)
 //    }
 
-    val settingViewModel: SettingViewModel by viewModels()
+//    val settingViewModel: SettingViewModel by viewModels()
 //    {
 //        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepositoryImpl)
 //    }
@@ -70,7 +65,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
             )
         ) {
             showToast("권한 허용")
-            analyzeViewModel.checkDrowsy
+//            analyzeViewModel.checkDrowsy
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             checkPermissions(arrayOf(Manifest.permission.FOREGROUND_SERVICE)) {}

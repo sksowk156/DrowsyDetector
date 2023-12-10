@@ -1,6 +1,9 @@
 package com.paradise.home
 
 import android.Manifest
+import androidx.activity.viewModels
+import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.paradise.common.helper.method.checkPermissions
 import com.paradise.common_ui.base.BaseFragment
@@ -23,6 +26,7 @@ class HomesFragment : BaseFragment<FragmentHomesBinding>(FragmentHomesBinding::i
 
     @Inject
     lateinit var featureAnalyzeContractImpl: FeatureAnalyzeContract
+
 
     override fun onViewCreated() {
         binding.btHomesToanalyze.setOnAvoidDuplicateClick {

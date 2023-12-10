@@ -7,9 +7,9 @@ import com.paradise.common.helper.VolumeHelper
 import javax.inject.Inject
 
 class VolumeHelperImpl @Inject constructor(
-    private val fragment: Fragment,
+    private var fragment: Fragment,
 ) : VolumeHelper {
-    private var contextRef: Context? = null
+    private lateinit var contextRef: Context
     override fun initVolumeHelper() {
         contextRef = fragment.requireContext()
     }

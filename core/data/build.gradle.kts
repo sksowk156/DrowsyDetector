@@ -47,7 +47,7 @@ dependencies {
 
     core_model()
     core_common()
-
+    retrofit()
 
     hilt()
 

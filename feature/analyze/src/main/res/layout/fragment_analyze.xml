@@ -2,16 +2,16 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_analyze"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/white"
     android:clickable="true"
-    android:id="@+id/layout_analyze"
-    tools:context=".ui.view.analyze.AnalyzeFragment">
+    tools:context=".AnalyzeFragment">
 
     <include
         android:id="@+id/analyze_toolbar"
-        layout="@layout/layout_toolbar"
+        layout="@layout/toolbar_common"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
@@ -25,11 +25,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/analyze_toolbar" />
+        app:layout_constraintTop_toBottomOf="@id/analyze_toolbar">
 
-    <com.paradise.drowsydetector.utils.OvalOverlayView
+    </androidx.camera.view.PreviewView>
+
+    <com.paradise.common_ui.designsystem.PreviewOverlayView
         android:id="@+id/analyze_overlay"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
