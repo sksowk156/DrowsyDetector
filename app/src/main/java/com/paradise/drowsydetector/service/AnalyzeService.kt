@@ -27,6 +27,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.common.PointF3D
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -54,7 +55,6 @@ import com.paradise.drowsydetector.utils.NOTIFICATION_ID
 import com.paradise.drowsydetector.utils.REFRESHTERM
 import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
-import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.helper.MusicHelper
@@ -178,7 +178,7 @@ class AnalyzeService : LifecycleService() {
     fun initFloatingView() {
         // floating view
         mFloatingView =
-            LayoutInflater.from(this@AnalyzeService).inflate(R.layout.floating_view, null)
+            LayoutInflater.from(this@AnalyzeService).inflate(R.layout.floating_views, null)
         // 종료 버튼
         val closeButtonCollapsed = mFloatingView!!.findViewById<ImageView>(R.id.iv_floating_close)
         closeButtonCollapsed.setOnClickListener {
@@ -511,6 +511,40 @@ class AnalyzeService : LifecycleService() {
             }
         }
     }
+    fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
+        var upDownSec =
+            (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
+        var leftRightSec =
+            (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
+
+        val rightUpper = landmark.get(159).position
+        val rightLower = landmark.get(145).position
+
+        val leftUpper = landmark.get(386).position
+        val leftLower = landmark.get(374).position
+
+        var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
+        var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
+
+        if (leftRightAngle < -30 || leftRightAngle > 30) {
+            widthLower *= 0.98
+            upDownSec *= 1.02
+        }
+        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
+            heightAvg *= (upDownSec * 1.05) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        } else { // 카메라가 아래에 있을 경우
+            heightAvg *= (upDownSec * 0.95) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+        }
+
+        // 종횡비 계산
+        return (heightAvg / widthLower)
+    }
+    fun calDist(point1: PointF3D, point2: PointF3D): Double {
+        val dx = point1.x - point2.x
+        val dy = point1.y - point2.y
+        return Math.sqrt((dx * dx + dy * dy).toDouble())
+    }
+
 
     // settingRepositoryImpl ///////////////////////////////////////////////////////////////////////////////////////
     private val _guideMode = MutableLiveData<Boolean>(true)

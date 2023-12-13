@@ -7,9 +7,9 @@
 
     <fragment
         android:id="@+id/statisticFragment"
-        android:name="com.paradise.statistic.StatisticFragment"
+        android:name="com.paradise.statistic.StatisticsFragment"
         android:label="fragment_analyze"
-        tools:layout="@layout/fragment_statistic">
+        tools:layout="@layout/fragment_statistics">
         <argument
             android:name="argStatisticalue"
             app:argType="string"

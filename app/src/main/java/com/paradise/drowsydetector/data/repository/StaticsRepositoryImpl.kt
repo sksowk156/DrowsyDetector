@@ -10,16 +10,16 @@ import javax.inject.Inject
 class StaticsRepositoryImpl @Inject constructor(
     private val analyzeResultDao: AnalyzeResultDao,
 ) : StaticsRepository {
-    companion object {
-        @Volatile
-        private var instance: StaticsRepositoryImpl? = null
-
-        fun getInstance(analyzeResultDao: AnalyzeResultDao) = instance ?: synchronized(this) {
-            instance ?: StaticsRepositoryImpl(
-                analyzeResultDao = analyzeResultDao
-            ).also { instance = it }
-        }
-    }
+//    companion object {
+//        @Volatile
+//        private var instance: StaticsRepositoryImpl? = null
+//
+//        fun getInstance(analyzeResultDao: AnalyzeResultDao) = instance ?: synchronized(this) {
+//            instance ?: StaticsRepositoryImpl(
+//                analyzeResultDao = analyzeResultDao
+//            ).also { instance = it }
+//        }
+//    }
 
     // AnalyzeResult
     override suspend fun insertRecord(AnalyzeResult: AnalyzeResult) {

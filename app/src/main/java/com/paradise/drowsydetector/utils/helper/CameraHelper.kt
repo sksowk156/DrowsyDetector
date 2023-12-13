@@ -2,6 +2,7 @@ package com.paradise.drowsydetector.utils.helper
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
@@ -13,12 +14,15 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.common.PointF3D
 import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
+import com.paradise.drowsydetector.utils.LEFT_RIGHT_ANGLE_THREDHOLD
+import com.paradise.drowsydetector.utils.UP_DOWN_ANGLE_THREDHOLD
 import java.lang.ref.WeakReference
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -174,7 +178,90 @@ class CameraHelper(
                 }, ContextCompat.getMainExecutor(context))
             }
         }
-
-
     }
+
+    fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
+        var upDownSec =
+            (1 / Math.cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
+        var leftRightSec =
+            (1 / Math.cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
+
+        /////////////////////////////////////////////////////
+        val rightUpper = landmark.get(159).position
+        val rightLower = landmark.get(145).position
+        val leftUpper = landmark.get(386).position
+        val leftLower = landmark.get(374).position
+
+//        /////////////////////////////////////////////////////
+//        var rightWidth = calDist(landmark.get(33).position, landmark.get(133).position) // 오른쪽 가로 길이
+//        var rightHeight = calDist(
+//            landmark.get(159).position, landmark.get(145).position
+//        )  // 오른쪽 세로 길이 -> 세로 길이는 항상 보정
+//        var leftWidth = calDist(landmark.get(263).position, landmark.get(362).position) // 왼쪽 가로 길이
+//        var leftHeight = calDist(
+//            landmark.get(386).position, landmark.get(374).position
+//        )  // 왼쪽 세로 길이 -> 세로 길이는 항상 보정
+//        /////////////////////////////////////////////
+//
+//
+//        var basewidthLower0 = ((rightWidth + leftWidth) / 2.0)
+//        var baseheightAvg0 = (rightHeight + leftHeight) / 2.0
+//
+//        ////////////////////////////////////////////////
+//
+//        var basewidthLower1 = ((rightWidth + leftWidth) / 2.0) * leftRightSec
+//        var baseheightAvg1 = (rightHeight + leftHeight) / 2.0
+//
+//
+//        ///////////////////////////////////////////////////////////
+//        var widthLower0 = (calDist(rightLower, leftLower))
+//        var heightAvg0 = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
+//
+//        /////////////////////////////////////////////////////////
+        var widthLower1 = (calDist(rightLower, leftLower)) * leftRightSec
+        var heightAvg1 = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
+//
+//        ///////////////////////////////////////////////////////////////
+//
+        if (leftRightAngle < -30 || leftRightAngle > 30) {
+            widthLower1 *= 0.98
+//            basewidthLower1 *= 0.98
+            upDownSec *= 1.02
+        }
+        if (upDownAngle < 0) { // 카메라가 위에 있을 경우
+            heightAvg1 *= (upDownSec * 1.05) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+//            baseheightAvg1 *= (upDownSec * 1.05)
+        } else { // 카메라가 아래에 있을 경우
+            heightAvg1 *= (upDownSec * 0.95) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
+//            baseheightAvg1 *= (upDownSec * 0.95)
+        }
+//
+//
+//
+//        Log.d(
+//            "whatisthis0",
+//            "${(heightAvg1 / widthLower1)} " +
+//                    "${heightAvg0 / widthLower0} " +
+//                    "${baseheightAvg1 / basewidthLower1} " +
+//                    "${baseheightAvg0 / basewidthLower0}"
+//        )
+
+        // 종횡비 계산
+        return (heightAvg1 / widthLower1)
+    }
+
+    fun calDist(point1: PointF3D, point2: PointF3D): Double {
+        val dx = point1.x - point2.x
+        val dy = point1.y - point2.y
+        return Math.sqrt((dx * dx + dy * dy).toDouble())
+    }
+
+    fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
+        upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
+
+    fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
+
+    fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
+        leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
+
 }

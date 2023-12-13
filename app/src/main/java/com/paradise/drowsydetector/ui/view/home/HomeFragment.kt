@@ -1,17 +1,16 @@
 package com.paradise.drowsydetector.ui.view.home
 
 import android.Manifest
-import android.os.Build
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.databinding.FragmentHomeBinding
+import com.paradise.drowsydetector.ui.view.analyze.AnalyzeFragment
+import com.paradise.drowsydetector.ui.view.setting.SettingFragment
+import com.paradise.drowsydetector.ui.view.statistic.StatisticFragment
 import com.paradise.drowsydetector.utils.ANALYZE
 import com.paradise.drowsydetector.utils.SETTING
 import com.paradise.drowsydetector.utils.STATISTIC
 import com.paradise.drowsydetector.utils.checkPermissions
-import com.paradise.drowsydetector.ui.view.analyze.AnalyzeFragment
-import com.paradise.drowsydetector.ui.view.setting.SettingFragment
-import com.paradise.drowsydetector.ui.view.statistic.StatisticFragment
 
 class HomeFragment : BaseViewbindingFragment<FragmentHomeBinding>(FragmentHomeBinding::inflate) {
     override fun onViewCreated() {

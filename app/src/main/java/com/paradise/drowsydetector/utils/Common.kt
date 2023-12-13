@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.camera.core.impl.utils.ContextUtil.getApplicationContext
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -39,6 +40,7 @@ import java.util.Random
 
 
 const val BASE_URL = "http://api.data.go.kr/openapi/"
+//    "http://api.data.go.kr/openapi/"
 
 // BaseFragment에서 사용하는 typealias
 typealias FragmentInflate<T> = (LayoutInflater, ViewGroup?, Boolean) -> T
@@ -141,7 +143,7 @@ const val SMILE_THREDHOLD = 0.9
 const val DROWSY_THREDHOLD = 0.76
 
 // 세팅 인식 EAR 임계값
-const val STT_THREDHOLD = 1.4
+const val STT_THREDHOLD = 1.42
 
 // 졸음 인식 지속 시간 임계값
 const val TIME_THREDHOLD = 1500
@@ -164,7 +166,7 @@ const val MUSICVOLUME = "music_volume_datastore" // 음악의 볼륨(Int)
 const val REFRESHTERM = "refresh_term_datastore" // 환기 주기(Int)
 
 // 한번에 가져오는 주차장 정보 개수
-const val DEFAULT_NUM_OF_ROWS = 200
+const val DEFAULT_NUM_OF_ROWS = 100
 
 // 기본 음악 지속 시간
 const val DEFAULT_MUSIC_DURATION: Long = 3000
@@ -208,68 +210,6 @@ fun Location.calculateDistance(lat1: Double, lon1: Double) =
         latitude = lat1
         longitude = lon1
     })
-
-
-fun calRatio(upDownAngle: Float, leftRightAngle: Float, landmark: List<FaceMeshPoint>): Double {
-    var upDownSec =
-        (1 / cos(Math.toRadians(upDownAngle.toDouble()))) //  val upDownRadian = upDownAngle * Math.PI / 180.0
-    var leftRightSec =
-        (1 / cos(Math.toRadians(leftRightAngle.toDouble()))) // val leftRightRadian = leftRightAngle * Math.PI / 180.0
-
-
-//    var rightWidth = calDist(landmark.get(33).position, landmark.get(133).position) // 오른쪽 가로 길이
-//
-//    var rightHeight = calDist(landmark.get(159).position, landmark.get(145).position)  // 오른쪽 세로 길이 -> 세로 길이는 항상 보정
-//
-//    var leftWidth = calDist(landmark.get(263).position, landmark.get(362).position) // 왼쪽 가로 길이
-//
-//    var leftHeight = calDist(landmark.get(386).position, landmark.get(374).position)  // 왼쪽 세로 길이 -> 세로 길이는 항상 보정
-//    val widthAvg = (rightWidth + leftWidth) / 2.0
-//    val heightAvg0 = (rightHeight + leftHeight) / 2.0
-
-
-    val rightUpper = landmark.get(159).position
-    val rightLower = landmark.get(145).position
-
-    val leftUpper = landmark.get(386).position
-    val leftLower = landmark.get(374).position
-
-    var widthLower = (calDist(rightLower, leftLower)) * leftRightSec
-    var heightAvg = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
-//    var temp = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
-    if (leftRightAngle < -30 || leftRightAngle > 30) {
-        widthLower *= 0.98
-        upDownSec *= 1.02
-    }
-    if (upDownAngle < 0) { // 카메라가 위에 있을 경우
-        heightAvg *= (upDownSec * 1.1) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-    } else { // 카메라가 아래에 있을 경우
-        heightAvg *= (upDownSec * 0.9) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
-    }
-
-//    Log.d(
-//        "whatisthis0",
-//        "${(heightAvg / widthLower)} "+ "${temp /(calDist(rightLower, leftLower))} " + "${heightAvg0 * upDownSec / widthAvg * leftRightSec} " + "${heightAvg0 / widthAvg}"
-//    )
-
-    // 종횡비 계산
-    return (heightAvg / widthLower)
-}
-
-fun calDist(point1: PointF3D, point2: PointF3D): Double {
-    val dx = point1.x - point2.x
-    val dy = point1.y - point2.y
-    return Math.sqrt((dx * dx + dy * dy).toDouble())
-}
-
-fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
-    upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
-
-fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
-
-fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
-    leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD
-
 /**
  * Launch with repeat on lifecycle
  *

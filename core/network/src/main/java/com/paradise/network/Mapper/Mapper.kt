@@ -6,6 +6,9 @@ import com.core.model.shelterItem
 import com.paradise.network.retrofit.parkinglot.model.ParkingLotModel
 import com.paradise.network.retrofit.rest.model.RestModel
 import com.paradise.network.retrofit.shelter.model.ShelterModel
+import com.paradise.network.retrofit.parkinglot.model.Item as parkingLotitem
+import com.paradise.network.retrofit.rest.model.Item as restitem
+import com.paradise.network.retrofit.shelter.model.Item as shelteritem
 
 fun ParkingLotModel.toParkingLotItemCount(): Int {
     return this.response.body.totalCount.toInt()
@@ -13,34 +16,40 @@ fun ParkingLotModel.toParkingLotItemCount(): Int {
 
 fun ParkingLotModel.toParkingLotItemList(): List<parkingLotItem> {
     return this.response.body.items.map {
-        parkingLotItem(
-            it.holidayCloseOpenHhmm,
-            it.holidayOperOpenHhmm,
-            it.latitude,
-            it.lnmadr,
-            it.longitude,
-            it.parkingchrgeInfo,
-            it.prkplceNm,
-            it.satOperCloseHhmm,
-            it.satOperOperOpenHhmm,
-            it.weekdayOperColseHhmm,
-            it.weekdayOperOpenHhmm,
-        )
+        it.toParkingLotItem()
     }
 }
+
+fun parkingLotitem.toParkingLotItem() = parkingLotItem(
+    this.holidayCloseOpenHhmm,
+    this.holidayOperOpenHhmm,
+    this.latitude,
+    this.lnmadr,
+    this.longitude,
+    this.parkingchrgeInfo,
+    this.prkplceNm,
+    this.satOperCloseHhmm,
+    this.satOperOperOpenHhmm,
+    this.weekdayOperColseHhmm,
+    this.weekdayOperOpenHhmm,
+)
 
 fun ShelterModel.toShelterItemList(): List<shelterItem> {
     return this.response.body.items.map {
-        shelterItem(
-            it.latitude, it.longitude, it.lnmadr, it.roadRouteDrc, it.signguNm
-        )
+        it.toShelterItem()
     }
 }
 
+fun shelteritem.toShelterItem() = shelterItem(
+    this.latitude, this.longitude, this.lnmadr, this.roadRouteDrc, this.signguNm
+)
+
 fun RestModel.toRestItemList(): List<restItem> {
     return this.response.body.items.map {
-        restItem(
-            it.latitude, it.longitude, it.roadRouteNm, it.roadRouteDrc
-        )
+        it.toRestItem()
     }
 }
+
+fun restitem.toRestItem() = restItem(
+    this.latitude, this.longitude, this.roadRouteNm, this.roadRouteDrc
+)

@@ -1,5 +1,4 @@
 package com.paradise.drowsydetector.ui.viewmodel
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -21,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class StaticsViewModel @Inject constructor(
-    private val staticsRepository: StaticsRepository,
+    val staticsRepository: StaticsRepository,
 ) : ViewModel() {
 
     private val _allAnalyzeRecord = MutableSharedFlow<List<AnalyzeResult>>()
@@ -166,18 +165,6 @@ class StaticsViewModel @Inject constructor(
         }
     }
 
-    class StaticsViewModelFactory(
-        private val staticsRepository: StaticsRepository,
-    ) :
-        ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return if (modelClass.isAssignableFrom(StaticsViewModel::class.java)) {
-                StaticsViewModel(staticsRepository) as T
-            } else {
-                throw IllegalArgumentException()
-            }
-        }
-    }
 
     //    var standard: Double?= null
 //
@@ -231,6 +218,19 @@ class StaticsViewModel @Inject constructor(
 //                        Log.d("whatisthis",currentWinkCount.toString())
 //                    }
 //                }
+//            }
+//        }
+//    }
+
+//    class StaticsViewModelFactory(
+//        private val staticsRepository: StaticsRepository,
+//    ) :
+//        ViewModelProvider.Factory {
+//        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//            return if (modelClass.isAssignableFrom(StaticsViewModel::class.java)) {
+//                StaticsViewModel(staticsRepository) as T
+//            } else {
+//                throw IllegalArgumentException()
 //            }
 //        }
 //    }

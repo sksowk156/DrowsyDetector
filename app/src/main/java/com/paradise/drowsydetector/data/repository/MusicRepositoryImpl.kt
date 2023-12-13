@@ -8,14 +8,14 @@ import javax.inject.Inject
 class MusicRepositoryImpl @Inject constructor(
     private val musicDao: MusicDao,
 ) : MusicRepository {
-    companion object {
-        @Volatile
-        private var instance: MusicRepositoryImpl? = null
-
-        fun getInstance(musicDao: MusicDao) = instance ?: synchronized(this) {
-            instance ?: MusicRepositoryImpl(musicDao).also { instance = it }
-        }
-    }
+//    companion object {
+//        @Volatile
+//        private var instance: MusicRepositoryImpl? = null
+//
+//        fun getInstance(musicDao: MusicDao) = instance ?: synchronized(this) {
+//            instance ?: MusicRepositoryImpl(musicDao).also { instance = it }
+//        }
+//    }
 
     /* C : 이벤트 등록 메서드 */
     override suspend fun insertMusic(music: Music) {

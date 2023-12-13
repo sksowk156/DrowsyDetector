@@ -10,7 +10,6 @@ import android.location.Location
 import android.os.IBinder
 import android.util.Log
 import android.view.View
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
@@ -19,6 +18,9 @@ import com.paradise.drowsydetector.base.BaseViewbindingFragment
 import com.paradise.drowsydetector.data.local.room.music.Music
 import com.paradise.drowsydetector.databinding.FragmentAnalyzeBinding
 import com.paradise.drowsydetector.service.AnalyzeService
+import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
+import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
+import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
 import com.paradise.drowsydetector.utils.ApplicationClass.Companion.getApplicationContext
 import com.paradise.drowsydetector.utils.BASICMUSICMODE
 import com.paradise.drowsydetector.utils.CHECKUSESTTSERVICE
@@ -33,10 +35,7 @@ import com.paradise.drowsydetector.utils.SMILE_THREDHOLD
 import com.paradise.drowsydetector.utils.STANDARD_IN_ANGLE
 import com.paradise.drowsydetector.utils.STT_THREDHOLD
 import com.paradise.drowsydetector.utils.TIME_THREDHOLD
-import com.paradise.drowsydetector.utils.calRatio
 import com.paradise.drowsydetector.utils.calculateDistance
-import com.paradise.drowsydetector.utils.checkHeadAngleInNoStandard
-import com.paradise.drowsydetector.utils.checkHeadAngleInStandard
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getBoundingBox
 import com.paradise.drowsydetector.utils.getCurrentTime
@@ -46,12 +45,8 @@ import com.paradise.drowsydetector.utils.helper.LocationHelper
 import com.paradise.drowsydetector.utils.helper.MusicHelper
 import com.paradise.drowsydetector.utils.helper.SttTtsController
 import com.paradise.drowsydetector.utils.helper.VolumeHelper
-import com.paradise.drowsydetector.utils.isInLeftRight
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
 import com.paradise.drowsydetector.utils.showToast
-import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
-import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -298,7 +293,7 @@ class AnalyzeFragment :
                 val upDownAngle = resultDetector.headEulerAngleX
                 val leftRightAngle = resultDetector.headEulerAngleY
 
-                val eyeRatio = calRatio(upDownAngle, leftRightAngle, resultMesh)
+                val eyeRatio = cameraHelper!!.calRatio(upDownAngle, leftRightAngle, resultMesh)
                 if (analyzeService?.standard == null) {
                     checkHeadPoseInNoStandard(eyeRatio, leftRightAngle, upDownAngle)
                 } else {
@@ -349,7 +344,7 @@ class AnalyzeFragment :
         leftRightAngle: Float,
         upDownAngle: Float,
     ) {// 각도 임계값
-        if (checkHeadAngleInNoStandard(upDownAngle, leftRightAngle)) {
+        if (cameraHelper!!.checkHeadAngleInNoStandard(upDownAngle, leftRightAngle)) {
             setHeadIn(eyeRatio)
         } else {
             setHeadOut(leftRightAngle, upDownAngle)
@@ -373,7 +368,7 @@ class AnalyzeFragment :
             stopTimer()
             standardRatioList.clear()
         }
-        if (isInLeftRight(leftRightAngle)) {
+        if (cameraHelper!!.isInLeftRight(leftRightAngle)) {
             if (upDownAngle > 4) binding.analyzeTextGazerequest.text = "고개를 살짝만 내려 주세요"
             else if (upDownAngle < -4) binding.analyzeTextGazerequest.text = "고개를 살짝만 들어 주세요"
         } else {
@@ -382,7 +377,7 @@ class AnalyzeFragment :
     }
 
     private fun checkHeadPoseInStandard(leftRightAngle: Float, upDownAngle: Float) {// 각도 임계값
-        if (checkHeadAngleInStandard(leftRightAngle, upDownAngle)) {
+        if (cameraHelper!!.checkHeadAngleInStandard(leftRightAngle, upDownAngle)) {
             // 카메라 정면 요청
             binding.analyzeTextScreenrequest.visibility = View.VISIBLE
             binding.analyzeTextDrowsycheck.visibility = View.INVISIBLE

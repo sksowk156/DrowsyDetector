@@ -2,7 +2,7 @@ package com.paradise.drowsydetector.ui.view.statistic
 
 import android.graphics.Color
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.components.AxisBase
@@ -25,14 +25,15 @@ import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
 import com.paradise.drowsydetector.utils.defaultDispatcher
 import com.paradise.drowsydetector.utils.getTodayDate
 import com.paradise.drowsydetector.utils.launchWithRepeatOnLifecycle
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class StatisticFragment :
     BaseViewbindingFragment<FragmentStatisticBinding>(FragmentStatisticBinding::inflate) {
-    private val staticsViewModel: StaticsViewModel by activityViewModels()
+    private val staticsViewModel: StaticsViewModel by viewModels()
 
     override fun onViewCreated() {
-        binding.toolbarStatistic
         binding.toolbarStatistic.setToolbarMenu("통계", true)
         subscribeTodayRecord()
         staticsViewModel.getRecord(getTodayDate())
@@ -41,8 +42,7 @@ class StatisticFragment :
 
     private fun subscribeTodayRecord() {
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            state = Lifecycle.State.STARTED,
-            dispatcher = defaultDispatcher
+            state = Lifecycle.State.STARTED, dispatcher = defaultDispatcher
         ) {
             staticsViewModel.analyzeRecord.collect {
                 if (it != null) {
@@ -53,8 +53,7 @@ class StatisticFragment :
         }
 
         viewLifecycleOwner.launchWithRepeatOnLifecycle(
-            state = Lifecycle.State.STARTED,
-            dispatcher = defaultDispatcher
+            state = Lifecycle.State.STARTED, dispatcher = defaultDispatcher
         ) {
             staticsViewModel.allAnayzeResult.collect {
                 if (it != null) {
@@ -72,7 +71,11 @@ class StatisticFragment :
             // Bar 데이터 생성
             val barEntries = ArrayList<BarEntry>()
             for (i in winkList.indices) {
-                barEntries.add(BarEntry((i + 1).toFloat(), winkList[i].value.toFloat())) // 1(간격)부터 시작
+                barEntries.add(
+                    BarEntry(
+                        (i + 1).toFloat(), winkList[i].value.toFloat()
+                    )
+                ) // 1(간격)부터 시작
             }
             val barDataSet = BarDataSet(barEntries, "눈 깜빡임 횟수")
             barDataSet.color = ContextCompat.getColor(requireContext(), R.color.primary1)

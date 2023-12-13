@@ -21,41 +21,37 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideGson(): GsonConverterFactory = GsonConverterFactory.create()
-
-    @Provides
-    @Singleton
-    fun provideShelterInterface(gsonConverterFactory: GsonConverterFactory): ShelterService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
+    fun provideShelterInterface(): ShelterService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
             .build().create(ShelterService::class.java)
 
     @Provides
     @Singleton
-    fun provideRestInterface(gsonConverterFactory: GsonConverterFactory): RestService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
+    fun provideRestInterface(): RestService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
             .build().create(RestService::class.java)
 
     @Provides
     @Singleton
-    fun provideParkingLotInterface(gsonConverterFactory: GsonConverterFactory): ParkingLotService =
-        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(gsonConverterFactory)
+    fun provideParkingLotInterface(): ParkingLotService =
+        Retrofit.Builder().baseUrl(BASE_URL).addConverterFactory(GsonConverterFactory.create())
             .build().create(ParkingLotService::class.java)
 
-    @Provides
-    @Singleton
-    fun provideShelterData(shelterService: ShelterService): ShelterDataProvider {
-        return ShelterDataProvider(shelterService)
-    }
-
-    @Provides
-    @Singleton
-    fun provideRestData(restService: RestService): RestDataProvider {
-        return RestDataProvider(restService)
-    }
-
-    @Provides
-    @Singleton
-    fun provideParkingLotData(parkingLotService: ParkingLotService): ParkingLotDataProvider {
-        return ParkingLotDataProvider(parkingLotService)
-    }
+//    @Provides
+//    @Singleton
+//    fun provideShelterData(shelterService: ShelterService): ShelterDataProvider {
+//        return ShelterDataProvider(shelterService)
+//    }
+//
+//    @Provides
+//    @Singleton
+//    fun provideRestData(restService: RestService): RestDataProvider {
+//        return RestDataProvider(restService)
+//    }
+//
+//    @Provides
+//    @Singleton
+//    fun provideParkingLotData(parkingLotService: ParkingLotService): ParkingLotDataProvider {
+//        return ParkingLotDataProvider(parkingLotService)
+//    }
 }

@@ -93,12 +93,12 @@ object AppModule {
             analyzeResultDao = analyzeResultDao
         )
 
-//    private val Context.settingDataStore by preferencesDataStore(PREFERENCES_NAME)
+    private val Context.settingDataStore by preferencesDataStore(PREFERENCES_NAME)
 
-//    @Provides
-//    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
-//        context.settingDataStore
-//
+    @Provides
+    fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.settingDataStore
+
     @Provides
     fun provideSettingRepository(dataStore: DataStore<Preferences>): SettingRepository =
         SettingRepositoryImpl(

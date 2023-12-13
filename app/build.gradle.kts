@@ -55,16 +55,16 @@ android {
 dependencies {
     // LeakCanary
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
-//    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
-    feature_analyze()
-    feature_home()
-    feature_setting()
-    feature_statistic()
-    core_model()
-    core_domain()
-    core_common()
-    core_data()
-    core_common_ui()
+////    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
+//    core_model()
+////    core_domain()
+//    core_common()
+////    core_data()
+//    core_common_ui()
+//    feature_analyze()
+//    feature_home()
+//    feature_setting()
+//    feature_statistic()
     // navi
     navigation()
     // dagger hilt

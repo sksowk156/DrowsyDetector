@@ -187,17 +187,13 @@ class SettingFragment :
         with(binding) {
             radiobtSettingBasicmusic.setOnAvoidDuplicateClick {
                 settingViewModel.setSettingMode(BASICMUSICMODE, true)
-                if (musicHelper != null) {
                     musicHelper?.releaseMediaPlayer()
                     musicHelper = null
-                }
             }
             radiobtSettingUsermusic.setOnAvoidDuplicateClick {
                 settingViewModel.setSettingMode(BASICMUSICMODE, false)
-                if (musicHelper != null) {
                     musicHelper?.releaseMediaPlayer()
                     musicHelper = null
-                }
             }
         }
     }
@@ -217,13 +213,13 @@ class SettingFragment :
     private fun initRecycler(result: MutableList<Music>) {
         with(binding) {
             musicAdapter = MusicAdapter(result, { selectedMusic ->
-                if (musicHelper?.isPrepared?.value == true){
+                if (musicHelper?.isPrepared?.value == true) {
                     musicHelper?.releaseMediaPlayer()
-                    Log.d("whatisthis","?!")
+                    Log.d("whatisthis", "?!")
                 } else {
                     musicHelper?.releaseMediaPlayer()
                     musicHelper?.startMusic(selectedMusic)
-                    Log.d("whatisthis","?!22")
+                    Log.d("whatisthis", "?!22")
                 }
             }, { selectedMusic ->
                 musicHelper?.releaseMediaPlayer()
@@ -294,6 +290,22 @@ class SettingFragment :
         }
     }
 
+    /**
+     * Get new file path from uri
+     *
+     * 1024바이트는 1킬로바이트(KB)와 같습니다. 1킬로바이트는 컴퓨터에서 데이터의 용량을 나타내는 기본 단위 중 하나입니다12.
+     *
+     * 1킬로바이트는 2의 10승이므로, 2진법으로 표현하기에 적합한 숫자입니다. 컴퓨터는 2진법으로 데이터를 처리하므로, 2의 제곱수로 된 단위를 사용하는 것이 효율적입니다12.
+     *
+     * 1킬로바이트는 너무 작지도 크지도 않은 적당한 크기의 단위입니다. 너무 작은 단위로 데이터를 읽으면 입출력 횟수가 많아져서 성능이 저하될 수 있습니다. 반면에 너무 큰 단위로 데이터를 읽으면 메모리가 부족하거나 버퍼 오버플로우가 발생할 수 있습니다3 .
+     *
+     * 1킬로바이트는 다른 단위와 호환되기 쉬운 단위입니다. 예를 들어, 1메가바이트(MB)는 1024킬로바이트, 1기가바이트(GB)는 1024메가바이트입니다. 따라서 1킬로바이트를 기준으로 데이터의 크기를 쉽게 변환하거나 비교할 수 있습니다12.
+     *
+     * @param context
+     * @param contentResolver
+     * @param uri
+     * @return
+     */
     // URI를 사용해 파일을 복사하고 복사한 경로를 제공하는 메소드
     fun getNewFilePathFromUri(
         context: Context,

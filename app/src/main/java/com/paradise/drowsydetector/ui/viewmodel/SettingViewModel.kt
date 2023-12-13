@@ -94,16 +94,16 @@ class SettingViewModel @Inject constructor(
     }
 
 
-    class SettingViewModelFactory(
-        private val settingRepository: SettingRepository,
-    ) :
-        ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return if (modelClass.isAssignableFrom(SettingViewModel::class.java)) {
-                SettingViewModel(settingRepository) as T
-            } else {
-                throw IllegalArgumentException()
-            }
-        }
-    }
+//    class SettingViewModelFactory(
+//        private val settingRepository: SettingRepository,
+//    ) :
+//        ViewModelProvider.Factory {
+//        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//            return if (modelClass.isAssignableFrom(SettingViewModel::class.java)) {
+//                SettingViewModel(settingRepository) as T
+//            } else {
+//                throw IllegalArgumentException()
+//            }
+//        }
+//    }
 }
