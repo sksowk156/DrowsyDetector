@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.map
 import java.io.IOException
 import javax.inject.Inject
 
-class DataStoreProvider(private val dataStore: DataStore<Preferences>) {
+class DataStoreProvider @Inject constructor(private val dataStore: DataStore<Preferences>) {
     suspend fun setBoolean(key: String, value: Boolean) {
         val preferencesKey = booleanPreferencesKey(key)
         dataStore.edit { preferences ->

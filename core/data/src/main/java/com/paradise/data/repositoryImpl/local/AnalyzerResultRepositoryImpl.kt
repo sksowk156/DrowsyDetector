@@ -1,4 +1,4 @@
-package com.paradise.data.repositoryImpl
+package com.paradise.data.repositoryImpl.local
 
 import com.core.model.analyzeResultItem
 import com.core.model.drowsyResultItem
@@ -10,14 +10,14 @@ import com.paradise.data.repository.AnalyzerResultRepository
 import com.paradise.database.mapper.toAnalyzeResultItem
 import com.paradise.database.mapper.toDrowsyItem
 import com.paradise.database.mapper.toWinkItem
-import com.paradise.database.provider.AnalyzeResultDataProvider
+import com.paradise.database.room.dao.AnalyzeResultDao
 import com.paradise.database.room.model.AnalyzeResult
 import com.paradise.database.room.model.DrowsyCount
 import com.paradise.database.room.model.WinkCount
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
-class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResultDataProvider: AnalyzeResultDataProvider) :
+class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResultDataProvider: AnalyzeResultDao) :
     AnalyzerResultRepository {
     override suspend fun insertRecord(analyzeResultItem: analyzeResultItem) {
         analyzeResultDataProvider.insertRecord(analyzeResultItem.toDataAnalyzeResult())

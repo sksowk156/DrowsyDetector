@@ -1,4 +1,4 @@
-package com.paradise.data.repositoryImpl
+package com.paradise.data.repositoryImpl.local
 
 import com.paradise.data.repository.SettingRepository
 import com.paradise.datastore.provider.DataStoreProvider

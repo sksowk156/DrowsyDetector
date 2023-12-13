@@ -1,13 +1,13 @@
-package com.paradise.data.repositoryImpl
+package com.paradise.data.repositoryImpl.remote
 
 import com.core.model.BoundingBox
 import com.core.model.parkingLotItem
 import com.paradise.common.network.DAY
+import com.paradise.common.network.compareTime
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher
-import com.paradise.common.network.isInTime
 import com.paradise.data.repository.ParkingLotRepository
-import com.paradise.network.Mapper.toParkingLotItemList
+import com.paradise.network.Mapper.toParkingLotItem
 import com.paradise.network.provider.ParkingLotDataProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -20,12 +20,8 @@ import javax.inject.Inject
 
 class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataProvider: ParkingLotDataProvider) :
     ParkingLotRepository {
-    override suspend fun getOneParkingLot(
-        pageNo: Int,
-        numOfRows: Int,
-        parkingchrgeInfo: String,
-    ): Flow<Int> = parkingLotDataProvider.getAllParkingLot(
-        pageNo = pageNo, numOfRows = numOfRows, parkingchrgeInfo = parkingchrgeInfo
+    override suspend fun getOneParkingLot(): Flow<Int> = parkingLotDataProvider.getAllParkingLot(
+        pageNo = 1, numOfRows = 1
     ).map { it.response.body.totalCount.toInt() }
 
     override suspend fun getAllParkingLot(
@@ -41,18 +37,29 @@ class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataPro
         parkingLotDataProvider.getAllParkingLot(
             pageNo = pageNo, numOfRows = numOfRows, parkingchrgeInfo = parkingchrgeInfo
         ).map { result ->
-            val resultConverted = result.toParkingLotItemList()
-            resultConverted.asFlow().flowOn(defaultDispatcher).filter { item ->
+            result.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
                 val lat = item.latitude.toDoubleOrNull()
                 val lon = item.longitude.toDoubleOrNull()
                 val inLatRange =
                     lat != null && lat in boundingBox.minLatitude..boundingBox.maxLatitude
                 val inLonRange =
                     lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
-                val inTime = isInTime(day = day, nowTime = nowTime, item = item)
+                val inTime = when (day) {
+                    DAY.WEEKDAY -> {
+                        compareTime(nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm)
+                    }
+
+                    DAY.SAT -> {
+                        compareTime(nowTime, item.satOperOperOpenHhmm, item.satOperCloseHhmm)
+                    }
+
+                    DAY.HOLIDAY -> {
+                        compareTime(nowTime, item.holidayOperOpenHhmm, item.holidayCloseOpenHhmm)
+                    }
+                }
                 inLatRange && inLonRange && inTime
             }.collect { item ->
-                freeParkingLot.add(item)
+                freeParkingLot.add(item.toParkingLotItem())
             }
             emit(freeParkingLot)
         }

@@ -1,8 +1,6 @@
 package com.paradise.database.di
 
 import android.content.Context
-import com.paradise.database.provider.AnalyzeResultDataProvider
-import com.paradise.database.provider.MusicDataProvider
 import com.paradise.database.room.LocalDatabase
 import com.paradise.database.room.dao.AnalyzeResultDao
 import com.paradise.database.room.dao.MusicDao
@@ -31,16 +29,4 @@ object LocalModule {
     @Provides
     @Singleton
     fun provideAnalyzeDao(database: LocalDatabase): AnalyzeResultDao = database.analyzeResultDao()
-
-    @Provides
-    @Singleton
-    fun provideMusicData(musicDao: MusicDao): MusicDataProvider {
-        return MusicDataProvider(musicDao)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyzeResultData(recorDao: AnalyzeResultDao): AnalyzeResultDataProvider {
-        return AnalyzeResultDataProvider(recorDao)
-    }
 }

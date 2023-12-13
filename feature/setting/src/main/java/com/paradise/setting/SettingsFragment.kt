@@ -42,7 +42,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsBinding::inflate) {
 
-    private val settingViewModel: SettingViewModel by viewModels()
+    private val settingsViewModel: SettingsViewModel by viewModels()
 
     @Inject
     lateinit var musicHelper: MusicHelper
@@ -81,10 +81,10 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
             val maxVolume = volumeHelper.getMaxVolume()
             val currentVolume = volumeHelper.getCurrentVolume()
-            settingViewModel.getAllMusic()
-            settingViewModel.getSettingModeBool(GUIDEMODE)
-            settingViewModel.getSettingModeInt(MUSICVOLUME)
-            settingViewModel.getSettingModeBool(BASICMUSICMODE)
+            settingsViewModel.getAllMusic()
+            settingsViewModel.getSettingModeBool(GUIDEMODE)
+            settingsViewModel.getSettingModeInt(MUSICVOLUME)
+            settingsViewModel.getSettingModeBool(BASICMUSICMODE)
 
             // RangeSlider의 최소값과 최대값을 0과 최대 음량으로 설정
             sliderSettingSound.valueFrom = 0f
@@ -112,7 +112,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
             // 안내 설정을 변경할 때마다 값을 갱신
             switchSettingGuide.setOnCheckedChangeListener { buttonView, isChecked ->
-                settingViewModel.setSettingMode(GUIDEMODE, isChecked)
+                settingsViewModel.setSettingMode(GUIDEMODE, isChecked)
             }
         }
     }
@@ -129,7 +129,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     override fun onPause() {
         super.onPause()
         musicHelper.releaseMediaPlayer()
-        settingViewModel.setSettingMode(MUSICVOLUME, volume)
+        settingsViewModel.setSettingMode(MUSICVOLUME, volume)
         // BroadcastReceiver를 해제
         requireContext().unregisterReceiver(volumeChangeObserver)
     }
@@ -140,7 +140,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     private fun subscribeMusicStyle() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-            settingViewModel.basicMusicMode.collect { mode ->
+            settingsViewModel.basicMusicMode.collect { mode ->
                 with(binding) {
                     if (mode) {
                         radiogroupSetting.check(radiobtSettingBasicmusic.id)
@@ -159,7 +159,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     private fun subscribeMusicVolume() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-            settingViewModel.musicVolume.collect { myvolume ->
+            settingsViewModel.musicVolume.collect { myvolume ->
                 with(binding) {
                     volume = myvolume
                     sliderSettingSound.setValues(myvolume.toFloat())
@@ -170,7 +170,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     private fun subscribeGuideState() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-            settingViewModel.guideMode.collect { mode ->
+            settingsViewModel.guideMode.collect { mode ->
                 with(binding) {
                     switchSettingGuide.isChecked = mode
                 }
@@ -179,7 +179,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     private fun subscribeMusicList() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
-            settingViewModel.music.collect { musicList ->
+            settingsViewModel.music.collect { musicList ->
                 if (musicList != null) {
                     initRecycler(musicList.toMutableList())
                 }
@@ -189,12 +189,12 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     private fun initButton() {
         with(binding) {
             radiobtSettingBasicmusic.setOnAvoidDuplicateClick {
-                settingViewModel.setSettingMode(BASICMUSICMODE, true)
+                settingsViewModel.setSettingMode(BASICMUSICMODE, true)
                 musicHelper.releaseMediaPlayer()
 
             }
             radiobtSettingUsermusic.setOnAvoidDuplicateClick {
-                settingViewModel.setSettingMode(BASICMUSICMODE, false)
+                settingsViewModel.setSettingMode(BASICMUSICMODE, false)
                 musicHelper.releaseMediaPlayer()
             }
         }
@@ -243,7 +243,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
 
     private fun showDialog(selectedMusic: musicItem) {
         val dialogFragment = MusicSettingsDialogFragment(selectedMusic) {
-            settingViewModel.updateMusic(it)
+            settingsViewModel.updateMusic(it)
         }
         dialogFragment.show(childFragmentManager, "YourDialogTag")
     }
@@ -254,7 +254,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
             val result = deleteFile.delete()
             if (result) toastHelper.showToast("파일 삭제")
         }
-        settingViewModel.deleteMusic(selectedMusic.id)
+        settingsViewModel.deleteMusic(selectedMusic.id)
     }
 
 
@@ -282,7 +282,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
                 val newMusic = musicItem(
                     title = title, newPath = newFilePath, originalPath = audioPath
                 )
-                settingViewModel.insertMusic(newMusic)
+                settingsViewModel.insertMusic(newMusic)
             } else { // 파일이 정상적으로 생성되지 않았을 때 내부 코드 실행
                 toastHelper.showToast("오디오 파일을 가져오는데 문제가 생겼습니다.") // 메시지 출력
             }

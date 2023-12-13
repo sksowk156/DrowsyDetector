@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
+import javax.inject.Singleton
 
 class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRepository: ParkingLotRepository) {
     operator fun invoke(
@@ -17,13 +18,11 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         parkingchargeInfo: String,
         numOfRows: Int, day: DAY, nowTime: String,
     ) = flow<List<Flow<List<parkingLotItem>>>> {
-        parkingLotRepository.getOneParkingLot(
-            pageNo = 1, numOfRows = 1, parkingchrgeInfo = "무료"
-        ).collect { totalCount ->
+        parkingLotRepository.getOneParkingLot().collect { totalCount ->
             var numOfCoroutineRequired = totalCount / numOfRows
             if (totalCount % numOfRows != 0) numOfCoroutineRequired++
             emit(
-                getParkingLots1(
+                getALLFreeParkingLots(
                     boundingBox = boundingBox,
                     parkingchargeInfo = parkingchargeInfo,
                     numOfCoroutineRequired = numOfCoroutineRequired,
@@ -34,7 +33,7 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         }
     }.flowOn(defaultDispatcher).cancellable()
 
-    suspend fun getParkingLots1(
+    suspend fun getALLFreeParkingLots(
         boundingBox: BoundingBox,
         parkingchargeInfo: String,
         numOfCoroutineRequired: Int,
