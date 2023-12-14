@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.multimodule
+package com.paradise.watchout.multimodule
 
 import android.app.Application
 import dagger.hilt.android.HiltAndroidApp

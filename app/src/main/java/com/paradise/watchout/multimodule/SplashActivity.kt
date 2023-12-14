@@ -1,13 +1,12 @@
-package com.paradise.drowsydetector.multimodule
+package com.paradise.watchout.multimodule
 
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
 import android.view.View
 import androidx.lifecycle.lifecycleScope
-import com.paradise.common_ui.base.BaseActivity
-import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.databinding.ActivitySplashBinding
+import com.paradise.watchout.R
+import com.paradise.watchout.databinding.ActivitySplashBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

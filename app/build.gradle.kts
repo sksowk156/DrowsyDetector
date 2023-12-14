@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.paradise.drowsydetector"
+    namespace = "com.paradise.watchout"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.paradise.drowsydetector"
+        applicationId = "com.paradise.watchout"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

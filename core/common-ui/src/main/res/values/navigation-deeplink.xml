@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="admin_deep_link" translatable="false">DrowsyDector://com.paradise.drowsydetector.ui.view.home</string>
+    <string name="admin_deep_link" translatable="false">DrowsyDector://com.paradise.watchout.multimodule.home</string>
 
     <!-- Home  -->
     <string name="home_deeplink_url">lab://home</string>

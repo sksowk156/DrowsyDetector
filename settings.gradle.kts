@@ -13,7 +13,7 @@ dependencyResolutionManagement {
         maven { url = uri("https://www.jitpack.io") }
     }
 }
-rootProject.name = "DrowsyDetector"
+rootProject.name = "WatchOut"
 include(":app")
 include(":feature:home")
 include(":feature:setting")

@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector
+package com.paradise.watchout
 
 import org.junit.Test
 

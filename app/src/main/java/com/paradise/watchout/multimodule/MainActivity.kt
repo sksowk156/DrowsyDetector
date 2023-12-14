@@ -1,10 +1,10 @@
-package com.paradise.drowsydetector.multimodule
+package com.paradise.watchout.multimodule
 
 import android.content.Intent
 import android.os.Bundle
 import com.paradise.common.network.ACTION_SHOW_ANALYZING_FRAGMENT
-import com.paradise.drowsydetector.R
-import com.paradise.drowsydetector.databinding.ActivityMainBinding
+import com.paradise.watchout.R
+import com.paradise.watchout.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
