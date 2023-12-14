@@ -38,9 +38,7 @@ import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshDetection
 import com.google.mlkit.vision.facemesh.FaceMeshDetectorOptions
 import com.google.mlkit.vision.facemesh.FaceMeshPoint
-import com.paradise.common.helper.MusicHelper
 import com.paradise.common.helper.MusicServiceHelper
-import com.paradise.common.network.ACTION_SHOW_ANALYZING_FRAGMENT
 import com.paradise.common.network.BASICMUSICMODE
 import com.paradise.common.network.DROWSY_THREDHOLD
 import com.paradise.common.network.GUIDEMODE

@@ -22,8 +22,8 @@ import com.paradise.analyze.databinding.FragmentAnalyzesBinding
 import com.paradise.common.helper.CameraHelper
 import com.paradise.common.helper.LocationHelper
 import com.paradise.common.helper.MusicHelper
-import com.paradise.common.helper.SttService
 import com.paradise.common.helper.SttTtsController
+import com.paradise.common.helper.SttTtsService
 import com.paradise.common.helper.ToastHelper
 import com.paradise.common.helper.VolumeHelper
 import com.paradise.common.network.BASICMUSICMODE
@@ -59,7 +59,7 @@ import javax.inject.Inject
 @WithFragmentBindings
 @AndroidEntryPoint
 class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesBinding::inflate),
-    SttService {
+    SttTtsService {
 
     private val analyzesViewModel: AnalyzesViewModel by viewModels()
 
@@ -124,6 +124,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             analyzesService?.stopForeground(Service.STOP_FOREGROUND_REMOVE)
             binding.analyzeTextGazerequest.visibility = View.VISIBLE
         }
+        overlay = binding.analyzeOverlay
         cameraHelper.initCameraHelper()
         musicHelper.initMusicHelper()
         volumeHelper.initVolumeHelper()
@@ -162,7 +163,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         // 재생 중인 음악을 멈춤
         musicHelper.releaseMediaPlayer()
 
-        sttTtsController.releaseSttTtsController()
+        sttTtsController.stopSttTtsController()
 
         stopTimer()
         // subscribe 했던 job 전부 해제, 휴식 공간 요청 job 전부 해제
@@ -181,6 +182,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             subscribeJobList.clear()
             Log.d("whatisthis", " job 취소 완료")
         }
+
         // 만약 bind되어 있다면 -> standard 설정이 되어 있다면 -> 분석을 시작했다면
         if (isAppInBackground() && analyzesService?.standard != null) {
             analyzesService?.startForegroundInBackground()
@@ -193,6 +195,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     override fun onDestroyViewInFragMent() { // 홈 버튼 누를 땐 동작 X
         Log.d("whatisthis", "onDestroyViewInFragMent()")
+        sttTtsController.releaseSttTtsController()
         sortResult.removeObservers(viewLifecycleOwner)
         // 서비스를 종료한다.
         requireContext().unbindService(connection) // bind 해제
@@ -598,7 +601,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString() + it.code)
+                    Log.d("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
@@ -636,7 +639,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString() + it.code)
+                    Log.d("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
@@ -674,7 +677,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString() + it.code)
+                    Log.d("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
@@ -724,26 +727,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
                 else -> return@setLastLocationEventListener
             }
-//            if (job == null) {
-//                job = temp()
-//                jobList.add(job)
-//            } else {
-//                if (job.isActive && !job.isCompleted) {
-//                    val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-//                        job!!.join()
-//                        jobList.remove(job)
-//                    }
-//                    subscribeJobList.add(subscribeJob)
-//                } else {
-//                    val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-//                        job!!.cancelAndJoin()
-//                        jobList.remove(job)
-//                        job = temp()
-//                        jobList.add(job!!)
-//                    }
-//                    subscribeJobList.add(subscribeJob)
-//                }
-//            }
         }
     }
 

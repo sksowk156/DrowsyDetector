@@ -21,8 +21,8 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.getTodayDate
 import com.paradise.common.utils.launchWithRepeatOnLifecycle
-import com.paradise.common_ui.base.BaseFragment
 import com.paradise.common_ui.R
+import com.paradise.common_ui.base.BaseFragment
 import com.paradise.statistic.databinding.FragmentStatisticsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.WithFragmentBindings
@@ -57,7 +57,7 @@ class StatisticsFragment :
             state = Lifecycle.State.STARTED, dispatcher = defaultDispatcher
         ) {
             staticsViewModel.allAnayzeResult.collect {
-                if (it.first !=null && it.second!=null) {
+                if (it.first != null && it.second != null) {
                     binding.tvStatisticDrowsycount.text = it.second!!.size.toString()
                     viewLifecycleOwner.lifecycleScope.launch { // 차트를 그려야 하므로 mainScope에서 해야 된다.
                         initChart(it.first!!, it.second!!)

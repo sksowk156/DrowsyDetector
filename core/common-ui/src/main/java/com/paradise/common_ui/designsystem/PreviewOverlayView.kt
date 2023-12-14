@@ -1,8 +1,5 @@
 package com.paradise.common_ui.designsystem
 
-import com.paradise.common.network.NO_STANDARD
-import com.paradise.common.network.OUT_OF_ANGLE
-import com.paradise.common.network.STANDARD_IN_ANGLE
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,6 +8,9 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
+import com.paradise.common.network.NO_STANDARD
+import com.paradise.common.network.OUT_OF_ANGLE
+import com.paradise.common.network.STANDARD_IN_ANGLE
 
 
 /**

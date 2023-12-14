@@ -8,7 +8,7 @@ interface TtsHelper {
     val isInitialized: LiveData<Boolean>
     val isSpeaking: LiveData<Int>
     fun initTTS()
+    fun speakOut(text: String)
     fun stopTtsHelper()
     fun releaseTtsHelper()
-    fun speakOut(text: String)
 }

@@ -38,20 +38,20 @@ fun restitem.toRestItem() = restItem(
     roadRouteDrc = this.roadRouteDrc
 )
 
-fun ParkingLotModel.toParkingLotItemList(): List<parkingLotItem> {
-    return this.response.body.items.map {
-        it.toParkingLotItem()
-    }
-}
-
-fun ShelterModel.toShelterItemList(): List<shelterItem> {
-    return this.response.body.items.map {
-        it.toShelterItem()
-    }
-}
-
-fun RestModel.toRestItemList(): List<restItem> {
-    return this.response.body.items.map {
-        it.toRestItem()
-    }
-}
+//fun ParkingLotModel.toParkingLotItemList(): List<parkingLotItem> {
+//    return this.response.body.items.map {
+//        it.toParkingLotItem()
+//    }
+//}
+//
+//fun ShelterModel.toShelterItemList(): List<shelterItem> {
+//    return this.response.body.items.map {
+//        it.toShelterItem()
+//    }
+//}
+//
+//fun RestModel.toRestItemList(): List<restItem> {
+//    return this.response.body.items.map {
+//        it.toRestItem()
+//    }
+//}

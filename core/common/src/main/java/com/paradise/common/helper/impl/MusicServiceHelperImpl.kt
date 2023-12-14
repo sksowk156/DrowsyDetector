@@ -107,7 +107,7 @@ class MusicServiceHelperImpl @Inject constructor(
      * @param music, Room에 저장된 외부 저장소의 음악 파일 경로로 음악 재생
      */
     override fun startMusic(music: musicItem) {
-        contextRef?.let { context ->
+        contextRef.let { context ->
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
                 setMusic(music.startTime.toInt(), music.durationTime)

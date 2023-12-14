@@ -12,6 +12,6 @@ interface ParkingLotService {
         @Query("pageNo") pageNo: Int = 1,
         @Query("numOfRows") numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         @Query("type") type: String = "json",
-        @Query("parkingchrgeInfo") parkingchrgeInfo : String?= null
+        @Query("parkingchrgeInfo") parkingchrgeInfo: String? = null,
     ): ParkingLotModel
 }

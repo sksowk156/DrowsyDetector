@@ -24,11 +24,22 @@ class SttHelperImpl @Inject constructor(
     override var sttState = MutableLiveData<Boolean>(false)
     private val duration = 4
 
-    private lateinit var contextRef: Context
+    private var contextRef: Context? = null
     override fun initSttHelper() {
         contextRef = fragment.requireContext()
         sttResult.value = ""
         sttState.value = false
+    }
+
+    override fun stopSttHelper(){
+        mRecognizer?.run {
+            sttResult.value = ("")
+            sttState.value = false
+            stopListening()
+            destroy()
+            mRecognizer?.setRecognitionListener(null)
+            mRecognizer = null
+        }
     }
 
     // 음성인식을 종료하는 메소드
@@ -40,6 +51,7 @@ class SttHelperImpl @Inject constructor(
             destroy()
             mRecognizer?.setRecognitionListener(null)
             mRecognizer = null
+            contextRef = null
         }
     }
 
@@ -72,7 +84,7 @@ class SttHelperImpl @Inject constructor(
                 override fun onFinish() {
                     // 타이머가 끝나면, 음성 인식을 종료합니다.
                     Log.d("whatisthis", "stt 종료1")
-                    releaseSttHelper()
+                    stopSttHelper()
                     sttState.value = (false)
                 }
             }

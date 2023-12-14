@@ -7,6 +7,7 @@ interface SttHelper {
 
     var sttResult: MutableLiveData<String>
     var sttState: MutableLiveData<Boolean>
-    fun releaseSttHelper()
     fun startSTT()
+    fun stopSttHelper()
+    fun releaseSttHelper()
 }

@@ -3,7 +3,6 @@ package com.paradise.network.retrofit.shelter
 import com.paradise.common.network.ApiKey.Companion.API_KEY
 import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 import com.paradise.network.retrofit.shelter.model.ShelterModel
-import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -15,5 +14,5 @@ interface ShelterService {
         @Query("type") type: String = "json",
         @Query("ctprvnNm") ctprvnNm: String? = null,
         @Query("signguNm") signguNm: String? = null,
-    ): Response<ShelterModel>
+    ): ShelterModel
 }

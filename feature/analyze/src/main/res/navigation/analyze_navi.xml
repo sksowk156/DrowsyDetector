@@ -3,17 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/analyze_navi"
-    app:startDestination="@id/analyzeFragment">
+    app:startDestination="@id/analyzesFragment">
 
     <fragment
-        android:id="@+id/analyzeFragment"
-        android:name="com.paradise.analyze.AnalyzeFragment"
+        android:id="@+id/analyzesFragment"
+        android:name="com.paradise.analyze.AnalyzesFragment"
         android:label="fragment_analyze"
-        tools:layout="@layout/fragment_analyze">
+        tools:layout="@layout/fragment_analyzes">
         <argument
             android:name="argAnalyzeValue"
-            app:argType="string"
-            android:defaultValue="0" />
+            android:defaultValue="0"
+            app:argType="string" />
         <!--        <deepLink-->
         <!--            app:uri="@string/home_deeplink_url" />-->
     </fragment>

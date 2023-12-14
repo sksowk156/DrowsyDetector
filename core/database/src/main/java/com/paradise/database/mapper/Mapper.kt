@@ -12,6 +12,7 @@ import com.paradise.database.room.model.WinkCount
 fun AnalyzeResult.toAnalyzeResultItem(): analyzeResultItem {
     return analyzeResultItem(time = this.time, id = this.id)
 }
+
 fun DrowsyCount.toDrowsyItem(): drowsyResultItem {
     return drowsyResultItem(
         recordId = this.recordId,
@@ -30,7 +31,7 @@ fun WinkCount.toWinkItem(): winkResultItem {
 
 fun Music?.toMusicItem(): musicItem {
     return musicItem(
-        title = this!!.title!!, newPath = this.newPath, startTime = this.startTime, // 초기엔 0초부터 시작
+        title = this!!.title, newPath = this.newPath, startTime = this.startTime, // 초기엔 0초부터 시작
         durationTime = this.durationTime, // 기본 3초 -> 후에 변경 가능하게 변경할 예정
         originalPath = this.originalPath!!, id = this.id
     )

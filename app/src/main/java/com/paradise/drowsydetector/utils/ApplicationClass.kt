@@ -10,22 +10,22 @@ import java.util.Locale
 
 @HiltAndroidApp
 class ApplicationClass : Application() {
-    companion object {
-        private lateinit var appInstance: ApplicationClass
-        fun getApplicationContext(): ApplicationClass = appInstance
-    }
+//    companion object {
+//        private lateinit var appInstance: ApplicationClass
+//        fun getApplicationContext(): ApplicationClass = appInstance
+//    }
 
 //    private val dataStore: DataStore<Preferences> by preferencesDataStore(name = PREFERENCES_NAME)
 //
 //    private val database by lazy { LocalDatabase.getDatabase(this) }
 //
-    val fusedLocationProviderClient by lazy {
-        LocationServices.getFusedLocationProviderClient(
-            this
-        )
-    }
-
-    val geocoder by lazy { Geocoder(this, Locale.KOREA) }
+//    val fusedLocationProviderClient by lazy {
+//        LocationServices.getFusedLocationProviderClient(
+//            this
+//        )
+//    }
+//
+//    val geocoder by lazy { Geocoder(this, Locale.KOREA) }
 //
 //    val musicRepositoryImpl by lazy {
 //        MusicRepositoryImpl.getInstance(
@@ -55,6 +55,6 @@ class ApplicationClass : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        appInstance = this
+//        appInstance = this
     }
 }

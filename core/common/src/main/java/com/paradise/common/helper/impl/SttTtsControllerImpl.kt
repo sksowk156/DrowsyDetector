@@ -36,16 +36,24 @@ class SttTtsControllerImpl @Inject constructor(
         subscribeSttResult()
     }
 
+    override fun stopSttTtsController() {
+        ttsHelper.stopTtsHelper()
+        sttHelper.stopSttHelper()
+    }
 
     override fun releaseSttTtsController() {
+        lifecycleOwner?.let {
+            sttHelper.sttResult.removeObservers(it) // observer 제거, 결과 받고 나서 제거
+            ttsHelper.isSpeaking.removeObservers(it)
+            request.removeObservers(it)
+        }
         ttsHelper.releaseTtsHelper()
         sttHelper.releaseSttHelper()
-        request.removeObservers(lifecycleOwner!!)
     }
 
     fun resetSttHelper(lifecycleOwner: LifecycleOwner) {
         sttHelper.sttResult.removeObservers(lifecycleOwner) // observer 제거, 결과 받고 나서 제거
-        sttHelper.releaseSttHelper() // stt 종료
+        sttHelper.stopSttHelper() // stt 종료
     }
 
     fun resetTtsHelper(lifecycleOwner: LifecycleOwner) {
@@ -67,7 +75,7 @@ class SttTtsControllerImpl @Inject constructor(
         }
     }
 
-    override fun speakOutTtsHelper(
+    private fun speakOutTtsHelper(
         lifecycleOwner: LifecycleOwner,
         initObserver: Observer<Int>,
         speakOutWord: String,
@@ -85,7 +93,7 @@ class SttTtsControllerImpl @Inject constructor(
     override fun checkTtsSttHelperReady() =
         (ttsHelper.isSpeaking.value != TTS_SPEAKING && !(sttHelper.sttState.value)!!)
 
-    fun subscribeSttResult() {
+    private fun subscribeSttResult() {
         lifecycleOwner?.let { lifecycleOwner ->
             request.observe(lifecycleOwner) {
                 if (it.isNotEmpty()) {

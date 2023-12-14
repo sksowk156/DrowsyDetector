@@ -93,7 +93,8 @@ class AnalyzesViewModel @Inject constructor(
         _rests.value = UiState.Loading
         try {
             restRepository.getAllRest(boundingBox).collect {
-                _rests.value = UiState.Success(it)
+                if (it.isNotEmpty()) _rests.value = UiState.Success(it)
+                else _rests.value = UiState.Fail("데이터 없음")
             }
         } catch (error: Throwable) {
             _rests.value = UiState.Error(error)
@@ -120,7 +121,8 @@ class AnalyzesViewModel @Inject constructor(
         _shelters.value = UiState.Loading
         try {
             shelterRepository.getAllShelter(boundingBox).collect {
-                _shelters.value = UiState.Success(it)
+                if (it.isNotEmpty()) _shelters.value = UiState.Success(it)
+                else _shelters.value = UiState.Fail("데이터 없음")
             }
         } catch (error: Throwable) {
             _shelters.value = UiState.Error(error)
@@ -175,7 +177,8 @@ class AnalyzesViewModel @Inject constructor(
             }.cancellable().catch { error ->
                 _parkingLots.value = UiState.Error(error)
             }.collectLatest { listItem ->
-                _parkingLots.value = UiState.Success(listItem)
+                if (listItem.isNotEmpty()) _parkingLots.value = UiState.Success(listItem)
+                else _parkingLots.value = UiState.Fail("데이터 없음")
             }
         }
     }
