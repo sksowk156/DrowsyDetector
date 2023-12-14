@@ -183,9 +183,9 @@ class MusicSettingsDialogFragment(
             }
         })
         val duration = if (player!!.duration >= 0) player!!.duration else 0 // 전체 음악 길이
-        val position = music.startTime!!
+        val position = music.startTime
 
-        updateSeekUi(duration!!, position)
+        updateSeekUi(duration, position)
     }
 
     private fun updateSeek() {

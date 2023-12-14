@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.base
+package com.paradise.drowsydetector.multimodule
 
 import android.os.Bundle
 import android.widget.Toast

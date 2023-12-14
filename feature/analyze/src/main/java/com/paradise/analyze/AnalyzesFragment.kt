@@ -125,6 +125,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             binding.analyzeTextGazerequest.visibility = View.VISIBLE
         }
         overlay = binding.analyzeOverlay
+
         cameraHelper.initCameraHelper()
         musicHelper.initMusicHelper()
         volumeHelper.initVolumeHelper()
@@ -136,6 +137,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         subscribeMusicVolume()
     }
 
+    /**
+     * Subscribe music volume
+     *
+     * datastore에 저장된 volume 크기 반환
+     */
     fun subscribeMusicVolume() =
         viewLifecycleOwner.launchWithRepeatOnLifecycle(Lifecycle.State.STARTED) {
             analyzesViewModel.musicVolume.collect { myvolume ->
@@ -146,12 +152,17 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     override fun onStart() {
         super.onStart()
         Log.d("whatisthis", "onStart")
-        // bindService, 서비스 등록
-        analyzesService?.stopForegroundInBackground() // Notification을 눌렀을 경우
+        // onStart()에서 analyzesService 객체가 있다는 것은 pendingIntent로 Activity를 실행했을 경우라는 것 -> foreground service를 종료한다.
+        analyzesService?.stopForegroundInBackground()
+
+        // background에서 돌아올 경우 onStart부터 시작하므로, 여기서 bindService를 호출한다.
         Intent(requireContext(), AnalyzesService::class.java).also { intent ->
             requireContext().bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
+
+        // background에서 돌아올 경우 overlay도 다시 그려야 하므로
         overlay = binding.analyzeOverlay
+
         analyzesViewModel.getAllSetting()
         analyzesViewModel.getAllMusic()
     }
@@ -162,9 +173,9 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         cameraHelper.stopCameraHelper()
         // 재생 중인 음악을 멈춤
         musicHelper.releaseMediaPlayer()
-
+        // 음성 서비스 중단
         sttTtsController.stopSttTtsController()
-
+        // 타이머가 동작 중이라면 중단
         stopTimer()
         // subscribe 했던 job 전부 해제, 휴식 공간 요청 job 전부 해제
         CoroutineScope(defaultDispatcher).launch {
@@ -195,9 +206,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     override fun onDestroyViewInFragMent() { // 홈 버튼 누를 땐 동작 X
         Log.d("whatisthis", "onDestroyViewInFragMent()")
+        // 음성 서비스 해제
         sttTtsController.releaseSttTtsController()
+        // 구독 해제
         sortResult.removeObservers(viewLifecycleOwner)
-        // 서비스를 종료한다.
+        // 서비스 종료
         requireContext().unbindService(connection) // bind 해제
         val intent = Intent(requireContext(), AnalyzesService::class.java)
         requireContext().stopService(intent)
@@ -220,6 +233,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                     if (i.isCancelled) continue // 종료된거면 종료 X
                     i.cancelAndJoin() // 진행이 끝났을 때 종료
                 }
+
                 subscribeJobList.clear()
 
                 if (it.first.size > 0 && it.second.size > 0) {
@@ -824,6 +838,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         return true
     }
 
+    /**
+     * SttTtsService 상속 메서드
+     *
+     * SttTtsController 내부에서 사용할 메서드 정의
+     */
     override fun baseMusic() {
         analyzesViewModel.setSettingMode(BASICMUSICMODE, true)
     }

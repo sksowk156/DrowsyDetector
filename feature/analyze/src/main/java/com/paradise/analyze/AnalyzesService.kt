@@ -75,7 +75,7 @@ class AnalyzesService : LifecycleService() {
     lateinit var settingRepository: SettingRepository
 
     @Inject
-    lateinit var analyzeREsultRepository: AnalyzerResultRepository
+    lateinit var analyzeResultRepository: AnalyzerResultRepository
 
     @Inject
     lateinit var musicHelper: MusicServiceHelper
@@ -608,7 +608,7 @@ class AnalyzesService : LifecycleService() {
     private val _allAnalyzeRecord = MutableLiveData<List<analyzeResultItem>>(emptyList())
     fun insertRecord(analyzeResult: analyzeResultItem) {
         lifecycleScope.launch() {
-            analyzeREsultRepository?.insertRecord(analyzeResult)
+            analyzeResultRepository.insertRecord(analyzeResult)
         }
     }
 
@@ -616,7 +616,7 @@ class AnalyzesService : LifecycleService() {
 
     fun getRecord(time: String) {
         lifecycleScope.launch(mainDispatcher) {
-            analyzeREsultRepository?.getRecord(time)?.collect {
+            analyzeResultRepository.getRecord(time)?.collect {
                 _analyzeRecord.value = (it)
             }
         }
@@ -624,7 +624,7 @@ class AnalyzesService : LifecycleService() {
 
     fun getRecord(id: Int) {
         lifecycleScope.launch(mainDispatcher) {
-            analyzeREsultRepository?.getRecord(id)?.collect {
+            analyzeResultRepository?.getRecord(id)?.collect {
                 _analyzeRecord.value = (it)
             }
         }
@@ -648,7 +648,7 @@ class AnalyzesService : LifecycleService() {
 
     fun insertWinkCount(winkCount: winkResultItem) {
         lifecycleScope.launch() {
-            analyzeREsultRepository?.insertWinkCount(winkCount)
+            analyzeResultRepository?.insertWinkCount(winkCount)
         }
     }
 
@@ -666,7 +666,7 @@ class AnalyzesService : LifecycleService() {
     private val _drowsyCount = MutableLiveData<List<drowsyResultItem>>(emptyList())
     fun insertDrowsyCount(drowsyCount: drowsyResultItem) {
         lifecycleScope.launch() {
-            analyzeREsultRepository?.insertDrowsyCount(drowsyCount)
+            analyzeResultRepository.insertDrowsyCount(drowsyCount)
         }
     }
 

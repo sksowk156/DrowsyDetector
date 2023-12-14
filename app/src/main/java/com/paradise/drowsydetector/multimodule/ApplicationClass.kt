@@ -1,15 +1,14 @@
-package com.paradise.drowsydetector.utils
+package com.paradise.drowsydetector.multimodule
 
 import android.app.Application
-import android.location.Geocoder
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.preferencesDataStore
-import com.google.android.gms.location.LocationServices
 import dagger.hilt.android.HiltAndroidApp
-import java.util.Locale
 
 @HiltAndroidApp
 class ApplicationClass : Application() {
+    override fun onCreate() {
+        super.onCreate()
+//        appInstance = this
+    }
 //    companion object {
 //        private lateinit var appInstance: ApplicationClass
 //        fun getApplicationContext(): ApplicationClass = appInstance
@@ -52,9 +51,4 @@ class ApplicationClass : Application() {
 //            analyzeResultDao = database.recordDao()
 //        )
 //    }
-
-    override fun onCreate() {
-        super.onCreate()
-//        appInstance = this
-    }
 }

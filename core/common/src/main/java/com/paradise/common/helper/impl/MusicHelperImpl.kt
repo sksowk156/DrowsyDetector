@@ -64,7 +64,7 @@ class MusicHelperImpl @Inject constructor(
      * Res에 저장된 음악 리스트에서 음악을 랜덤으로 뽑아 MusicHelperImpl.Builder()에 저장한다.
      */
     override fun setStandardMusic() {
-        startMusic(R.raw.setstandard)
+        startMusic(R.raw.settingsound)
     }
 
     /**
@@ -74,7 +74,7 @@ class MusicHelperImpl @Inject constructor(
      */
     override fun setResMusic() {
         val randomMusic = listOf<Int>(
-            (R.raw.alert1), (R.raw.alert2), (R.raw.alert3), (R.raw.alert4), (R.raw.alert5)
+            (R.raw.alert1), (R.raw.alert2), (R.raw.alert3)
         ).getRandomElement()
         if (randomMusic != null) startMusic(randomMusic)
     }
@@ -91,7 +91,7 @@ class MusicHelperImpl @Inject constructor(
      * @param resId, raw package에 있는 음악 파일을 재생
      */
     override fun startMusic(resId: Int) {
-        contextRef?.let { context ->
+        contextRef.let { context ->
             val rawDescriptor = context.resources.openRawResourceFd(resId)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(
@@ -109,10 +109,10 @@ class MusicHelperImpl @Inject constructor(
      * @param music, Room에 저장된 외부 저장소의 음악 파일 경로로 음악 재생
      */
     override fun startMusic(music: musicItem) {
-        contextRef?.let { context ->
+        contextRef.let { context ->
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
-                setMusic(music.startTime!!.toInt(), music.durationTime!!)
+                setMusic(music.startTime.toInt(), music.durationTime)
             }
         }
     }
@@ -158,7 +158,7 @@ class MusicHelperImpl @Inject constructor(
      * 음악의 종료 시점을 정한다.
      * @param duration
      */
-    private fun setDuration(duration: Long) = lifecycleOwner?.let {
+    private fun setDuration(duration: Long) = lifecycleOwner.let {
         it.lifecycleScope.launch(defaultDispatcher) {
             delay(duration)
             releaseMediaPlayer()

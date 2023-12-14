@@ -1,4 +1,4 @@
-package com.paradise.drowsydetector.ui.view
+package com.paradise.drowsydetector.multimodule
 
 import android.annotation.SuppressLint
 import android.content.Intent

@@ -42,7 +42,7 @@
     </queries>
 
     <application
-        android:name=".utils.ApplicationClass"
+        android:name=".multimodule.ApplicationClass"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@drawable/watchout_logo"
@@ -54,7 +54,7 @@
         tools:ignore="MissingTvBanner"
         tools:targetApi="31">
         <activity
-            android:name=".ui.view.SplashActivity"
+            android:name=".multimodule.SplashActivity"
             android:exported="true" >
 
             <intent-filter>
@@ -67,7 +67,7 @@
 
         <!-- screenOrientation="portrait" 로 핸드폰 회전을 막음 -->
         <activity
-            android:name=".ui.view.MainActivity"
+            android:name=".multimodule.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="portrait">

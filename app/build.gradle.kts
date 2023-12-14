@@ -57,10 +57,9 @@ dependencies {
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 ////    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
     core_model()
-//    core_domain()
     core_common()
-//    core_data()
     core_common_ui()
+
     feature_analyze()
     feature_home()
     feature_setting()
