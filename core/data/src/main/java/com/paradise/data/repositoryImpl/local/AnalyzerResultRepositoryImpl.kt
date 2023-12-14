@@ -15,6 +15,7 @@ import com.paradise.database.room.model.AnalyzeResult
 import com.paradise.database.room.model.DrowsyCount
 import com.paradise.database.room.model.WinkCount
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import javax.inject.Inject
 
 class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResultDataProvider: AnalyzeResultDao) :
@@ -32,26 +33,26 @@ class AnalyzerResultRepositoryImpl @Inject constructor(private val analyzeResult
     }
 
     override fun getAllRecord() =
-        analyzeResultDataProvider.getAllRecord().map { it.map(AnalyzeResult::toAnalyzeResultItem) }
+        analyzeResultDataProvider.getAllRecord().map { it?.map(AnalyzeResult::toAnalyzeResultItem) }
 
     override fun getRecord(Id: Int) =
-        analyzeResultDataProvider.getRecord(Id).map { it.toAnalyzeResultItem() }
+        analyzeResultDataProvider.getRecord(Id).map { it?.toAnalyzeResultItem() }
 
     override fun getRecord(time: String) =
-        analyzeResultDataProvider.getRecord(time).map { it.toAnalyzeResultItem() }
+        analyzeResultDataProvider.getRecord(time).map { it?.toAnalyzeResultItem() }
 
     override fun getAllDrowsyCount() =
-        analyzeResultDataProvider.getAllDrowsyCount().map { it.map(DrowsyCount::toDrowsyItem) }
+        analyzeResultDataProvider.getAllDrowsyCount().map{ it?.map(DrowsyCount::toDrowsyItem) }
 
     override fun getDrowsyCount(recordId: Int) =
-        analyzeResultDataProvider.getDrowsyCount(recordId).map { it.map(DrowsyCount::toDrowsyItem) }
+        analyzeResultDataProvider.getDrowsyCount(recordId).map { it?.map(DrowsyCount::toDrowsyItem) }
 
     override fun getAllWinkCount() =
-        analyzeResultDataProvider.getAllWinkCount().map { it.map(WinkCount::toWinkItem) }
+        analyzeResultDataProvider.getAllWinkCount().map { it?.map(WinkCount::toWinkItem) }
 
 
     override fun getWinkCount(recordId: Int) =
-        analyzeResultDataProvider.getWinkCount(recordId).map { it.map(WinkCount::toWinkItem) }
+        analyzeResultDataProvider.getWinkCount(recordId).map { it?.map(WinkCount::toWinkItem) }
 
 
     override suspend fun deleteAllRecords() {

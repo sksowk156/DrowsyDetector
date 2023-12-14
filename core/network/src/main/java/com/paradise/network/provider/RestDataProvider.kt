@@ -14,5 +14,5 @@ class RestDataProvider @Inject constructor(private val restService: RestService)
         pageNo: Int = 1,
         numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         type: String = "json",
-    ): Flow<RestModel> = flow { restService.getAllRest(pageNo, numOfRows, type) }
+    ): Flow<RestModel?> = flow { emit(restService.getAllRest(pageNo, numOfRows, type)) }
 }

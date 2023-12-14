@@ -15,14 +15,15 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataProvider: ParkingLotDataProvider) :
     ParkingLotRepository {
-    override suspend fun getOneParkingLot(): Flow<Int> = parkingLotDataProvider.getAllParkingLot(
-        pageNo = 1, numOfRows = 1
-    ).map { it.response.body.totalCount.toInt() }
+    override suspend fun getOneParkingLot(): Flow<Int> = flow {
+        parkingLotDataProvider.getAllParkingLot(
+            pageNo = 1, numOfRows = 1
+        ).collect { emit(it?.response?.body?.totalCount?.toInt() ?: 0) }
+    }
 
     override suspend fun getAllParkingLot(
         pageNo: Int,
@@ -36,8 +37,8 @@ class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataPro
         val freeParkingLot = mutableListOf<parkingLotItem>()
         parkingLotDataProvider.getAllParkingLot(
             pageNo = pageNo, numOfRows = numOfRows, parkingchrgeInfo = parkingchrgeInfo
-        ).map { result ->
-            result.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
+        ).collect { result ->
+            result?.response?.body?.items?.asFlow()?.flowOn(defaultDispatcher)?.filter { item ->
                 val lat = item.latitude.toDoubleOrNull()
                 val lon = item.longitude.toDoubleOrNull()
                 val inLatRange =
@@ -46,7 +47,9 @@ class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataPro
                     lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
                 val inTime = when (day) {
                     DAY.WEEKDAY -> {
-                        compareTime(nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm)
+                        compareTime(
+                            nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm
+                        )
                     }
 
                     DAY.SAT -> {
@@ -54,11 +57,13 @@ class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataPro
                     }
 
                     DAY.HOLIDAY -> {
-                        compareTime(nowTime, item.holidayOperOpenHhmm, item.holidayCloseOpenHhmm)
+                        compareTime(
+                            nowTime, item.holidayOperOpenHhmm, item.holidayCloseOpenHhmm
+                        )
                     }
                 }
                 inLatRange && inLonRange && inTime
-            }.collect { item ->
+            }?.collect { item ->
                 freeParkingLot.add(item.toParkingLotItem())
             }
             emit(freeParkingLot)

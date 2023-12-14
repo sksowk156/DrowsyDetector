@@ -81,13 +81,13 @@
         </activity>
 
         <service
-            android:name="com.paradise.drowsydetector.service.AnalyzeService"
+            android:name="com.paradise.analyze.AnalyzesService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="camera"
             android:stopWithTask="false" />
 <!--        <service-->
-<!--            android:name="com.paradise.analyze.AnalyzeService"-->
+<!--            android:name="com.paradise.analyze.AnalyzesServicee"-->
 <!--            android:enabled="true"-->
 <!--            android:exported="false"-->
 <!--            android:foregroundServiceType="camera"-->

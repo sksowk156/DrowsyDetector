@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class RestRepositoryImpl @Inject constructor(private val restDataProvider: RestDataProvider) :
@@ -22,8 +21,8 @@ class RestRepositoryImpl @Inject constructor(private val restDataProvider: RestD
         boundingBox: BoundingBox,
     ): Flow<List<restItem>> = flow<List<restItem>> {
         val nearRest = mutableListOf<restItem>()
-        restDataProvider.getAllRest().map { result ->
-            result.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
+        restDataProvider.getAllRest().collect { result ->
+            result?.response?.body?.items?.asFlow()?.flowOn(defaultDispatcher)?.filter { item ->
                 val lat = item.latitude.toDoubleOrNull()
                 val lon = item.longitude.toDoubleOrNull()
                 val inLatRange =
@@ -31,7 +30,7 @@ class RestRepositoryImpl @Inject constructor(private val restDataProvider: RestD
                 val inLonRange =
                     lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
                 inLatRange && inLonRange
-            }.collect { item ->
+            }?.collect { item ->
                 nearRest.add(item.toRestItem())
             }
             emit(nearRest)

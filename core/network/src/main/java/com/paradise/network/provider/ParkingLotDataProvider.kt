@@ -17,6 +17,6 @@ class ParkingLotDataProvider @Inject constructor(
         numOfRows: Int = DEFAULT_NUM_OF_ROWS,
         type: String = "json",
         parkingchrgeInfo: String ?= null,
-    ): Flow<ParkingLotModel> =
-        flow { parkingLotService.getAllParkingLot(pageNo, numOfRows, type, parkingchrgeInfo) }
+    ): Flow<ParkingLotModel?> =
+        flow { emit(parkingLotService.getAllParkingLot(pageNo, numOfRows, type, parkingchrgeInfo)) }
 }

@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class ShelterRepositoryImpl @Inject constructor(private val shelterDataProvider: ShelterDataProvider) :
@@ -22,8 +21,8 @@ class ShelterRepositoryImpl @Inject constructor(private val shelterDataProvider:
         boundingBox: BoundingBox,
     ): Flow<List<shelterItem>> = flow<List<shelterItem>> {
         val nearShelter = mutableListOf<shelterItem>()
-        shelterDataProvider.getAllShelter().map { result ->
-            result.response.body.items.asFlow().flowOn(defaultDispatcher).filter { item ->
+        shelterDataProvider.getAllShelter().collect { result ->
+            result?.response?.body?.items?.asFlow()?.flowOn(defaultDispatcher)?.filter { item ->
                 val lat = item.latitude.toDoubleOrNull()
                 val lon = item.longitude.toDoubleOrNull()
                 val inLatRange =
@@ -31,7 +30,7 @@ class ShelterRepositoryImpl @Inject constructor(private val shelterDataProvider:
                 val inLonRange =
                     lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
                 inLatRange && inLonRange
-            }.collect { item ->
+            }?.collect { item ->
                 nearShelter.add(item.toShelterItem())
             }
             emit(nearShelter)

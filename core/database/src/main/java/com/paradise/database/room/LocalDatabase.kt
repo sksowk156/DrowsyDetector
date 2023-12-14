@@ -13,7 +13,7 @@ import com.paradise.database.room.model.WinkCount
 
 @Database(
     entities = [Music::class, AnalyzeResult::class, WinkCount::class, DrowsyCount::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class LocalDatabase : RoomDatabase() {
@@ -30,7 +30,7 @@ abstract class LocalDatabase : RoomDatabase() {
                     context.applicationContext,
                     LocalDatabase::class.java,
                     "localdatabase.db"
-                ).build()
+                ).fallbackToDestructiveMigration().build()
                 database = instance
                 instance
             }

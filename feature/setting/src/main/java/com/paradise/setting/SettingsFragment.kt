@@ -100,6 +100,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
                 volume = value.toInt()
                 // AudioManager의 음량을 변경
                 volumeHelper.setVolume(volume)
+                settingsViewModel.setSettingMode(MUSICVOLUME, volume)
             }
 
             ivSettingAddmusic.setOnAvoidDuplicateClick {
@@ -129,7 +130,6 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     override fun onPause() {
         super.onPause()
         musicHelper.releaseMediaPlayer()
-        settingsViewModel.setSettingMode(MUSICVOLUME, volume)
         // BroadcastReceiver를 해제
         requireContext().unregisterReceiver(volumeChangeObserver)
     }

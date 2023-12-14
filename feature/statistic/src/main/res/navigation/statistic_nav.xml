@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/statistic_nav"
-    app:startDestination="@id/statisticFragment">
+    app:startDestination="@id/statisticsFragment">
 
     <fragment
-        android:id="@+id/statisticFragment"
+        android:id="@+id/statisticsFragment"
         android:name="com.paradise.statistic.StatisticsFragment"
         android:label="fragment_analyze"
         tools:layout="@layout/fragment_statistics">

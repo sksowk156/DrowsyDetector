@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "drowsy_table", indices = [Index(value = ["id"], unique = true)])
 data class AnalyzeResult(
     @ColumnInfo(name = "time") // 총 감지 시간
-    val time: String? = "",
+    val time: String = "",
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     val id: Int = 0,    // 음원 자체의 ID
@@ -26,8 +26,8 @@ data class AnalyzeResult(
 )
 data class DrowsyCount(
     @ColumnInfo(name = "recordId")
-    val recordId: Int,
-    val value: Int,
+    val recordId: Int = 0,
+    val value: Int = 0,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 )
@@ -43,8 +43,8 @@ data class DrowsyCount(
 )
 data class WinkCount(
     @ColumnInfo(name = "recordId")
-    val recordId: Int,
-    val value: Int,
+    val recordId: Int = 0,
+    val value: Int = 0,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 )

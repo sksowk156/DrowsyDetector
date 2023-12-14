@@ -4,49 +4,41 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.viewModels
+import com.paradise.common.helper.method.checkPermissions
+import com.paradise.common.network.ACTION_SHOW_ANALYZING_FRAGMENT
+import com.paradise.common.network.BASICMUSICMODE
+import com.paradise.common.network.GUIDEMODE
+import com.paradise.common.network.MUSICVOLUME
 import com.paradise.drowsydetector.R
 import com.paradise.drowsydetector.base.BaseActivity
 import com.paradise.drowsydetector.databinding.ActivityMainBinding
-import com.paradise.drowsydetector.ui.viewmodel.AnalyzeViewModel
-import com.paradise.drowsydetector.ui.viewmodel.MusicViewModel
-import com.paradise.drowsydetector.ui.viewmodel.SettingViewModel
-import com.paradise.drowsydetector.ui.viewmodel.StaticsViewModel
-import com.paradise.drowsydetector.utils.ACTION_SHOW_ANALYZING_FRAGMENT
-import com.paradise.drowsydetector.utils.BASICMUSICMODE
-import com.paradise.drowsydetector.utils.CUURRENTFRAGMENTTAG
-import com.paradise.drowsydetector.utils.GUIDEMODE
-import com.paradise.drowsydetector.utils.MAINBASE
-import com.paradise.drowsydetector.utils.MUSICVOLUME
-import com.paradise.drowsydetector.utils.checkPermissions
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
 
-    val analyzeViewModel: AnalyzeViewModel by viewModels()
-//    {
-//        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepositoryImpl)
-//    }
-
-//    val staticsViewModel: StaticsViewModel by viewModels()
-//    {
-//        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
-//    }
-
-    val musicViewModel: MusicViewModel by viewModels()
-//    {
-//        MusicViewModel.MusicViewModelFactory(ApplicationClass.getApplicationContext().musicRepositoryImpl)
-//    }
-
-    val settingViewModel: SettingViewModel by viewModels()
-//    {
-//        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepositoryImpl)
-//    }
-
-//    @Inject
-//    lateinit var toastHelper: ToastHelper
+//    val analyzeViewModel: AnalyzeViewModel by viewModels()
+////    {
+////        AnalyzeViewModel.AnalyzeViewModelFactory(ApplicationClass.getApplicationContext().relaxRepositoryImpl)
+////    }
+//
+////    val staticsViewModel: StaticsViewModel by viewModels()
+////    {
+////        StaticsViewModel.StaticsViewModelFactory(ApplicationClass.getApplicationContext().staticRepository)
+////    }
+//
+//    val musicViewModel: MusicViewModel by viewModels()
+////    {
+////        MusicViewModel.MusicViewModelFactory(ApplicationClass.getApplicationContext().musicRepositoryImpl)
+////    }
+//
+//    val settingViewModel: SettingViewModel by viewModels()
+////    {
+////        SettingViewModel.SettingViewModelFactory(ApplicationClass.getApplicationContext().settingRepositoryImpl)
+////    }
+//
+////    @Inject
+////    lateinit var toastHelper: ToastHelper
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
@@ -91,32 +83,32 @@ class MainActivity : BaseActivity<ActivityMainBinding>(R.layout.activity_main) {
         checkPermissions(arrayOf(Manifest.permission.SYSTEM_ALERT_WINDOW)) {}
 
 //        staticsViewModel.getAllRecord()
-        settingViewModel.getSettingModeBool(GUIDEMODE)
-        settingViewModel.getSettingModeInt(MUSICVOLUME)
-        settingViewModel.getSettingModeBool(BASICMUSICMODE)
-        settingViewModel.getAllSetting()
-        musicViewModel.getAllMusic()
+//        settingViewModel.getSettingModeBool(GUIDEMODE)
+//        settingViewModel.getSettingModeInt(MUSICVOLUME)
+//        settingViewModel.getSettingModeBool(BASICMUSICMODE)
+//        settingViewModel.getAllSetting()
+//        musicViewModel.getAllMusic()
 
         navigateToTrackingFragmentIfNeeded(intent)
     }
 
     override fun saveInstanceStateNull() {
-        supportFragmentManager
-            .beginTransaction()
-            .add(binding.mainFramelayout.id, MainBaseFragment(), MAINBASE)
-            .commitAllowingStateLoss()
+//        supportFragmentManager
+//            .beginTransaction()
+//            .add(binding.mainFramelayout.id, MainBaseFragment(), MAINBASE)
+//            .commitAllowingStateLoss()
     }
 
     override fun saveInstanceStateNotNull(bundle: Bundle) {
-        val currentFragmentTag = bundle.getString(CUURRENTFRAGMENTTAG).toString()
-        supportFragmentManager
-            .beginTransaction()
-            .show(supportFragmentManager.findFragmentByTag(currentFragmentTag)!!)
-            .commitAllowingStateLoss()
+//        val currentFragmentTag = bundle.getString(CUURRENTFRAGMENTTAG).toString()
+//        supportFragmentManager
+//            .beginTransaction()
+//            .show(supportFragmentManager.findFragmentByTag(currentFragmentTag)!!)
+//            .commitAllowingStateLoss()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putString(CUURRENTFRAGMENTTAG, MAINBASE)
+//        outState.putString(CUURRENTFRAGMENTTAG, MAINBASE)
     }
 }

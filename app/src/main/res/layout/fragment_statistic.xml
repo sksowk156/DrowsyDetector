@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:clickable="true"
-    tools:context=".ui.view.statistic.StatisticFragment">
+    tools:context="com.paradise.statistic.StatisticFragment">
 
     <include
         android:id="@+id/toolbar_statistic"

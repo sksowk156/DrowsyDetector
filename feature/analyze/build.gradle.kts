@@ -55,6 +55,7 @@ dependencies {
     core_domain()
     core_common()
     core_common_ui()
+
     // navi
     navigation()
     // dagger hilt
@@ -80,7 +81,7 @@ dependencies {
     // RxBinding
     rxBinding()
 
-
+    implementation("com.google.guava:guava:30.1.1-android")
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")

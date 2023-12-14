@@ -1,5 +1,6 @@
 package com.paradise.datastore.provider
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -73,6 +74,8 @@ class DataStoreProvider @Inject constructor(private val dataStore: DataStore<Pre
                 throw exception
             }
         }.map { preferences ->
+            Log.d("whatisthis", "in datastore, ${key} ${preferences[preferencesKey]}")
+
             preferences[preferencesKey] ?: 0
         }
     }

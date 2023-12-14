@@ -53,7 +53,7 @@ class SttTtsControllerImpl @Inject constructor(
         ttsHelper?.stopTtsHelper() // tts 멈춤
     }
 
-    private var request = MutableLiveData<String>()
+    override val request = MutableLiveData<String>()
     override fun speakOutTtsHelper(word: String) {
         lifecycleOwner?.let { lifecycleOwner ->
             if (checkTtsSttHelperReady()) {

@@ -3,6 +3,7 @@ package com.paradise.domain.usecases
 import com.core.model.BoundingBox
 import com.core.model.parkingLotItem
 import com.paradise.common.network.DAY
+import com.paradise.common.network.DEFAULT_NUM_OF_ROWS
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.data.repository.ParkingLotRepository
 import kotlinx.coroutines.flow.Flow
@@ -19,17 +20,19 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
         numOfRows: Int, day: DAY, nowTime: String,
     ) = flow<List<Flow<List<parkingLotItem>>>> {
         parkingLotRepository.getOneParkingLot().collect { totalCount ->
-            var numOfCoroutineRequired = totalCount / numOfRows
-            if (totalCount % numOfRows != 0) numOfCoroutineRequired++
-            emit(
-                getALLFreeParkingLots(
-                    boundingBox = boundingBox,
-                    parkingchargeInfo = parkingchargeInfo,
-                    numOfCoroutineRequired = numOfCoroutineRequired,
-                    day = day,
-                    nowTime = nowTime
+            if(totalCount!=0){
+                var numOfCoroutineRequired = totalCount / numOfRows
+                if (totalCount % numOfRows != 0) numOfCoroutineRequired++
+                emit(
+                    getALLFreeParkingLots(
+                        boundingBox = boundingBox,
+                        parkingchargeInfo = parkingchargeInfo,
+                        numOfCoroutineRequired = numOfCoroutineRequired,
+                        day = day,
+                        nowTime = nowTime
+                    )
                 )
-            )
+            }
         }
     }.flowOn(defaultDispatcher).cancellable()
 
@@ -42,7 +45,7 @@ class GetParkingLostItemListUseCase @Inject constructor(private val parkingLotRe
     ) = (1..numOfCoroutineRequired).map {
         parkingLotRepository.getAllParkingLot(
             pageNo = it,
-            numOfRows = DEFAULT_BUFFER_SIZE,
+            numOfRows = DEFAULT_NUM_OF_ROWS,
             boundingBox = boundingBox,
             parkingchargeInfo = parkingchargeInfo,
             day = day,

@@ -22,15 +22,15 @@ fun DrowsyCount.toDrowsyItem(): drowsyResultItem {
 
 fun WinkCount.toWinkItem(): winkResultItem {
     return winkResultItem(
-        recordId = this.recordId,
+        recordId = this!!.recordId,
         value = this.value,
         id = this.id,
     )
 }
 
-fun Music.toMusicItem(): musicItem {
+fun Music?.toMusicItem(): musicItem {
     return musicItem(
-        title = this.title!!, newPath = this.newPath, startTime = this.startTime, // 초기엔 0초부터 시작
+        title = this!!.title!!, newPath = this.newPath, startTime = this.startTime, // 초기엔 0초부터 시작
         durationTime = this.durationTime, // 기본 3초 -> 후에 변경 가능하게 변경할 예정
         originalPath = this.originalPath!!, id = this.id
     )
