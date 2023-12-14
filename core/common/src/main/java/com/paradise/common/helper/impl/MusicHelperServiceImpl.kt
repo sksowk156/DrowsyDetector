@@ -2,12 +2,11 @@ package com.paradise.common.helper.impl
 
 import android.content.Context
 import android.media.MediaPlayer
-import androidx.fragment.app.Fragment
-import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.core.model.musicItem
 import com.paradise.common.R
-import com.paradise.common.helper.MusicHelper
+import com.paradise.common.helper.MusicHelperService
 import com.paradise.common.network.DEFAULT_MUSIC_DURATION
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.getUriFromFilePath
@@ -19,20 +18,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class MusicHelperImpl @Inject constructor(
-    private val fragment: Fragment,
-) : MusicHelper {
+class MusicHelperServiceImpl @Inject constructor(
+    private val contextRef: Context,
+    private val lifecycleOwner: LifecycleService,
+) : MusicHelperService {
 
     private var mediaPlayer: MediaPlayer? = null
     private var job: Job? = null
     private val _isPrepared: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private lateinit var contextRef: Context
-    private lateinit var lifecycleOwner: LifecycleOwner
-    override fun initMusicHelper() {
-        contextRef = fragment.requireContext()
-        lifecycleOwner = fragment.viewLifecycleOwner
-    }
-
     override val isPrepared: StateFlow<Boolean> get() = _isPrepared
 
     /**
@@ -111,8 +104,10 @@ class MusicHelperImpl @Inject constructor(
     override fun startMusic(music: musicItem) {
         contextRef?.let { context ->
             mediaPlayer = MediaPlayer().apply {
-                setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
-                setMusic(music.startTime!!.toInt(), music.durationTime!!)
+                if (music.id != null) {
+                    setDataSource(context, getUriFromFilePath(context, music.newPath!!)!!)
+                    setMusic(music.startTime!!.toInt(), music.durationTime!!)
+                }
             }
         }
     }

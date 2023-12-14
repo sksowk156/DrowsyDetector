@@ -125,18 +125,18 @@ class MusicSettingsDialogFragment(
 
         player?.addMediaSource(mediaSource)
         player?.prepare()
-        player?.seekTo(music.startTime)
+        player?.seekTo(music.startTime!!)
     }
 
     private fun initStopJob() = lifecycleScope.launch() {
-        var remainTime = music.durationTime
-        if (player?.currentPosition!! > music.startTime) { // 재생 중간에 멈출 경우 delay 시간을 고쳐야 한다.
-            val diffTime = player?.currentPosition!! - music.startTime // 들은 시간
-            remainTime = music.durationTime - diffTime // 전체 동작 시간에서 들은 시간만큼 빼준다.
+        var remainTime = music.durationTime!!
+        if (player?.currentPosition!! > music.startTime!!) { // 재생 중간에 멈출 경우 delay 시간을 고쳐야 한다.
+            val diffTime = player?.currentPosition!! - music.startTime!! // 들은 시간
+            remainTime = music.durationTime!! - diffTime // 전체 동작 시간에서 들은 시간만큼 빼준다.
         }
         delay(remainTime) // 이 시간이 지나면 자동으로 멈춘다.
         player!!.pause()
-        player?.seekTo(music.startTime) // 다시 처음으로 돌아간다.
+        player?.seekTo(music.startTime!!) // 다시 처음으로 돌아간다.
     }
 
     private fun initPlayControlButtons() {
@@ -178,12 +178,12 @@ class MusicSettingsDialogFragment(
             override fun onStopTrackingTouch(seekBar: SeekBar) { // 사용자가 SeekBar 조작을 멈출 때 호출되는 메서드
                 if (player!!.isPlaying) player!!.pause()
                 music.startTime = seekBar.progress * 1000L
-                player?.seekTo(music.startTime)
+                player?.seekTo(music.startTime!!)
 //                initDurationView()
             }
         })
         val duration = if (player!!.duration >= 0) player!!.duration else 0 // 전체 음악 길이
-        val position = music.startTime
+        val position = music.startTime!!
 
         updateSeekUi(duration!!, position)
     }

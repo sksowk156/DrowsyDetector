@@ -7,6 +7,7 @@ import androidx.lifecycle.Observer
 interface SttTtsController {
     fun initSttTtsController()
 
+    val request : MutableLiveData<String>
     fun releaseSttTtsController()
     fun speakOutTtsHelper(word: String)
 

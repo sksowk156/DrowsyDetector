@@ -6,8 +6,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.paradise.common.helper.SttHelper
-import com.paradise.common.helper.SttService
 import com.paradise.common.helper.SttTtsController
+import com.paradise.common.helper.SttTtsService
 import com.paradise.common.helper.TtsHelper
 import com.paradise.common.network.CHECKUSESTTSERVICE
 import com.paradise.common.network.SELECTGUIDESETTING
@@ -18,39 +18,39 @@ import com.paradise.common.network.TTS_SPEAKING
 import javax.inject.Inject
 
 class SttTtsControllerImpl @Inject constructor(
+    private val sttHelper: SttHelper,
+    private val ttsHelper: TtsHelper,
     private val fragment: Fragment,
 ) : SttTtsController {
     private var lifecycleOwner: LifecycleOwner? = null
-    private var sttService: SttService? = null
-    private var sttHelper: SttHelper? = null
-    private var ttsHelper: TtsHelper? = null
+    private var sttTtsService: SttTtsService? = null
+
     override fun initSttTtsController() {
         lifecycleOwner = fragment.viewLifecycleOwner
-        sttService = fragment as SttService
-        ttsHelper = TtsHelperImpl(fragment)
-        sttHelper = SttHelperImpl(fragment)
+        sttTtsService = fragment as SttTtsService
 
-        ttsHelper?.initTtsHelper()
-        sttHelper?.initSttHelper()
+        ttsHelper.initTtsHelper()
+        ttsHelper.initTTS()
+        sttHelper.initSttHelper()
 
-        ttsHelper?.initTTS()
         subscribeSttResult()
     }
 
 
     override fun releaseSttTtsController() {
-        ttsHelper?.releaseTtsHelper()
-        sttHelper?.releaseSttHelper()
+        ttsHelper.releaseTtsHelper()
+        sttHelper.releaseSttHelper()
+        request.removeObservers(lifecycleOwner!!)
     }
 
     fun resetSttHelper(lifecycleOwner: LifecycleOwner) {
-        sttHelper?.sttResult?.removeObservers(lifecycleOwner) // observer 제거, 결과 받고 나서 제거
-        sttHelper?.releaseSttHelper() // stt 종료
+        sttHelper.sttResult.removeObservers(lifecycleOwner) // observer 제거, 결과 받고 나서 제거
+        sttHelper.releaseSttHelper() // stt 종료
     }
 
     fun resetTtsHelper(lifecycleOwner: LifecycleOwner) {
-        ttsHelper?.isSpeaking?.removeObservers(lifecycleOwner)
-        ttsHelper?.stopTtsHelper() // tts 멈춤
+        ttsHelper.isSpeaking.removeObservers(lifecycleOwner)
+        ttsHelper.stopTtsHelper() // tts 멈춤
     }
 
     override val request = MutableLiveData<String>()
@@ -72,18 +72,18 @@ class SttTtsControllerImpl @Inject constructor(
         initObserver: Observer<Int>,
         speakOutWord: String,
     ) {
-        ttsHelper?.isSpeaking?.observe(lifecycleOwner, initObserver)
-        ttsHelper?.speakOut(speakOutWord)
+        ttsHelper.isSpeaking.observe(lifecycleOwner, initObserver)
+        ttsHelper.speakOut(speakOutWord)
     }
 
     private val initTtsStateObserver: Observer<Int> = Observer<Int> {
-        if ((ttsHelper?.isSpeaking?.value == TTS_FINISHING)) { // TTS가 끝났을 때, STT가 시작하지 않았을 때
-            ttsHelper?.stopTtsHelper() // tts 멈춤
+        if ((ttsHelper.isSpeaking.value == TTS_FINISHING)) { // TTS가 끝났을 때, STT가 시작하지 않았을 때
+            ttsHelper.stopTtsHelper() // tts 멈춤
         }
     }
 
     override fun checkTtsSttHelperReady() =
-        (ttsHelper?.isSpeaking?.value != TTS_SPEAKING && !(sttHelper?.sttState?.value)!!)
+        (ttsHelper.isSpeaking.value != TTS_SPEAKING && !(sttHelper.sttState.value)!!)
 
     fun subscribeSttResult() {
         lifecycleOwner?.let { lifecycleOwner ->
@@ -142,15 +142,15 @@ class SttTtsControllerImpl @Inject constructor(
         initTtsObserver: Observer<Int>,
         speakOutWord: String,
     ) {
-        sttHelper?.sttResult?.observe(lifecycleOwner, initSttObserver)
-        ttsHelper?.isSpeaking?.observe(lifecycleOwner, initTtsObserver)
-        ttsHelper?.speakOut(speakOutWord)
+        sttHelper.sttResult.observe(lifecycleOwner, initSttObserver)
+        ttsHelper.isSpeaking.observe(lifecycleOwner, initTtsObserver)
+        ttsHelper.speakOut(speakOutWord)
     }
 
     private val initTtsSttServiceObserver: Observer<Int> = Observer<Int> {
-        if ((ttsHelper?.isSpeaking?.value == TTS_FINISHING && !(sttHelper?.sttState?.value)!!)) { // TTS가 끝났을 때, STT가 시작하지 않았을 때
-            sttHelper?.startSTT() // stt 시작
-            ttsHelper?.stopTtsHelper() // tts 멈춤
+        if ((ttsHelper.isSpeaking.value == TTS_FINISHING && !(sttHelper.sttState.value)!!)) { // TTS가 끝났을 때, STT가 시작하지 않았을 때
+            sttHelper.startSTT() // stt 시작
+            ttsHelper.stopTtsHelper() // tts 멈춤
         }
     }
 
@@ -241,43 +241,43 @@ class SttTtsControllerImpl @Inject constructor(
     }
 
     private fun setBaseMusic() {
-        sttService?.run {
+        sttTtsService?.run {
             this.baseMusic()
         }
     }
 
     private fun setUserMusic() {
-        sttService?.run {
+        sttTtsService?.run {
             this.userMusic()
         }
     }
 
     private fun setGuideOff() {
-        sttService?.run {
+        sttTtsService?.run {
             this.guideOff()
         }
     }
 
     private fun setGuideOn() {
-        sttService?.run {
+        sttTtsService?.run {
             this.guideOn()
         }
     }
 
     private fun requestRelaxData() { // 휴식 공간 정보 요청
-        sttService?.run {
+        sttTtsService?.run {
             this.relaxData()
         }
     }
 
     private fun requestRecentRelaxData() { // 휴식 공간 최근 정보 조회
-        sttService?.run {
+        sttTtsService?.run {
             this.recentRelaxData()
         }
     }
 
     private fun requestCancleAnalyze() {  // 앱 종료
-        sttService?.run {
+        sttTtsService?.run {
             this.cancleAnalyze()
         }
     }

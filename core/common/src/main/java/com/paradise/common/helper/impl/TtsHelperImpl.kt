@@ -17,15 +17,14 @@ import javax.inject.Inject
 class TtsHelperImpl @Inject constructor(
     private val fragment: Fragment,
 ) : TextToSpeech.OnInitListener, TtsHelper {
-    private var contextRef: Context? = null
+    private lateinit var contextRef: Context
+    private var tts: TextToSpeech? = null
     override fun initTtsHelper() {
         contextRef = fragment.requireContext()
     }
 
-
-    private var tts: TextToSpeech? = null
     override fun initTTS() {
-        contextRef?.let { context ->
+        contextRef.let { context ->
             tts = TextToSpeech(context, this)
         }
     }
@@ -36,8 +35,6 @@ class TtsHelperImpl @Inject constructor(
 
     private var _isSpeaking = MutableLiveData<Int>(TTS_WAITING)
     override val isSpeaking: LiveData<Int> get() = _isSpeaking
-
-
     override fun stopTtsHelper() {
         tts?.stop()
         _isSpeaking.postValue(TTS_WAITING)
@@ -46,6 +43,7 @@ class TtsHelperImpl @Inject constructor(
     override fun releaseTtsHelper() {
         stopTtsHelper()
         tts?.shutdown()
+        tts = null
     }
 
     override fun onInit(status: Int) {
