@@ -535,7 +535,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     private fun subscribeSortResult() {
         sortResult.observe(viewLifecycleOwner) {
             musicHelper.releaseMediaPlayer()
-            Log.d("whatisthis", "okay")
             sttTtsController.speakOutTtsHelper(it)
         }
     }

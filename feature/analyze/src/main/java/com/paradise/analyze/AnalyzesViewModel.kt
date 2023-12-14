@@ -24,6 +24,7 @@ import com.paradise.data.repository.RestRepository
 import com.paradise.data.repository.SettingRepository
 import com.paradise.data.repository.ShelterRepository
 import com.paradise.domain.usecases.GetParkingLostItemListUseCase
+import com.paradise.domain.usecases.GetSettingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,6 +47,7 @@ class AnalyzesViewModel @Inject constructor(
     private val restRepository: RestRepository,
     private val musicRepository: MusicRepository,
     private val settingRepository: SettingRepository,
+    private val getSettingUseCase: GetSettingUseCase,
 ) : ViewModel() {
 
     var shelterRequestTime: Int = 0
@@ -291,16 +293,8 @@ class AnalyzesViewModel @Inject constructor(
         _allSettings.asStateFlow()
 
     fun getAllSetting() = viewModelScope.launch {
-        with(settingRepository) {
-            this.getBoolean(GUIDEMODE)
-                .zip(this.getBoolean(BASICMUSICMODE)) { a, b -> mutableListOf(a, b) }
-                .zip(this.getInt(MUSICVOLUME)) { list, c -> list to mutableListOf(c) }
-                .zip(this.getInt(REFRESHTERM)) { pair, d ->
-                    pair.second.add(d)
-                    pair.first to pair.second
-                }.collect {
-                    _allSettings.value = it
-                }
+        getSettingUseCase().collect {
+            _allSettings.value = it
         }
     }
 

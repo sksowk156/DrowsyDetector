@@ -31,7 +31,7 @@ class SttHelperImpl @Inject constructor(
         sttState.value = false
     }
 
-    override fun stopSttHelper(){
+    override fun stopSttHelper() {
         mRecognizer?.run {
             sttResult.value = ("")
             sttState.value = false
@@ -44,15 +44,8 @@ class SttHelperImpl @Inject constructor(
 
     // 음성인식을 종료하는 메소드
     override fun releaseSttHelper() {
-        mRecognizer?.run {
-            sttResult.value = ("")
-            sttState.value = false
-            stopListening()
-            destroy()
-            mRecognizer?.setRecognitionListener(null)
-            mRecognizer = null
-            contextRef = null
-        }
+        stopSttHelper()
+        contextRef = null
     }
 
     // 음성인식을 시작하는 메소드
