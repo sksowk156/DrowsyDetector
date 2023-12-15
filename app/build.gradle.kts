@@ -26,9 +26,14 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // 출시 빌드 타입에만 코드 축소, 난독화, 최적화를 적용합니다.
+            isMinifyEnabled = true
+            // Android Gradle 플러그인이 수행하는 리소스 축소를 활성화합니다.
+            isShrinkResources = true
+            // Android Gradle 플러그인에 포함된 기본 ProGuard 규칙 파일을 포함합니다.
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
             )
         }
     }

@@ -7,7 +7,7 @@ import com.paradise.common.network.compareTime
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher
 import com.paradise.data.repository.ParkingLotRepository
-import com.paradise.network.Mapper.toParkingLotItem
+import com.paradise.network.mapper.toParkingLotItem
 import com.paradise.network.provider.ParkingLotDataProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow

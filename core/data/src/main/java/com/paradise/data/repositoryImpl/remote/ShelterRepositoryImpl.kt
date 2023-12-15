@@ -5,7 +5,7 @@ import com.core.model.shelterItem
 import com.paradise.common.network.defaultDispatcher
 import com.paradise.common.network.ioDispatcher
 import com.paradise.data.repository.ShelterRepository
-import com.paradise.network.Mapper.toShelterItem
+import com.paradise.network.mapper.toShelterItem
 import com.paradise.network.provider.ShelterDataProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow

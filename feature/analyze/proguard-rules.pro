@@ -19,3 +19,10 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# inline 함수
+-keepclassmembers class * {
+    @kotlin.internal.InlineOnly *;
+}
+
+-keep class com.paradise.analyze.AnalyzesService

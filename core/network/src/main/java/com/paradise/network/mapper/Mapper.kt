@@ -1,11 +1,8 @@
-package com.paradise.network.Mapper
+package com.paradise.network.mapper
 
 import com.core.model.parkingLotItem
 import com.core.model.restItem
 import com.core.model.shelterItem
-import com.paradise.network.retrofit.parkinglot.model.ParkingLotModel
-import com.paradise.network.retrofit.rest.model.RestModel
-import com.paradise.network.retrofit.shelter.model.ShelterModel
 import com.paradise.network.retrofit.parkinglot.model.Item as parkingLotitem
 import com.paradise.network.retrofit.rest.model.Item as restitem
 import com.paradise.network.retrofit.shelter.model.Item as shelteritem

@@ -19,3 +19,8 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-keep class com.paradise.database.room.LocalDatabase { *; }
+-keep class com.paradise.database.room.model.AnalyzeResult { *; }
+-keep class com.paradise.database.room.model.DrowsyCount { *; }
+-keep class com.paradise.database.room.model.WinkCount { *; }
+
