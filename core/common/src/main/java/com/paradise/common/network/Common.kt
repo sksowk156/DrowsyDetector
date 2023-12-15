@@ -176,7 +176,6 @@ fun getUriFromFilePath(context: Context, filePath: String): Uri? {
             val authority = "${context.packageName}.provider"
             FileProvider.getUriForFile(context, authority, file)
         } catch (e: IllegalArgumentException) {
-            Log.d("whatisthis", "${context.packageName}ㅇㅔ러" + e.toString())
             e.printStackTrace()
             null
         }

@@ -4,7 +4,11 @@ plugins {
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
 }
-
+//plugins {
+//    `android-library`
+//    `kotlin-android`
+//}
+//apply<MainGradlePlugin>()
 android {
     namespace = "com.paradise.datastore"
     compileSdk = 34

@@ -74,8 +74,6 @@ class DataStoreProvider @Inject constructor(private val dataStore: DataStore<Pre
                 throw exception
             }
         }.map { preferences ->
-            Log.d("whatisthis", "in datastore, ${key} ${preferences[preferencesKey]}")
-
             preferences[preferencesKey] ?: 0
         }
     }

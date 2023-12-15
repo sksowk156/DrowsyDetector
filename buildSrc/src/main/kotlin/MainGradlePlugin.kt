@@ -1,8 +1,11 @@
-import org.gradle.api.JavaVersion
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-
-//class MainGradlePlugin: Plugin<Project> {
+//import ProjectConfig.compileSdk
+//import ProjectConfig.minSdk
+//import org.gradle.api.JavaVersion
+//import org.gradle.api.Plugin
+//import org.gradle.api.Project
+//import com.android.build.gradle.LibraryExtension
+//
+//class MainGradlePlugin : Plugin<Project> {
 //
 //    override fun apply(project: Project) {
 //        applyPlugins(project)
@@ -13,7 +16,7 @@ import org.gradle.api.Project
 //        project.apply {
 //            plugin("android-library")
 //            plugin("kotlin-android")
-//            plugin("dagger.hilt.android.plugin")
+//            plugin("com.google.dagger.hilt.android")
 //            plugin("kotlin-kapt")
 //        }
 //    }
@@ -30,6 +33,11 @@ import org.gradle.api.Project
 //            compileOptions {
 //                sourceCompatibility = JavaVersion.VERSION_18
 //                targetCompatibility = JavaVersion.VERSION_18
+//            }
+//
+//            buildFeatures {
+//                viewBinding = true
+//                dataBinding = true
 //            }
 //        }
 //    }

@@ -105,14 +105,12 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     private val connection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            Log.d("whatisthis", "onServiceConnected")
             val binder = service as AnalyzesService.MyBinder
             analyzesService = binder.getService()
             isServiceBounded = true
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
-            Log.d("whatisthis", "onServiceDisconnected")
             isServiceBounded = false
         }
     }
@@ -151,7 +149,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     override fun onStart() {
         super.onStart()
-        Log.d("whatisthis", "onStart")
         // onStart()에서 analyzesService 객체가 있다는 것은 pendingIntent로 Activity를 실행했을 경우라는 것 -> foreground service를 종료한다.
         analyzesService?.stopForegroundInBackground()
 
@@ -168,7 +165,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     }
 
     override fun onStop() {
-        Log.d("whatisthis", "onStop")
         // fragment의 previewView 동작을 멈추기 위함
         cameraHelper.stopCameraHelper()
         // 재생 중인 음악을 멈춤
@@ -191,7 +187,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             }
             jobList.clear()
             subscribeJobList.clear()
-            Log.d("whatisthis", " job 취소 완료")
         }
 
         // 만약 bind되어 있다면 -> standard 설정이 되어 있다면 -> 분석을 시작했다면
@@ -205,7 +200,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     }
 
     override fun onDestroyViewInFragMent() { // 홈 버튼 누를 땐 동작 X
-        Log.d("whatisthis", "onDestroyViewInFragMent()")
         // 음성 서비스 해제
         sttTtsController.releaseSttTtsController()
         // 구독 해제
@@ -240,7 +234,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                     val defaultMusic = it.first[1]
                     val onGuide = it.first[0]
                     val onRefresh = it.second[1]
-                    Log.d("whatisthis", it.toString())
 
                     if (onGuide) {
                         // 내 위치를 중심으로 근처에 있는 데이터 관찰
@@ -254,8 +247,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                         val subjob4 = subscribeSortedAll()
                         subscribeJobList.add(subjob4)
                     }
-
-                    Log.d("whatisthis", "subscribe is On, startCamera")
                     startCamera(startMusic = { startMusic(defaultMusic) },
                         startGuide = { startGuide(onGuide) },
                         startRefresh = { startRefresh(onRefresh) })
@@ -440,13 +431,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     private fun requestSortedAll() {
         if (jobSortedAll == null) {
-            Log.d("whatisthis", "모든 정렬 정보 요청")
             jobSortedAll = analyzesViewModel.sortAll()
             jobList.add(jobSortedAll!!)
         } else {
             if (jobSortedAll!!.isActive && !jobSortedAll!!.isCompleted) {
                 val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-                    Log.d("whatisthis", "모든 정렬 정보 이미 요청됨**** ")
                     jobSortedAll!!.join()
                     jobList.remove(jobSortedAll)
                 }
@@ -455,7 +444,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
                     jobList.remove(jobSortedAll!!)
                     jobSortedAll!!.cancelAndJoin()
-                    Log.d("whatisthis", "모든 정렬 정보 재요청")
                     jobSortedAll = analyzesViewModel.sortAll()
                     jobList.add(jobSortedAll!!)
                 }
@@ -485,7 +473,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
 
     private fun handleRequestCompletion(job: Job, detectType: String) {
         val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
-            Log.d("whatisthis", "$detectType 정보 이미 요청됨**** ")
             job.join()
             jobList.remove(job)
         }
@@ -496,7 +483,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         val subscribeJob = viewLifecycleOwner.lifecycleScope.launch(defaultDispatcher) {
             jobList.remove(job)
             job.cancelAndJoin()
-            Log.d("whatisthis", "$detectType 정보 요청 재요청!!!!")
             locationHelper.setLastLocationEventListener { location ->
                 getJobForType(detectType, count, location)
             }
@@ -505,7 +491,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     }
 
     private fun handleFirstRequest(detectType: String, count: Int) {
-        Log.d("whatisthis", "$detectType 정보 첫요청1")
         locationHelper.setLastLocationEventListener { location ->
             getJobForType(detectType, count, location)
         }
@@ -593,7 +578,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             when (it) {
                 is UiState.Uninitialized -> {}
                 is UiState.Loading -> {
-                    Log.d("whatisthis", "주차장 데이터 로딩")
                 }
 
                 is UiState.Success -> {
@@ -601,7 +585,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                         if (it.data.isNotEmpty()) {
                             requestSortingData(it.data)
                         } else {
-                            Log.d("whatisthis", "근처에 주차장이 없음 반경을 늘려서 재요청")
                             if (analyzesViewModel.parkingLotRequestTime < 3) {
                                 repeatRequestWhenNull(
                                     analyzesViewModel.parkingLotRequestTime++, "Shelter"
@@ -614,11 +597,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString())
+                    Log.e("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
-                    Log.d("whatisthis", it.exception.toString())
+                    Log.e("whatisthis", it.exception.toString())
                 }
             }
         }
@@ -631,7 +614,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             when (it) {
                 is UiState.Uninitialized -> {}
                 is UiState.Loading -> {
-                    Log.d("whatisthis", "졸음 쉼터 데이터 로딩")
                 }
 
                 is UiState.Success -> {
@@ -639,7 +621,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                         if (it.data.isNotEmpty()) {
                             requestSortingData(it.data)
                         } else {
-                            Log.d("whatisthis", "근처에 쉼터가 없음 반경을 늘려서 재요청")
                             if (analyzesViewModel.shelterRequestTime < 3) {
                                 repeatRequestWhenNull(
                                     analyzesViewModel.shelterRequestTime++, "Shelter"
@@ -652,11 +633,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString())
+                    Log.e("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
-                    Log.d("whatisthis", it.exception.toString())
+                    Log.e("whatisthis", it.exception.toString())
                 }
             }
         }
@@ -669,7 +650,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
             when (it) {
                 is UiState.Uninitialized -> {}
                 is UiState.Loading -> {
-                    Log.d("whatisthis", "휴게소 데이터 로딩")
                 }
 
                 is UiState.Success -> {
@@ -677,7 +657,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                         if (it.data.isNotEmpty()) {
                             requestSortingData(it.data)
                         } else {
-                            Log.d("whatisthis", "근처에 휴게소가 없음 반경을 늘려서 재요청")
                             if (analyzesViewModel.restRequestTime < 3) {
                                 repeatRequestWhenNull(
                                     analyzesViewModel.restRequestTime++, "Shelter"
@@ -690,11 +669,11 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                 }
 
                 is UiState.Fail -> {
-                    Log.d("whatisthis", it.message.toString())
+                    Log.e("whatisthis", it.message.toString())
                 }
 
                 is UiState.Error -> {
-                    Log.d("whatisthis", it.exception.toString())
+                    Log.e("whatisthis", it.exception.toString())
                 }
             }
         }
@@ -790,7 +769,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                     standardRatioList.sort()
                     val mid = standardRatioList.slice(3 until standardRatioList.size - 3)
                     val avg = mid.average()
-                    Log.d("whatisthis", "standard : $avg")
                     if (!avg.isNaN()) {
                         musicHelper.setStandardMusic()
                         analyzesService?.standard = avg

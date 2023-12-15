@@ -325,7 +325,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
             file.absolutePath  // 그 후 복사가 완료된 파일 객체 반환
         } catch (e: IOException) { // 입출력 문제 생기면 오류 출력
             e.printStackTrace()
-            Log.d("whatisthis", e.toString())
+            Log.e("whatisthis", e.toString())
             null
         } finally {
             // 마지막으로 사용한 inputStream, outputStream 종료
@@ -349,7 +349,6 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
                 cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME) // 파일이름이 저장된 열의 위치 반환 후 저장
             if (nameIndex != -1) { // 해당 열이 존재할 경우 내부 코드 실행
                 displayName = cursor.getString(nameIndex) // 열에 있는 데이터 반환
-                Log.d("whatisthis", displayName.toString())
             }
             cursor.close() // 커서 종료
         }

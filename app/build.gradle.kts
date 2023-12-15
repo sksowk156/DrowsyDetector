@@ -7,6 +7,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.dagger.hilt.android")
     kotlin("kapt")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -42,17 +43,21 @@ android {
         dataBinding = true
         viewBinding = true
     }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
+//    packaging {
+//        resources {
+//            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+//        }
+//    }
 //    hilt {
 //        enableAggregatingTask = true
 //    }
 }
 
 dependencies {
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    // Add the dependency for the Firebase SDK for Google Analytics
+    implementation("com.google.firebase:firebase-analytics")
     // LeakCanary
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 ////    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")

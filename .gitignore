@@ -13,5 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
-/app/src/main/java/com/paradise/drowsydetector/utils/ApiKey.kt
+/app/src/main/java/com/paradise/watchout/utils/ApiKey.kt
 /core/common/src/main/java/com/paradise/common/network/ApiKey.kt

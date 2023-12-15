@@ -33,7 +33,6 @@ class LocationHelperImpl @Inject constructor(
         ) {
             fusedLocationProviderClient.lastLocation.addOnSuccessListener { location: Location? -> //
                 if (location != null) {
-//                        Log.d("whatisthis", location.toString())
                     lastLocationListener(location)
                 }
             }
@@ -72,7 +71,6 @@ class LocationHelperImpl @Inject constructor(
                 latitude, longitude, 2
             )
             if (addresses != null) {
-//                Log.d("whatisthis", "* " + addresses.toString())
                 if (addresses.size > 0) reverseGeocoderListener(addresses.first())
             }
         }

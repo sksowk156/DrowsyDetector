@@ -100,7 +100,6 @@ class SttTtsControllerImpl @Inject constructor(
                     if (checkTtsSttHelperReady()) {
                         resetSttHelper(lifecycleOwner)
                         resetTtsHelper(lifecycleOwner)
-                        Log.d("whatisthis", it)
                         when (it) {
                             CHECKUSESTTSERVICE -> {
                                 checkUseSttService(
@@ -164,7 +163,6 @@ class SttTtsControllerImpl @Inject constructor(
 
     private val initObserver = Observer<String> {
         if (it.isNotEmpty()) { // STT 결과가 나왔을 때
-            Log.d("whatisthis", "음성 인식 결과1 : ${it}")
             when (it) {
                 "onError" -> {
                 } // 에러 (말을 안한 것도 포함)
@@ -180,7 +178,6 @@ class SttTtsControllerImpl @Inject constructor(
 
     private val initObserver1 = Observer<String> {
         if (it.isNotEmpty()) { // STT 결과가 나왔을 때
-            Log.d("whatisthis", "음성 인식 결과2 : ${it}")
             when (it) {
                 "onError" -> {
                 }
@@ -208,7 +205,6 @@ class SttTtsControllerImpl @Inject constructor(
 
     private val initObserver2 = Observer<String> {
         if (it.isNotEmpty()) { // STT 결과가 나왔을 때
-            Log.d("whatisthis", "음성 인식 결과3 : ${it}")
             when (it) {
                 "onError" -> { // 에러 (말을 안한 것도 포함)
                 }
@@ -229,7 +225,6 @@ class SttTtsControllerImpl @Inject constructor(
 
     private val initObserver3 = Observer<String> {
         if (it.isNotEmpty()) { // STT 결과가 나왔을 때
-            Log.d("whatisthis", "음성 인식 결과 : ${it}")
             when (it) {
                 "onError" -> { // 에러 (말을 안한 것도 포함)
                 }

@@ -1,16 +1,15 @@
-plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.dagger.hilt.android")
-    kotlin("kapt")
-}
-
 //plugins {
 //    `android-library`
 //    `kotlin-android`
 //}
 //apply<MainGradlePlugin>()
 
+plugins {
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.dagger.hilt.android")
+    kotlin("kapt")
+}
 android {
     namespace = "com.paradise.common"
 

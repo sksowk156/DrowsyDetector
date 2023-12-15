@@ -51,7 +51,6 @@ class SttHelperImpl @Inject constructor(
     // 음성인식을 시작하는 메소드
     override fun startSTT() {
         contextRef?.let { context ->
-            Log.d("whatisthis", "stt 시작")
             sttResult.value = ("")
             sttState.value = true
             // 음성인식을 위한 Intent 생성
@@ -76,7 +75,6 @@ class SttHelperImpl @Inject constructor(
 
                 override fun onFinish() {
                     // 타이머가 끝나면, 음성 인식을 종료합니다.
-                    Log.d("whatisthis", "stt 종료1")
                     stopSttHelper()
                     sttState.value = (false)
                 }
@@ -122,7 +120,6 @@ class SttHelperImpl @Inject constructor(
                 SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "말하는 시간초과 에러"
                 else -> "알 수 없는 오류"
             }
-            Log.e("whatisthis", message)
 //            showToast("에러 발생 : $message")
         }
 
@@ -135,8 +132,6 @@ class SttHelperImpl @Inject constructor(
             val result = checkWord(rs?.get(0) ?: "")
             sttResult.value = (result) // 텍스트뷰에 음성인식 결과의 첫 번째 후보를 출력함.
             sttState.value = (false)
-            Log.d("whatisthis", result.toString())
-            Log.d("whatisthis", "stt 종료2")
         }
 
         // 부분적인 음성인식 결과를 받음

@@ -131,7 +131,6 @@ class AnalyzesService : LifecycleService() {
 
     @SuppressLint("RestrictedApi")
     override fun onDestroy() {
-        Log.d("whatisthis", "service onDestroy()")
         killForegroundService()
         mWindowManager = null
         mParams = null
@@ -245,7 +244,6 @@ class AnalyzesService : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
         // 서비스가 시작될 때 수행할 작업을 여기에 작성합니다.
         intent?.let {
-            Log.d("whatisthis", "standard in service : $standard")
             startForeground()
         }
         return START_NOT_STICKY // 서비스가 종료되었을 때, 서비스 재 실행을 하지 않음
@@ -292,10 +290,8 @@ class AnalyzesService : LifecycleService() {
         _analyzeRecord.observe(this@AnalyzesService) {
             if (it == null) {
                 currentAnayzeResult = analyzeResultItem(getTodayDate(), 1)
-                Log.d("whatisthis", currentAnayzeResult.toString() + " null")
             } else {
                 currentAnayzeResult = it
-                Log.d("whatisthis", it.toString())
             }
         }
     }
@@ -334,7 +330,6 @@ class AnalyzesService : LifecycleService() {
     private fun initJob() = lifecycleScope.launch(defaultDispatcher, CoroutineStart.LAZY) {
         while (this.isActive) {
             delay(1 * 60 * 1000)  // 30분 대기
-            Log.d("whatisthis", "깜빡임 : " + currentWinkCount + " 졸음 인식 : " + currentDrowsyCount)
             insertWinkCount(
                 winkResultItem(
                     recordId = currentAnayzeResult!!.id, value = currentWinkCount
@@ -595,7 +590,6 @@ class AnalyzesService : LifecycleService() {
                             pair.second.add(d)
                             pair.first to pair.second
                         }.collect {
-                            Log.d("whatisthis", it.toString())
                             _allSettings.value = it
                         }
                 }

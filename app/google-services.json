@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "170855384335",
+    "project_id": "watchout-aa0ab",
+    "storage_bucket": "watchout-aa0ab.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:170855384335:android:1d063f74e7137eb17d6a7a",
+        "android_client_info": {
+          "package_name": "com.paradise.watchout"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx1G7OYCbqlF3NaPQbCK_lujvneCLBs78"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

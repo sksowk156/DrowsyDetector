@@ -25,11 +25,12 @@ object Dependencies {
     const val navigationFragment = ("androidx.navigation:navigation-fragment-ktx:${navigation}")
     const val navigationUi = ("androidx.navigation:navigation-ui-ktx:${navigation}")
     const val navigationRuntime = "androidx.navigation:navigation-runtime-ktx:${navigation}"
+    const val navi = "androidx.navigation:navigation-safe-args-gradle-plugin:${navigation}"
 
     // dagger hilt
     const val hiltAndroid = "com.google.dagger:hilt-android:${daggerHilt}"
     const val hiltCompiler = "com.google.dagger:hilt-android-compiler:${daggerHilt}"
-//    const val hiltAgp = "com.google.dagger:hilt-android-gradle-plugin:${daggerHilt}"
+    const val hiltAgp = "com.google.dagger:hilt-android-gradle-plugin:${daggerHilt}"
 
     // Preferences DataStore (SharedPreferences like APIs)
     const val DataStore = ("androidx.datastore:datastore-preferences:${dataStore}")
@@ -267,4 +268,3 @@ fun DependencyHandler.core_domain() {
 fun DependencyHandler.core_model() {
     implementation(project(":core:model"))
 }
-

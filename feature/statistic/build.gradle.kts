@@ -1,5 +1,11 @@
 import Dependencies.Location
 import Dependencies.MpAndroidChart
+//plugins {
+//    `android-library`
+//    `kotlin-android`
+//}
+//
+//apply<MainGradlePlugin>()
 
 plugins {
     id("com.android.library")
@@ -43,6 +49,10 @@ android {
 }
 
 dependencies {
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    // Add the dependency for the Firebase SDK for Google Analytics
+    implementation("com.google.firebase:firebase-analytics")
     core_model()
     core_domain()
     core_data()
