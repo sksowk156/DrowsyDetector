@@ -27,9 +27,6 @@ android {
             // Enables code shrinking, obfuscation, and optimization for only
             // your project's release build type.
             isMinifyEnabled = true
-            // Enables resource shrinking, which is performed by the
-            // Android Gradle plugin.
-            isShrinkResources = true
             // Includes the default ProGuard rules files that are packaged with
             // the Android Gradle plugin. To learn more, go to the section about
             // R8 configuration files.

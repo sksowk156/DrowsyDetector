@@ -38,3 +38,7 @@
 -keep class * implements com.google.gson.TypeAdapterFactory
 -keep class * implements com.google.gson.JsonSerializer
 -keep class * implements com.google.gson.JsonDeserializer
+
+-keep class com.paradise.network.retrofit.parkinglot.model.Item { *; }
+-keep class com.paradise.network.retrofit.rest.model.Item { *; }
+-keep class com.paradise.network.retrofit.shelter.model.Item { *; }
