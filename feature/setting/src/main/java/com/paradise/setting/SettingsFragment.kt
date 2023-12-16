@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.core.model.musicItem
 import com.paradise.common.helper.MusicHelper
@@ -26,12 +27,14 @@ import com.paradise.common.network.BASICMUSICMODE
 import com.paradise.common.network.GUIDEMODE
 import com.paradise.common.network.MUSICVOLUME
 import com.paradise.common.network.getPathFromFileUri
+import com.paradise.common.network.mainScope
 import com.paradise.common.utils.launchWithRepeatOnLifecycle
 import com.paradise.common_ui.R.*
 import com.paradise.common_ui.base.BaseFragment
 import com.paradise.setting.databinding.FragmentSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.WithFragmentBindings
+import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -100,7 +103,6 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
                 volume = value.toInt()
                 // AudioManager의 음량을 변경
                 volumeHelper.setVolume(volume)
-                settingsViewModel.setSettingMode(MUSICVOLUME, volume)
             }
 
             ivSettingAddmusic.setOnAvoidDuplicateClick {
@@ -128,14 +130,16 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
     }
 
     override fun onPause() {
-        super.onPause()
+        settingsViewModel.setSettingMode(MUSICVOLUME, volume)
         musicHelper.releaseMediaPlayer()
         // BroadcastReceiver를 해제
         requireContext().unregisterReceiver(volumeChangeObserver)
+        super.onPause()
     }
 
     override fun onDestroyViewInFragMent() {
         volume = 0
+        volumeHelper.releaseVolumeHelper()
     }
 
     private fun subscribeMusicStyle() =

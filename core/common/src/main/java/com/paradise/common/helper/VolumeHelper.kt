@@ -7,10 +7,7 @@ interface VolumeHelper {
     fun initVolumeHelper()
     fun releaseVolumeHelper()
     fun initAudio()
-
     fun getMaxVolume() : Int?
-
     fun getCurrentVolume() : Int?
-
     fun setVolume(volume: Int)
 }

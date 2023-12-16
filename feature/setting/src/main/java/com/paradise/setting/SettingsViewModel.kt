@@ -8,6 +8,7 @@ import com.paradise.common.network.BASICMUSICMODE
 import com.paradise.common.network.GUIDEMODE
 import com.paradise.common.network.MUSICVOLUME
 import com.paradise.common.network.REFRESHTERM
+import com.paradise.common.network.defaultDispatcher
 import com.paradise.data.repository.MusicRepository
 import com.paradise.data.repository.SettingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -80,7 +81,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setSettingMode(key: String, value: Int) = viewModelScope.launch {
+    fun setSettingMode(key: String, value: Int) = viewModelScope.launch(defaultDispatcher) {
         settingRepository.setInt(key, value)
     }
 

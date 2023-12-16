@@ -9,13 +9,14 @@ import javax.inject.Inject
 class VolumeHelperImpl @Inject constructor(
     private var fragment: Fragment,
 ) : VolumeHelper {
-    private lateinit var contextRef: Context
+    private var contextRef: Context? = null
     override fun initVolumeHelper() {
         contextRef = fragment.requireContext()
     }
 
     override fun releaseVolumeHelper() {
         audioManager = null
+        contextRef = null
     }
 
     private var audioManager: AudioManager? = null

@@ -16,6 +16,7 @@
 //        project.apply {
 //            plugin("android-library")
 //            plugin("kotlin-android")
+//            plugin("androidx.navigation.safeargs.kotlin")
 //            plugin("com.google.dagger.hilt.android")
 //            plugin("kotlin-kapt")
 //        }
@@ -28,6 +29,19 @@
 //            defaultConfig {
 //                minSdk = ProjectConfig.minSdk
 //                testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+//            }
+//            buildTypes{
+//                release {
+//                    // Enables code shrinking, obfuscation, and optimization for only
+//                    // your project's release build type.
+//                    isMinifyEnabled = true
+//                    // Includes the default ProGuard rules files that are packaged with
+//                    // the Android Gradle plugin. To learn more, go to the section about
+//                    // R8 configuration files.
+//                    proguardFiles(
+//                        getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+//                    )
+//                }
 //            }
 //
 //            compileOptions {

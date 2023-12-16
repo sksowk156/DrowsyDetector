@@ -202,6 +202,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
     override fun onDestroyViewInFragMent() { // 홈 버튼 누를 땐 동작 X
         // 음성 서비스 해제
         sttTtsController.releaseSttTtsController()
+        volumeHelper.releaseVolumeHelper()
         // 구독 해제
         sortResult.removeObservers(viewLifecycleOwner)
         // 서비스 종료
