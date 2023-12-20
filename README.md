@@ -1,4 +1,5 @@
 # WatchOut
+![WatchOut - 복사본_1](https://github.com/sksowk156/Hellth/assets/110645858/f698d666-4118-4221-b2d3-27e4cb323b0a)
 - email address : sksowk156@gmail.com <br />
 
 ## Features
@@ -7,7 +8,7 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 경고음을 커스텀할 수 있고, 졸음 감지 결과를 확인할 수 있습니다.<br />
 
 ### Screenshots
-
+![KakaoTalk_20231220_220504776](https://github.com/sksowk156/Hellth/assets/110645858/3d27a815-3737-492d-8fc4-060ebabec329)
 
 ## Usage
 ### 홈
