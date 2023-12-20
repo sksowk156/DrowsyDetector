@@ -27,9 +27,9 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 
 
 ### 설정
-|제목 셀1|제목 셀2|제목 셀3|제목 셀4|
-|---|---|---|---|
-|내용 1|내용 2|내용 3|내용 4|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/5656f052-5009-4005-8a56-bd5eddc47a80" width="216" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/886362f1-5013-4746-90e7-203ec2ad87bc" width="216" height="384"/><br />|
+|---|---|
+|1. 졸음 알림음을 선택할 수 있다.<br />>>기본 알림음 : 3개의 기본 음악이 존재한다.<br />>>사용자 설정 음악 : 사용자 선택하는 음악이 3초간 재생된다.<br />2. 알림음 크기를 조절할 수 있다.<br />>>사이드 버튼으로도 조절 가능<br />3. 휴식 장소 안내를 설정할 수 있다.|1. 음악의 구간을 설정할 수 있다.|
 
 ## Architecture
 ![그림02](https://github.com/sksowk156/Hellth/assets/110645858/dad4558f-1a29-4091-8efa-a60eddd16cc3)
