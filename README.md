@@ -11,19 +11,14 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 
 ## Usage
 ### 홈
-|제목 셀1|제목 셀2|제목 셀3|제목 셀4|
-|---|---|---|---|
-|내용 1|내용 2|내용 3|내용 4|
-
-<img src="https://github.com/sksowk156/Hellth/assets/110645858/f1aad50a-39e9-4b96-bd3d-87293f840df0" width="216" height="384"/><br />
-
-+ 구글 아이디로 회원 가입 및 로그인 할 수 있습니다.<br />
-+ 로그인을 해야만 앱을 사용할 수 있습니다.<br />
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/ce3c4b23-8e06-4cab-b47f-75b6148ce55e" width="216" height="384"/><br />|
+|---|
+|-홈 화면입니다.<br />-졸음 감지, 통계, 설정 메뉴가 있습니다.|
 
 ### 졸음 감지
-|제목 셀1|제목 셀2|제목 셀3|제목 셀4|
-|---|---|---|---|
-|내용 1|내용 2|내용 3|내용 4|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/a337d7b9-70d7-48d5-8035-1cde4b8195c5" width="216" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/cef0efa7-8f41-44fc-95d6-c2f59578f861" width="216" height="384"/><br />|
+|---|---|
+|1. 카메라를 정면으로 응시해 현재 눈 상태를 설정한다.<br />2. 등록한 눈 상태를 기반으로 실시간 눈 상태를 계산한다.<br />3. 졸음이 감지될 경우<br />>> 경고음을 알린다.(기본 음악 또는 사용자 설정 음악)<br />>> 최단 거리에 있는 휴식 공간의 위치를 음성 안내 서비스로 알려준다.|1. 홈 버튼을 눌러 앱을 floating view로 전환한 뒤 다른 앱과 동시에 사용한다.|
 
 <img src="https://github.com/sksowk156/Hellth/assets/110645858/a818e82b-6d74-4121-bc00-2ffa42be43ab" width="216" height="384"/>
 <img src="https://github.com/sksowk156/Hellth/assets/110645858/05bc494c-73f8-421d-83f0-9909cbd42837" width="216" height="384"/><br />
