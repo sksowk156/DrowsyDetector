@@ -1,3 +1,11 @@
+이 프로젝트는 다음의 오픈소스 라이브러리를 사용하였습니다:
+
+1. TedPermission (Apache License 2.0) - ParkSangGwon
+2. MPAndroidChart (Apache License 2.0) - Philipp Jahoda
+3. RxBinding (Apache License 2.0) - Jake Wharton
+4. FlowBinding (Apache License 2.0) - Vincent Tung
+
+각 라이브러리의 라이센스는 해당 라이브러리의 웹사이트 혹은 소스코드에 포함되어 있습니다.
 Apache License 2.0의 전문은 아래와 같습니다:                                 
 
                                 Apache License
