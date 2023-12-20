@@ -81,4 +81,4 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 - kotlinVersion : 1.8.20
 
 ## License
-[License] ([http://www.google.co.kr](https://github.com/sksowk156/WatchOut/blob/main/LICENSE)https://github.com/sksowk156/WatchOut/blob/main/LICENSE)
+[License](https://github.com/sksowk156/WatchOut/blob/main/LICENSE)
