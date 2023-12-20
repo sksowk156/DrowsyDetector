@@ -12,23 +12,23 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 
 ## Usage
 ### 홈
-|<img src="https://github.com/sksowk156/Hellth/assets/110645858/ce3c4b23-8e06-4cab-b47f-75b6148ce55e" width="216" height="384"/><br />|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/ce3c4b23-8e06-4cab-b47f-75b6148ce55e" width="210" height="384"/><br />|
 |---|
 |-홈 화면입니다.<br />-졸음 감지, 통계, 설정 메뉴가 있습니다.|
 
 ### 졸음 감지
-|<img src="https://github.com/sksowk156/Hellth/assets/110645858/a337d7b9-70d7-48d5-8035-1cde4b8195c5" width="216" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/cef0efa7-8f41-44fc-95d6-c2f59578f861" width="216" height="384"/><br />|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/a337d7b9-70d7-48d5-8035-1cde4b8195c5" width="200" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/cef0efa7-8f41-44fc-95d6-c2f59578f861" width="200" height="384"/><br />|
 |---|---|
 |1. 카메라를 정면으로 응시해 현재 눈 상태를 설정한다.<br />2. 등록한 눈 상태를 기반으로 실시간 눈 상태를 계산한다.<br />3. 졸음이 감지될 경우<br />>> 경고음을 알린다.(기본 음악 또는 사용자 설정 음악)<br />>> 최단 거리에 있는 휴식 공간의 위치를 음성 안내 서비스로 알려준다.|1. 홈 버튼을 눌러 앱을 floating view로 전환한 뒤 다른 앱과 동시에 사용한다.|
    
 ### 통계
-|<img src="https://github.com/sksowk156/Hellth/assets/110645858/161ca01c-7296-4129-b6eb-6c6f402ce2ff" width="216" height="384"/><br />|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/161ca01c-7296-4129-b6eb-6c6f402ce2ff" width="200" height="384"/><br />|
 |---|
 |1. 졸음 감지 서비스를 사용하고 나서 그 통계 정보를 볼 수 있다.<br />>> 정해진 시간을 주기로 눈을 깜빡인 횟수와 졸음 인식 횟수 정보를 보여준다.|
 
 
 ### 설정
-|<img src="https://github.com/sksowk156/Hellth/assets/110645858/5656f052-5009-4005-8a56-bd5eddc47a80" width="216" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/886362f1-5013-4746-90e7-203ec2ad87bc" width="216" height="384"/><br />|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/5656f052-5009-4005-8a56-bd5eddc47a80" width="200" height="384"/><br />|<img src="https://github.com/sksowk156/Hellth/assets/110645858/886362f1-5013-4746-90e7-203ec2ad87bc" width="200" height="384"/><br />|
 |---|---|
 |1. 졸음 알림음을 선택할 수 있다.<br />>>기본 알림음 : 3개의 기본 음악이 존재한다.<br />>>사용자 설정 음악 : 사용자 선택하는 음악이 3초간 재생된다.<br />2. 알림음 크기를 조절할 수 있다.<br />>>사이드 버튼으로도 조절 가능<br />3. 휴식 장소 안내를 설정할 수 있다.|1. 음악의 구간을 설정할 수 있다.|
 
