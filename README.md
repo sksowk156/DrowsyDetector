@@ -12,7 +12,7 @@ WatchOut은 졸음을 방지 서비스입니다.<br />
 
 ## Usage
 ### 홈
-|<img src="https://github.com/sksowk156/Hellth/assets/110645858/ce3c4b23-8e06-4cab-b47f-75b6148ce55e" width="210" height="384"/><br />|
+|<img src="https://github.com/sksowk156/Hellth/assets/110645858/ce3c4b23-8e06-4cab-b47f-75b6148ce55e" width="200" height="384"/><br />|
 |---|
 |-홈 화면입니다.<br />-졸음 감지, 통계, 설정 메뉴가 있습니다.|
 
