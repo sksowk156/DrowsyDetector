@@ -46,22 +46,9 @@ class ParkingLotRepositoryImpl @Inject constructor(private val parkingLotDataPro
                 val inLonRange =
                     lon != null && lon in boundingBox.minLongitude..boundingBox.maxLongitude
                 val inTime = when (day) {
-                    DAY.WEEKDAY -> {
-                        compareTime(
-                            nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm
-                        )
-                    }
-
-                    DAY.SAT -> {
-                        compareTime(nowTime, item.satOperOperOpenHhmm, item.satOperCloseHhmm)
-                    }
-
-                    DAY.HOLIDAY -> {
-                        compareTime(
-                            nowTime, item.holidayOperOpenHhmm, item.holidayCloseOpenHhmm
-                        )
-                    }
-                }
+                    DAY.WEEKDAY -> { compareTime(nowTime, item.weekdayOperOpenHhmm, item.weekdayOperColseHhmm) }
+                    DAY.SAT -> { compareTime(nowTime, item.satOperOperOpenHhmm, item.satOperCloseHhmm) }
+                    DAY.HOLIDAY -> { compareTime(nowTime, item.holidayOperOpenHhmm, item.holidayCloseOpenHhmm) } }
                 inLatRange && inLonRange && inTime
             }?.collect { item ->
                 freeParkingLot.add(item.toParkingLotItem())

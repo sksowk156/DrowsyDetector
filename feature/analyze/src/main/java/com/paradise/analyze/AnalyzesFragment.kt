@@ -225,7 +225,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         viewLifecycleOwner.launchWithRepeatOnLifecycle(state = Lifecycle.State.STARTED) {
             analyzesViewModel.allSettings.collect {
                 for (i in subscribeJobList) {
-                    if (i.isCancelled) continue // 종료된거면 종료 X
                     i.cancelAndJoin() // 진행이 끝났을 때 종료
                 }
 
@@ -244,7 +243,6 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
                         subscribeJobList.add(subjob2)
                         val subjob3 = subscribeRestData()
                         subscribeJobList.add(subjob3)
-
                         val subjob4 = subscribeSortedAll()
                         subscribeJobList.add(subjob4)
                     }
@@ -530,7 +528,7 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
         }
     }
 
-    private val sortResult = MutableLiveData<String>("")
+    private val sortResult = MutableLiveData<String>()
 
     private fun subscribeSortResult() {
         sortResult.observe(viewLifecycleOwner) {
@@ -823,32 +821,39 @@ class AnalyzesFragment : BaseFragment<FragmentAnalyzesBinding>(FragmentAnalyzesB
      * SttTtsController 내부에서 사용할 메서드 정의
      */
     override fun baseMusic() {
+        sttTtsController.stopSttTtsController()
         analyzesViewModel.setSettingMode(BASICMUSICMODE, true)
     }
 
     override fun userMusic() {
+        sttTtsController.stopSttTtsController()
         analyzesViewModel.setSettingMode(BASICMUSICMODE, false)
     }
 
     override fun guideOff() {
+        sttTtsController.stopSttTtsController()
         analyzesViewModel.setSettingMode(GUIDEMODE, false)
     }
 
     override fun guideOn() {
+        sttTtsController.stopSttTtsController()
         analyzesViewModel.setSettingMode(GUIDEMODE, true)
     }
 
     override fun relaxData() {
+        sttTtsController.stopSttTtsController()
         requestRelaxData()
     }
 
     override fun recentRelaxData() {
+        sttTtsController.stopSttTtsController()
         if (sortResult.value != null) {
             sttTtsController.speakOutTtsHelper(sortResult.value!!)
         }
     }
 
     override fun cancleAnalyze() {
+        sttTtsController.stopSttTtsController()
         requireActivity().finish()
     }
 }

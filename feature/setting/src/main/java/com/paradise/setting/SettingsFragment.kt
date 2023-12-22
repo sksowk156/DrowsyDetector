@@ -274,9 +274,7 @@ class SettingsFragment : BaseFragment<FragmentSettingsBinding>(FragmentSettingsB
             // ContentResolver를 통해 앱은 ContentProvider를 사용해 다른 앱의 데이터에 접근하거나 데이터를 읽거나 쓸 수 있다
             val contentResolver = requireContext().contentResolver
             // Uri를 사용해 파일 복사본 생성후 해당 파일 경로 반환
-            val newFilePath: String? = getNewFilePathFromUri(
-                requireContext(), contentResolver, audioUri
-            )
+            val newFilePath: String? = getNewFilePathFromUri(requireContext(), contentResolver, audioUri)
             // 원본 파일의 Uri로부터 절대 경로 반환
             val audioPath = getPathFromFileUri(requireContext(), audioUri)
             // 원본 파일로부터 음원 제목 추출

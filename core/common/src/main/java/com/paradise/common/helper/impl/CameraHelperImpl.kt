@@ -27,6 +27,7 @@ import com.paradise.common.network.UP_DOWN_ANGLE_THREDHOLD
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.inject.Inject
+import kotlin.math.abs
 
 class CameraHelperImpl @Inject constructor(
     private val fragment: Fragment,
@@ -188,10 +189,13 @@ class CameraHelperImpl @Inject constructor(
         var heightAvg1 = (calDist(rightUpper, rightLower) + calDist(leftUpper, leftLower)) / 2.0
 
 
-        if (leftRightAngle < -30 || leftRightAngle > 30) {
-            widthLower1 *= 0.98
+        if (abs(leftRightAngle) > 30) {
+            if (abs(leftRightAngle) <= 40) {
+                widthLower1 *= 0.98
+            }
             upDownSec *= 1.02
         }
+
         if (upDownAngle < 0) { // 카메라가 위에 있을 경우
             heightAvg1 *= (upDownSec * 1.05) // 랜드마크의 세로 길이가 짧게 측정되는 경향이 있어 값을 보정
         } else { // 카메라가 아래에 있을 경우
@@ -209,9 +213,9 @@ class CameraHelperImpl @Inject constructor(
     }
 
     override fun checkHeadAngleInNoStandard(upDownAngle: Float, leftRightAngle: Float) =
-        upDownAngle < 4 && upDownAngle > -4 && leftRightAngle < 4 && leftRightAngle > -4
+        abs(upDownAngle) < 6 && abs(leftRightAngle) < 6
 
-    override fun isInLeftRight(leftRightAngle: Float) = leftRightAngle < 4 && leftRightAngle > -4
+    override fun isInLeftRight(leftRightAngle: Float) = abs(leftRightAngle) < 6
 
     override fun checkHeadAngleInStandard(leftRightAngle: Float, upDownAngle: Float) =
         leftRightAngle < -LEFT_RIGHT_ANGLE_THREDHOLD || leftRightAngle > LEFT_RIGHT_ANGLE_THREDHOLD || upDownAngle < -UP_DOWN_ANGLE_THREDHOLD || upDownAngle > UP_DOWN_ANGLE_THREDHOLD

@@ -63,8 +63,8 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     // Add the dependency for the Firebase SDK for Google Analytics
     implementation("com.google.firebase:firebase-analytics")
-    // LeakCanary
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+//    // LeakCanary
+//    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 ////    releaseImplementation("com.squareup.leakcanary:leakcanary-android-no-op:2.7")
     core_model()
     core_common()

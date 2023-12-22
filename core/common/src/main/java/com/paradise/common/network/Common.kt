@@ -127,13 +127,13 @@ const val SMILE_THREDHOLD = 0.9
 const val DROWSY_THREDHOLD = 0.78
 
 // 세팅 인식 EAR 임계값
-const val STT_THREDHOLD = 1.3
+const val STT_THREDHOLD = 1.435
 
 // 졸음 인식 지속 시간 임계값
 const val TIME_THREDHOLD = 1500
 
 // 좌우 회전 각도 임계값
-const val LEFT_RIGHT_ANGLE_THREDHOLD = 55
+const val LEFT_RIGHT_ANGLE_THREDHOLD = 50
 
 // 위,아래 회전 각도 임계값
 const val UP_DOWN_ANGLE_THREDHOLD = 40

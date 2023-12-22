@@ -17,6 +17,7 @@ import com.paradise.common.network.MUSICVOLUME
 import com.paradise.common.network.REFRESHTERM
 import com.paradise.common.network.calculateDistance
 import com.paradise.common.network.defaultDispatcher
+import com.paradise.common.network.defaultScope
 import com.paradise.common.network.ioDispatcher
 import com.paradise.common.result.UiState
 import com.paradise.data.repository.MusicRepository
@@ -26,16 +27,23 @@ import com.paradise.data.repository.ShelterRepository
 import com.paradise.domain.usecases.GetParkingLostItemListUseCase
 import com.paradise.domain.usecases.GetSettingUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.cancellable
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.replay
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -73,15 +81,17 @@ class AnalyzesViewModel @Inject constructor(
 
 
     private val _sortedAll: MutableSharedFlow<Triple<List<restItem>, List<shelterItem>, List<parkingLotItem>>> =
-        MutableSharedFlow()
+        MutableSharedFlow(replay = 0)
     val sortedAll: SharedFlow<Triple<List<restItem>, List<shelterItem>, List<parkingLotItem>>> get() = _sortedAll
+
     fun sortAll() = viewModelScope.launch(defaultDispatcher) {
         sortedRests.zip(sortedShelters) { rest, shelter -> Pair(rest, shelter) }
             .zip(sortedParkingLots) { pair, parkinglot ->
                 Triple(
                     pair.first, pair.second, parkinglot
                 )
-            }.collect {
+            }.take(1)
+            .collect {
                 _sortedAll.emit(it)
             }
     }
@@ -103,7 +113,7 @@ class AnalyzesViewModel @Inject constructor(
         }
     }
 
-    private val _sortedRests: MutableSharedFlow<List<restItem>> = MutableSharedFlow()
+    private val _sortedRests: MutableSharedFlow<List<restItem>> = MutableSharedFlow(replay = 0)
     val sortedRests: SharedFlow<List<restItem>> get() = _sortedRests
     fun sortRests(nowLocation: Location, rests: List<restItem>) =
         viewModelScope.launch(defaultDispatcher) {
@@ -131,8 +141,9 @@ class AnalyzesViewModel @Inject constructor(
         }
     }
 
-    private val _sortedShelters: MutableSharedFlow<List<shelterItem>> = MutableSharedFlow()
-    val sortedShelters: SharedFlow<List<shelterItem>> get() = _sortedShelters.asSharedFlow()
+    private val _sortedShelters: MutableSharedFlow<List<shelterItem>> =
+        MutableSharedFlow(replay = 0)
+    val sortedShelters: SharedFlow<List<shelterItem>> get() = _sortedShelters
     fun sortShelters(nowLocation: Location, shelters: List<shelterItem>) =
         viewModelScope.launch(defaultDispatcher) {
             _sortedShelters.emit(shelters.sortedBy {// 정렬
@@ -186,8 +197,9 @@ class AnalyzesViewModel @Inject constructor(
     }
 
 
-    private val _sortedParkingLots: MutableSharedFlow<List<parkingLotItem>> = MutableSharedFlow()
-    val sortedParkingLots: SharedFlow<List<parkingLotItem>> get() = _sortedParkingLots.asSharedFlow()
+    private val _sortedParkingLots: MutableSharedFlow<List<parkingLotItem>> =
+        MutableSharedFlow(replay = 0)
+    val sortedParkingLots: SharedFlow<List<parkingLotItem>> get() = _sortedParkingLots
 
     /**
      * Sort parking lots

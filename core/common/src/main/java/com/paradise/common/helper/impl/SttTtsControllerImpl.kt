@@ -64,6 +64,7 @@ class SttTtsControllerImpl @Inject constructor(
     override val request = MutableLiveData<String>()
     override fun speakOutTtsHelper(word: String) {
         lifecycleOwner?.let { lifecycleOwner ->
+            Log.d("whatisthis", "${(ttsHelper.isSpeaking.value != TTS_SPEAKING)} ${!(sttHelper.sttState.value)!!}")
             if (checkTtsSttHelperReady()) {
                 resetTtsHelper(lifecycleOwner)
                 if (word.isNotEmpty()) {
