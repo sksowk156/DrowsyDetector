@@ -1,7 +1,7 @@
 # WatchOut
 ![WatchOut - 복사본_1](https://github.com/sksowk156/Hellth/assets/110645858/f698d666-4118-4221-b2d3-27e4cb323b0a)
 - email address : sksowk156@gmail.com <br />
-- blog : https://heavenly-radar-b6f.notion.site/WatchOut-42dad163b25e4048864c4f41e3c0bb25?pvs=4 <br />
+- blog(시연 영상 포함) : https://heavenly-radar-b6f.notion.site/WatchOut-42dad163b25e4048864c4f41e3c0bb25?pvs=4 <br /> 
 
 ## Features
 WatchOut은 졸음 방지 서비스입니다.<br />
